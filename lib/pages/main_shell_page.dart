@@ -7,7 +7,9 @@ import '../widgets/gradient_button.dart';
 import '../widgets/management_list_tile.dart';
 import '../widgets/phone_frame.dart';
 import '../widgets/server_icon.dart';
+import 'album_page.dart';
 import 'detail_page.dart';
+import 'music_page.dart';
 
 class MainShellPage extends StatefulWidget {
   const MainShellPage({super.key});
@@ -35,7 +37,6 @@ class _MainShellPageState extends State<MainShellPage> {
       maxContentWidth: 900,
       child: Column(
         children: [
-          _ShellHeader(index: _currentIndex),
           Expanded(
             child: Stack(
               children: [
@@ -76,54 +77,57 @@ class _MainShellPageState extends State<MainShellPage> {
       case 1:
         return const _ManagementPage(
           key: ValueKey('docker'),
-          title: '容器列表',
-          description: '在此查看和管理所有运行中的 Docker 容器。',
+          type: 'Docker',
           items: [
             ManagementData(
               icon: Icons.layers,
               title: 'MediaServer',
               status: '运行中',
+              description: '媒体服务容器',
             ),
             ManagementData(
               icon: Icons.layers,
               title: 'FileSync',
               status: '已停止',
+              description: '文件同步容器',
             ),
           ],
         );
       case 2:
         return const _ManagementPage(
           key: ValueKey('vm'),
-          title: '虚拟机列表',
-          description: '在此查看和管理所有虚拟机。',
+          type: '虚拟机',
           items: [
             ManagementData(
               icon: Icons.computer,
               title: 'Windows 10',
               status: '运行中',
+              description: '桌面虚拟机',
             ),
             ManagementData(
               icon: Icons.computer,
               title: 'Ubuntu Server',
               status: '已停止',
+              description: '服务器虚拟机',
             ),
           ],
         );
       case 3:
         return const _ManagementPage(
           key: ValueKey('share'),
-          title: '共享列表',
-          description: '在此查看和管理所有共享资源。',
+          type: '共享',
           items: [
             ManagementData(
               icon: Icons.folder_shared,
               title: 'Movies',
               status: '公开',
+              description: '媒体共享目录',
             ),
             ManagementData(
               icon: Icons.folder_shared,
               title: 'Backup',
               status: '私有',
+              description: '备份共享目录',
             ),
           ],
         );
@@ -173,44 +177,6 @@ class _MainShellPageState extends State<MainShellPage> {
   }
 }
 
-class _ShellHeader extends StatelessWidget {
-  const _ShellHeader({required this.index});
-
-  final int index;
-
-  @override
-  Widget build(BuildContext context) {
-    final titles = ['服务器信息', 'Docker 管理', '虚拟机管理', '共享管理'];
-    final subtitles = ['Media server', '容器运行状态', '虚拟化资源', '共享资源'];
-    return SizedBox(
-      height: 118,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              titles[index],
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              subtitles[index],
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.80),
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ServerInfoPage extends StatelessWidget {
   const _ServerInfoPage({
     super.key,
@@ -234,11 +200,11 @@ class _ServerInfoPage extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'SU',
                         style: TextStyle(
                           color: AppTheme.textDark,
@@ -246,14 +212,16 @@ class _ServerInfoPage extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(height: 5),
-                      Text(
+                      const SizedBox(height: 5),
+                      const Text(
                         'Media server',
                         style: TextStyle(
                           color: AppTheme.textMedium,
                           fontSize: 16,
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      const _ServerInfoChips(),
                     ],
                   ),
                 ),
@@ -286,23 +254,6 @@ class _ServerInfoPage extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            const _ServerDetailRow(
-              icon: Icons.devices,
-              label: '型号',
-              value: 'Custom',
-            ),
-            const _ServerDetailRow(
-              icon: Icons.verified_user,
-              label: '注册',
-              value: 'Unraid OS Pro',
-              highlight: 'Pro',
-            ),
-            const _ServerDetailRow(
-              icon: Icons.schedule,
-              label: '正常运行时间',
-              value: '4 分钟',
-            ),
             const SizedBox(height: 20),
             GradientButton(
               label: '查看完整信息',
@@ -311,6 +262,8 @@ class _ServerInfoPage extends StatelessWidget {
                 DetailPage.routeName,
               ),
             ),
+            const SizedBox(height: 28),
+            const _HomeAppShortcuts(),
           ],
         ),
       ),
@@ -318,44 +271,60 @@ class _ServerInfoPage extends StatelessWidget {
   }
 }
 
-class _ServerDetailRow extends StatelessWidget {
-  const _ServerDetailRow({
+class _ServerInfoChips extends StatelessWidget {
+  const _ServerInfoChips();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _ServerInfoChip(icon: Icons.devices, label: '型号', value: 'Custom'),
+        _ServerInfoChip(
+          icon: Icons.verified_user,
+          label: '注册',
+          value: 'Pro',
+        ),
+        _ServerInfoChip(icon: Icons.schedule, label: '运行', value: '4 分钟'),
+      ],
+    );
+  }
+}
+
+class _ServerInfoChip extends StatelessWidget {
+  const _ServerInfoChip({
     required this.icon,
     required this.label,
     required this.value,
-    this.highlight,
   });
 
   final IconData icon;
   final String label;
   final String value;
-  final String? highlight;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppTheme.softLine)),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.softLine),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppTheme.primary),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppTheme.textLight,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                _DetailValue(value: value, highlight: highlight),
-              ],
+          Icon(icon, color: AppTheme.primary, size: 15),
+          const SizedBox(width: 5),
+          Text(
+            '$label $value',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.textMedium,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -364,43 +333,90 @@ class _ServerDetailRow extends StatelessWidget {
   }
 }
 
-class _DetailValue extends StatelessWidget {
-  const _DetailValue({required this.value, this.highlight});
-
-  final String value;
-  final String? highlight;
+class _HomeAppShortcuts extends StatelessWidget {
+  const _HomeAppShortcuts();
 
   @override
   Widget build(BuildContext context) {
-    if (highlight == null || !value.contains(highlight!)) {
-      return Text(
-        value,
-        style: const TextStyle(
-          color: AppTheme.textDark,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
+    return Row(
+      children: [
+        _HomeAppShortcut(
+          label: '相册',
+          icon: Icons.photo_library,
+          colors: const [AppTheme.primary, AppTheme.secondary],
+          onTap: () => Navigator.of(context).pushNamed(AlbumPage.routeName),
         ),
-      );
-    }
-    final parts = value.split(highlight!);
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(text: parts.first),
-          TextSpan(
-            text: highlight,
-            style: const TextStyle(
-              color: AppTheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+        const SizedBox(width: 20),
+        _HomeAppShortcut(
+          label: '音乐',
+          icon: Icons.music_note,
+          colors: const [Color(0xFF3498DB), Color(0xFF52C41A)],
+          onTap: () => Navigator.of(context).pushNamed(MusicPage.routeName),
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeAppShortcut extends StatelessWidget {
+  const _HomeAppShortcut({
+    required this.label,
+    required this.icon,
+    required this.colors,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final List<Color> colors;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 64,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Ink(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: colors,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.first.withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: Colors.white, size: 28),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.textDark,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-          if (parts.length > 1) TextSpan(text: parts.last),
-        ],
-      ),
-      style: const TextStyle(
-        color: AppTheme.textDark,
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -446,23 +462,23 @@ class ManagementData {
     required this.icon,
     required this.title,
     required this.status,
+    required this.description,
   });
 
   final IconData icon;
   final String title;
   final String status;
+  final String description;
 }
 
 class _ManagementPage extends StatelessWidget {
   const _ManagementPage({
     super.key,
-    required this.title,
-    required this.description,
+    required this.type,
     required this.items,
   });
 
-  final String title;
-  final String description;
+  final String type;
   final List<ManagementData> items;
 
   @override
@@ -473,31 +489,276 @@ class _ManagementPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: AppTheme.textDark,
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              description,
-              style: const TextStyle(
-                color: AppTheme.textMedium,
-                fontSize: 16,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 20),
             for (final item in items)
-              ManagementListTile(
-                icon: item.icon,
-                title: item.title,
-                status: item.status,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => Navigator.of(context).pushNamed(
+                    ManagementDetailPage.routeName,
+                    arguments: ManagementDetailArgs(type: type, data: item),
+                  ),
+                  child: ManagementListTile(
+                    icon: item.icon,
+                    title: item.title,
+                    status: item.status,
+                  ),
+                ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class ManagementDetailArgs {
+  const ManagementDetailArgs({
+    required this.type,
+    required this.data,
+  });
+
+  final String type;
+  final ManagementData data;
+}
+
+class ManagementDetailPage extends StatelessWidget {
+  const ManagementDetailPage({super.key});
+
+  static const routeName = '/management-detail';
+
+  @override
+  Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final detailArgs = args is ManagementDetailArgs
+        ? args
+        : const ManagementDetailArgs(
+            type: '项目',
+            data: ManagementData(
+              icon: Icons.info,
+              title: '未知项目',
+              status: '未知',
+              description: '暂无信息',
+            ),
+          );
+
+    return PhoneFrame(
+      maxContentWidth: 900,
+      child: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(30, 8, 30, 30),
+          child: FadeSlide(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextButton.icon(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('返回'),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        detailArgs.data.icon,
+                        color: AppTheme.primary,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            detailArgs.data.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppTheme.textDark,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            detailArgs.type,
+                            style: const TextStyle(
+                              color: AppTheme.textMedium,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                _DetailPanel(
+                  children: [
+                    _DetailInfoRow(
+                      icon: Icons.info_outline,
+                      label: '状态',
+                      value: detailArgs.data.status,
+                    ),
+                    _DetailInfoRow(
+                      icon: Icons.description_outlined,
+                      label: '说明',
+                      value: detailArgs.data.description,
+                    ),
+                    _DetailInfoRow(
+                      icon: Icons.storage,
+                      label: '位置',
+                      value: detailArgs.type == '共享'
+                          ? '/mnt/user/${detailArgs.data.title}'
+                          : detailArgs.data.title,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                _DetailPanel(
+                  children: [
+                    _ManagementActionButton(
+                      icon: Icons.play_arrow,
+                      label: '启动',
+                      color: AppTheme.success,
+                      onPressed: () => _showAction(context, '启动'),
+                    ),
+                    const SizedBox(height: 10),
+                    _ManagementActionButton(
+                      icon: Icons.stop,
+                      label: '停止',
+                      color: AppTheme.danger,
+                      onPressed: () => _showAction(context, '停止'),
+                    ),
+                    const SizedBox(height: 10),
+                    _ManagementActionButton(
+                      icon: Icons.refresh,
+                      label: '重启',
+                      color: const Color(0xFF3498DB),
+                      onPressed: () => _showAction(context, '重启'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAction(BuildContext context, String action) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$action 操作已提交')),
+    );
+  }
+}
+
+class _DetailPanel extends StatelessWidget {
+  const _DetailPanel({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.softLine),
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _DetailInfoRow extends StatelessWidget {
+  const _DetailInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.primary, size: 20),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 58,
+            child: Text(
+              label,
+              style: const TextStyle(color: AppTheme.textLight, fontSize: 13),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.textDark,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ManagementActionButton extends StatelessWidget {
+  const _ManagementActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 42,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 20),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: color,
+          side: const BorderSide(color: AppTheme.line),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );

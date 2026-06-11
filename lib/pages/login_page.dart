@@ -192,22 +192,17 @@ class _ProtocolDomainField extends StatelessWidget {
       },
       decoration: InputDecoration(
         hintText: '请输入 IP 地址或域名',
-        prefixIconConstraints: const BoxConstraints(minWidth: 110),
-        prefixIcon: InkWell(
-          borderRadius: const BorderRadius.horizontal(
-            left: Radius.circular(12),
-          ),
-          onTap: onToggle,
-          child: Container(
-            height: 52,
-            width: 110,
-            decoration: const BoxDecoration(
-              color: AppTheme.inputBackground,
-              border: Border(right: BorderSide(color: AppTheme.line)),
-              borderRadius: BorderRadius.horizontal(left: Radius.circular(12)),
-            ),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 102,
+          minHeight: 24,
+        ),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 15, right: 10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: onToggle,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   useHttps ? 'https://' : 'http://',
@@ -216,11 +211,14 @@ class _ProtocolDomainField extends StatelessWidget {
                     fontSize: 15,
                   ),
                 ),
+                const SizedBox(width: 2),
                 const Icon(
                   Icons.arrow_drop_down,
                   color: AppTheme.textMedium,
                   size: 18,
                 ),
+                const SizedBox(width: 10),
+                Container(width: 1, height: 22, color: AppTheme.line),
               ],
             ),
           ),
