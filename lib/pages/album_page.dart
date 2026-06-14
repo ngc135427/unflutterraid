@@ -304,7 +304,7 @@ class _AlbumScaffoldState extends State<_AlbumScaffold> {
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(30, 12, 30, 30),
                 child: FadeSlide(
-                  child: _FramedAlbumBody(child: widget.child),
+                  child: widget.child,
                 ),
               ),
             ),
@@ -344,26 +344,6 @@ class _AlbumHeaderSearch extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _FramedAlbumBody extends StatelessWidget {
-  const _FramedAlbumBody({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.softLine),
-      ),
-      child: child,
     );
   }
 }

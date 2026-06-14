@@ -242,33 +242,13 @@ class _MusicScaffold extends StatelessWidget {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(30, 12, 30, 30),
                 child: FadeSlide(
-                  child: _FramedMusicBody(child: child),
+                  child: child,
                 ),
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _FramedMusicBody extends StatelessWidget {
-  const _FramedMusicBody({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.softLine),
-      ),
-      child: child,
     );
   }
 }

@@ -6,7 +6,6 @@ import '../widgets/fade_slide.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/phone_frame.dart';
 import 'main_shell_page.dart';
-import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,19 +19,39 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _domainController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _apiKeyController = TextEditingController();
+  final _domainFocusNode = FocusNode();
+  final _apiKeyFocusNode = FocusNode();
 
   bool _rememberMe = false;
   bool _useHttps = false;
   bool _loginSucceeded = false;
+  bool _hasInputFocus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _domainFocusNode.addListener(_handleFocusChange);
+    _apiKeyFocusNode.addListener(_handleFocusChange);
+  }
 
   @override
   void dispose() {
+    _domainFocusNode.removeListener(_handleFocusChange);
+    _apiKeyFocusNode.removeListener(_handleFocusChange);
+    _domainFocusNode.dispose();
+    _apiKeyFocusNode.dispose();
     _domainController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
+    _apiKeyController.dispose();
     super.dispose();
+  }
+
+  void _handleFocusChange() {
+    final hasFocus = _domainFocusNode.hasFocus || _apiKeyFocusNode.hasFocus;
+    if (_hasInputFocus == hasFocus) {
+      return;
+    }
+    setState(() => _hasInputFocus = hasFocus);
   }
 
   void _submit() {
@@ -55,10 +74,7 @@ class _LoginPageState extends State<LoginPage> {
       maxContentWidth: 520,
       child: Column(
         children: [
-          const _AuthHeader(
-            title: '欢迎回来',
-            subtitle: '请登录您的账号',
-          ),
+          _AuthHeader(compact: _hasInputFocus),
           Expanded(
             child: Container(
               width: double.infinity,
@@ -85,31 +101,20 @@ class _LoginPageState extends State<LoginPage> {
                       _ProtocolDomainField(
                         useHttps: _useHttps,
                         controller: _domainController,
+                        focusNode: _domainFocusNode,
                         onToggle: () => setState(() => _useHttps = !_useHttps),
                       ),
                       const SizedBox(height: 21),
                       AppTextField(
-                        label: '用户名',
-                        controller: _usernameController,
-                        hint: '请输入用户名',
-                        icon: Icons.person,
+                        label: 'API 密钥',
+                        controller: _apiKeyController,
+                        focusNode: _apiKeyFocusNode,
+                        hint: '请输入 API 密钥',
+                        obscureText: true,
+                        icon: Icons.vpn_key,
                         validator: (value) {
                           if ((value ?? '').trim().isEmpty) {
-                            return '请输入有效的用户名';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 21),
-                      AppTextField(
-                        label: '密码',
-                        controller: _passwordController,
-                        hint: '请输入密码',
-                        obscureText: true,
-                        icon: Icons.lock,
-                        validator: (value) {
-                          if ((value ?? '').length < 6) {
-                            return '密码不能少于 6 位';
+                            return '请输入有效的 API 密钥';
                           }
                           return null;
                         },
@@ -133,9 +138,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const Spacer(),
-                          TextButton(
-                            onPressed: () {},
-                            child: const Text('忘记密码?'),
+                          const Icon(
+                            Icons.key,
+                            color: AppTheme.textLight,
+                            size: 18,
                           ),
                         ],
                       ),
@@ -145,17 +151,6 @@ class _LoginPageState extends State<LoginPage> {
                         icon: _loginSucceeded ? Icons.check : null,
                         isSuccess: _loginSucceeded,
                         onPressed: _loginSucceeded ? null : _submit,
-                      ),
-                      const SizedBox(height: 14),
-                      Center(
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pushNamed(
-                              RegisterPage.routeName,
-                            );
-                          },
-                          child: const Text('创建新账号'),
-                        ),
                       ),
                     ],
                   ),
@@ -173,17 +168,20 @@ class _ProtocolDomainField extends StatelessWidget {
   const _ProtocolDomainField({
     required this.useHttps,
     required this.controller,
+    required this.focusNode,
     required this.onToggle,
   });
 
   final bool useHttps;
   final TextEditingController controller;
+  final FocusNode focusNode;
   final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       validator: (value) {
         if ((value ?? '').trim().isEmpty) {
           return '请输入有效的 IP 地址或域名';
@@ -230,40 +228,101 @@ class _ProtocolDomainField extends StatelessWidget {
 
 class _AuthHeader extends StatelessWidget {
   const _AuthHeader({
-    required this.title,
-    required this.subtitle,
+    required this.compact,
   });
 
-  final String title;
-  final String subtitle;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 180,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+      height: compact ? 108 : 180,
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.80),
-                fontSize: 16,
-              ),
-            ),
-          ],
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          scale: compact ? 0.74 : 1,
+          child: const _UnraidMark(),
         ),
       ),
     );
+  }
+}
+
+class _UnraidMark extends StatelessWidget {
+  const _UnraidMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Unraid',
+      child: Container(
+        width: 96,
+        height: 96,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.24),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: CustomPaint(
+          painter: _UnraidMarkPainter(),
+        ),
+      ),
+    );
+  }
+}
+
+class _UnraidMarkPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final barPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final orangePaint = Paint()
+      ..color = const Color(0xFFFF8A00)
+      ..style = PaintingStyle.fill;
+
+    void drawBar(double x, double y, double width, double height) {
+      final radius = Radius.circular(height / 2);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset(x, y), width: width, height: height),
+          radius,
+        ),
+        barPaint,
+      );
+    }
+
+    void drawDot(double x, double y, double radius) {
+      canvas.drawCircle(Offset(x, y), radius, orangePaint);
+    }
+
+    drawBar(center.dx, center.dy - 22, size.width * 0.46, 8);
+    drawBar(center.dx, center.dy, size.width * 0.62, 8);
+    drawBar(center.dx, center.dy + 22, size.width * 0.46, 8);
+
+    drawDot(center.dx - 33, center.dy - 22, 5);
+    drawDot(center.dx + 33, center.dy - 22, 5);
+    drawDot(center.dx - 39, center.dy, 5);
+    drawDot(center.dx + 39, center.dy, 5);
+    drawDot(center.dx - 33, center.dy + 22, 5);
+    drawDot(center.dx + 33, center.dy + 22, 5);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

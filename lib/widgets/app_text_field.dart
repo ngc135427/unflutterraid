@@ -10,6 +10,7 @@ class AppTextField extends StatelessWidget {
     required this.hint,
     this.icon,
     this.obscureText = false,
+    this.focusNode,
     this.validator,
   });
 
@@ -18,6 +19,7 @@ class AppTextField extends StatelessWidget {
   final String hint;
   final IconData? icon;
   final bool obscureText;
+  final FocusNode? focusNode;
   final String? Function(String?)? validator;
 
   @override
@@ -36,6 +38,7 @@ class AppTextField extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
+          focusNode: focusNode,
           obscureText: obscureText,
           validator: validator,
           decoration: InputDecoration(
