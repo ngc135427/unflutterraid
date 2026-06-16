@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../services/unraid_api_client.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/fade_slide.dart';
 import '../widgets/gradient_button.dart';
@@ -27,6 +28,8 @@ class _LoginPageState extends State<LoginPage> {
   bool _useHttps = false;
   bool _loginSucceeded = false;
   bool _hasInputFocus = false;
+  bool _isSubmitting = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -54,18 +57,63 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _hasInputFocus = hasFocus);
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       return;
     }
-    setState(() => _loginSucceeded = true);
-    Future<void>.delayed(const Duration(milliseconds: 650), () {
+
+    final client = UnraidApiClient(
+      baseUrl: _buildBaseUrl(),
+      apiKey: _apiKeyController.text,
+    );
+
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await client.checkConnection();
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pushReplacementNamed(MainShellPage.routeName);
-    });
+      setState(() => _loginSucceeded = true);
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pushReplacementNamed(
+        MainShellPage.routeName,
+        arguments: client,
+      );
+    } on UnraidApiException catch (error) {
+      client.close();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _errorMessage = error.message;
+        _isSubmitting = false;
+      });
+    } on Object catch (error) {
+      client.close();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _errorMessage = '登录失败：$error';
+        _isSubmitting = false;
+      });
+    }
+  }
+
+  String _buildBaseUrl() {
+    final input = _domainController.text.trim();
+    if (input.startsWith('http://') || input.startsWith('https://')) {
+      return input;
+    }
+    return '${_useHttps ? 'https' : 'http'}://$input';
   }
 
   @override
@@ -146,11 +194,26 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      if (_errorMessage != null) ...[
+                        Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            color: AppTheme.danger,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       GradientButton(
-                        label: _loginSucceeded ? '登录成功' : '登录',
+                        label: _loginSucceeded
+                            ? '登录成功'
+                            : _isSubmitting
+                                ? '正在连接'
+                                : '登录',
                         icon: _loginSucceeded ? Icons.check : null,
                         isSuccess: _loginSucceeded,
-                        onPressed: _loginSucceeded ? null : _submit,
+                        onPressed:
+                            _loginSucceeded || _isSubmitting ? null : _submit,
                       ),
                     ],
                   ),

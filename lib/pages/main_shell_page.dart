@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/fade_slide.dart';
@@ -23,6 +24,8 @@ class MainShellPage extends StatefulWidget {
 class _MainShellPageState extends State<MainShellPage> {
   int _currentIndex = 0;
   ServerIconVariant _serverIcon = ServerIconVariant.defaultIcon;
+  UnraidApiClient? _apiClient;
+  Future<UnraidDashboard>? _dashboardFuture;
 
   static const _navItems = [
     BottomNavItem(icon: Icons.home, label: '主页'),
@@ -30,6 +33,25 @@ class _MainShellPageState extends State<MainShellPage> {
     BottomNavItem(icon: Icons.computer, label: '虚拟机'),
     BottomNavItem(icon: Icons.folder_shared, label: '共享'),
   ];
+
+  @override
+  void dispose() {
+    _apiClient?.close();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_apiClient != null) {
+      return;
+    }
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is UnraidApiClient) {
+      _apiClient = args;
+      _dashboardFuture = args.fetchDashboard();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +72,7 @@ class _MainShellPageState extends State<MainShellPage> {
                     ),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 250),
-                      child: _buildCurrentPage(),
+                      child: _buildContent(),
                     ),
                   ),
                 ),
@@ -72,73 +94,99 @@ class _MainShellPageState extends State<MainShellPage> {
     );
   }
 
-  Widget _buildCurrentPage() {
+  Widget _buildContent() {
+    final dashboardFuture = _dashboardFuture;
+    if (_apiClient == null || dashboardFuture == null) {
+      return const _StateMessage(
+        icon: Icons.link_off,
+        title: '未连接服务器',
+        message: '请返回登录页重新连接。',
+      );
+    }
+
+    return FutureBuilder<UnraidDashboard>(
+      future: dashboardFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const _StateMessage(
+            icon: Icons.cloud_sync,
+            title: '正在读取服务器',
+            message: '正在请求 Unraid GraphQL API...',
+          );
+        }
+
+        if (snapshot.hasError) {
+          return _StateMessage(
+            icon: Icons.error_outline,
+            title: '读取失败',
+            message: snapshot.error.toString(),
+            actionLabel: '重试',
+            onAction: _refreshDashboard,
+          );
+        }
+
+        final dashboard = snapshot.data;
+        if (dashboard == null) {
+          return const _StateMessage(
+            icon: Icons.inbox_outlined,
+            title: '暂无数据',
+            message: '服务器没有返回可显示的数据。',
+          );
+        }
+
+        return _buildCurrentPage(dashboard);
+      },
+    );
+  }
+
+  Widget _buildCurrentPage(UnraidDashboard dashboard) {
     switch (_currentIndex) {
       case 1:
-        return const _ManagementPage(
-          key: ValueKey('docker'),
+        return _ManagementPage(
+          key: const ValueKey('docker'),
           type: 'Docker',
-          items: [
-            ManagementData(
-              icon: Icons.layers,
-              title: 'MediaServer',
-              status: '运行中',
-              description: '媒体服务容器',
-            ),
-            ManagementData(
-              icon: Icons.layers,
-              title: 'FileSync',
-              status: '已停止',
-              description: '文件同步容器',
-            ),
-          ],
+          items: dashboard.dockerItems
+              .map((item) => ManagementData.fromApi(item, Icons.layers))
+              .toList(),
+          apiClient: _apiClient,
         );
       case 2:
-        return const _ManagementPage(
-          key: ValueKey('vm'),
+        return _ManagementPage(
+          key: const ValueKey('vm'),
           type: '虚拟机',
-          items: [
-            ManagementData(
-              icon: Icons.computer,
-              title: 'Windows 10',
-              status: '运行中',
-              description: '桌面虚拟机',
-            ),
-            ManagementData(
-              icon: Icons.computer,
-              title: 'Ubuntu Server',
-              status: '已停止',
-              description: '服务器虚拟机',
-            ),
-          ],
+          items: dashboard.vmItems
+              .map((item) => ManagementData.fromApi(item, Icons.computer))
+              .toList(),
+          apiClient: _apiClient,
         );
       case 3:
-        return const _ManagementPage(
-          key: ValueKey('share'),
+        return _ManagementPage(
+          key: const ValueKey('share'),
           type: '共享',
-          items: [
-            ManagementData(
-              icon: Icons.folder_shared,
-              title: 'Movies',
-              status: '公开',
-              description: '媒体共享目录',
-            ),
-            ManagementData(
-              icon: Icons.folder_shared,
-              title: 'Backup',
-              status: '私有',
-              description: '备份共享目录',
-            ),
-          ],
+          items: dashboard.shareItems
+              .map((item) => ManagementData.fromApi(item, Icons.folder_shared))
+              .toList(),
+          apiClient: _apiClient,
         );
       default:
         return _ServerInfoPage(
           key: const ValueKey('server'),
           iconVariant: _serverIcon,
+          dashboard: dashboard,
           onEditIcon: _showIconPicker,
           onPowerAction: _showPowerDialog,
         );
     }
+  }
+
+  void _refreshDashboard() {
+    final client = _apiClient;
+    if (client == null) {
+      return;
+    }
+    setState(() {
+      _dashboardFuture = client.fetchDashboard();
+    });
   }
 
   Future<void> _showIconPicker() async {
@@ -181,11 +229,13 @@ class _ServerInfoPage extends StatelessWidget {
   const _ServerInfoPage({
     super.key,
     required this.iconVariant,
+    required this.dashboard,
     required this.onEditIcon,
     required this.onPowerAction,
   });
 
   final ServerIconVariant iconVariant;
+  final UnraidDashboard dashboard;
   final VoidCallback onEditIcon;
   final ValueChanged<String> onPowerAction;
 
@@ -204,8 +254,8 @@ class _ServerInfoPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'SU',
+                      Text(
+                        dashboard.serverName,
                         style: TextStyle(
                           color: AppTheme.textDark,
                           fontSize: 22,
@@ -213,15 +263,15 @@ class _ServerInfoPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 5),
-                      const Text(
-                        'Media server',
+                      Text(
+                        dashboard.serverDescription,
                         style: TextStyle(
                           color: AppTheme.textMedium,
                           fontSize: 16,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const _ServerInfoChips(),
+                      _ServerInfoChips(dashboard: dashboard),
                     ],
                   ),
                 ),
@@ -272,21 +322,31 @@ class _ServerInfoPage extends StatelessWidget {
 }
 
 class _ServerInfoChips extends StatelessWidget {
-  const _ServerInfoChips();
+  const _ServerInfoChips({required this.dashboard});
+
+  final UnraidDashboard dashboard;
 
   @override
   Widget build(BuildContext context) {
-    return const Wrap(
+    return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        _ServerInfoChip(icon: Icons.devices, label: '型号', value: 'Custom'),
+        _ServerInfoChip(
+          icon: Icons.devices,
+          label: '型号',
+          value: dashboard.model,
+        ),
         _ServerInfoChip(
           icon: Icons.verified_user,
           label: '注册',
-          value: 'Pro',
+          value: dashboard.registration,
         ),
-        _ServerInfoChip(icon: Icons.schedule, label: '运行', value: '4 分钟'),
+        _ServerInfoChip(
+          icon: Icons.schedule,
+          label: '运行',
+          value: dashboard.uptime,
+        ),
       ],
     );
   }
@@ -459,16 +519,31 @@ class _OutlineActionButton extends StatelessWidget {
 
 class ManagementData {
   const ManagementData({
+    required this.id,
     required this.icon,
     required this.title,
     required this.status,
     required this.description,
+    required this.type,
   });
 
+  factory ManagementData.fromApi(UnraidManagementItem item, IconData icon) {
+    return ManagementData(
+      id: item.id,
+      icon: icon,
+      title: item.title,
+      status: item.status,
+      description: item.description,
+      type: item.type,
+    );
+  }
+
+  final String id;
   final IconData icon;
   final String title;
   final String status;
   final String description;
+  final ManagementItemType type;
 }
 
 class _ManagementPage extends StatelessWidget {
@@ -476,10 +551,12 @@ class _ManagementPage extends StatelessWidget {
     super.key,
     required this.type,
     required this.items,
+    required this.apiClient,
   });
 
   final String type;
   final List<ManagementData> items;
+  final UnraidApiClient? apiClient;
 
   @override
   Widget build(BuildContext context) {
@@ -496,7 +573,11 @@ class _ManagementPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   onTap: () => Navigator.of(context).pushNamed(
                     ManagementDetailPage.routeName,
-                    arguments: ManagementDetailArgs(type: type, data: item),
+                    arguments: ManagementDetailArgs(
+                      type: type,
+                      data: item,
+                      apiClient: apiClient,
+                    ),
                   ),
                   child: ManagementListTile(
                     icon: item.icon,
@@ -504,6 +585,12 @@ class _ManagementPage extends StatelessWidget {
                     status: item.status,
                   ),
                 ),
+              ),
+            if (items.isEmpty)
+              _StateMessage(
+                icon: Icons.inbox_outlined,
+                title: '$type 为空',
+                message: '服务器当前没有返回$type项目。',
               ),
           ],
         ),
@@ -516,31 +603,50 @@ class ManagementDetailArgs {
   const ManagementDetailArgs({
     required this.type,
     required this.data,
+    required this.apiClient,
   });
 
   final String type;
   final ManagementData data;
+  final UnraidApiClient? apiClient;
 }
 
-class ManagementDetailPage extends StatelessWidget {
+class ManagementDetailPage extends StatefulWidget {
   const ManagementDetailPage({super.key});
 
   static const routeName = '/management-detail';
+
+  @override
+  State<ManagementDetailPage> createState() => _ManagementDetailPageState();
+}
+
+class _ManagementDetailPageState extends State<ManagementDetailPage> {
+  bool _isSubmitting = false;
+  String? _sharePath;
+  Future<List<UnraidFileEntry>>? _shareFuture;
 
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
     final detailArgs = args is ManagementDetailArgs
         ? args
-        : const ManagementDetailArgs(
+        : ManagementDetailArgs(
             type: '项目',
             data: ManagementData(
+              id: '',
               icon: Icons.info,
               title: '未知项目',
               status: '未知',
               description: '暂无信息',
+              type: ManagementItemType.share,
             ),
+            apiClient: null,
           );
+
+    if (detailArgs.data.type == ManagementItemType.share) {
+      _ensureShareBrowser(detailArgs);
+      return _buildShareBrowser(detailArgs);
+    }
 
     return PhoneFrame(
       maxContentWidth: 900,
@@ -621,7 +727,7 @@ class ManagementDetailPage extends StatelessWidget {
                     _DetailInfoRow(
                       icon: Icons.storage,
                       label: '位置',
-                      value: detailArgs.type == '共享'
+                      value: detailArgs.data.type == ManagementItemType.share
                           ? '/mnt/user/${detailArgs.data.title}'
                           : detailArgs.data.title,
                     ),
@@ -634,21 +740,39 @@ class ManagementDetailPage extends StatelessWidget {
                       icon: Icons.play_arrow,
                       label: '启动',
                       color: AppTheme.success,
-                      onPressed: () => _showAction(context, '启动'),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => _runAction(
+                                detailArgs,
+                                ManagementAction.start,
+                                '启动',
+                              ),
                     ),
                     const SizedBox(height: 10),
                     _ManagementActionButton(
                       icon: Icons.stop,
                       label: '停止',
                       color: AppTheme.danger,
-                      onPressed: () => _showAction(context, '停止'),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => _runAction(
+                                detailArgs,
+                                ManagementAction.stop,
+                                '停止',
+                              ),
                     ),
                     const SizedBox(height: 10),
                     _ManagementActionButton(
                       icon: Icons.refresh,
                       label: '重启',
                       color: const Color(0xFF3498DB),
-                      onPressed: () => _showAction(context, '重启'),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => _runAction(
+                                detailArgs,
+                                ManagementAction.restart,
+                                '重启',
+                              ),
                     ),
                   ],
                 ),
@@ -660,9 +784,268 @@ class ManagementDetailPage extends StatelessWidget {
     );
   }
 
-  void _showAction(BuildContext context, String action) {
+  Widget _buildShareBrowser(ManagementDetailArgs args) {
+    final currentPath = _sharePath ?? _shareRoot(args);
+    return PhoneFrame(
+      maxContentWidth: 900,
+      child: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
+              child: Row(
+                children: [
+                  TextButton.icon(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('返回'),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: '刷新',
+                    onPressed: () => _openSharePath(currentPath),
+                    icon: const Icon(Icons.refresh),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(30, 0, 30, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.folder_shared,
+                          color: AppTheme.primary,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              args.data.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppTheme.textDark,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              currentPath,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppTheme.textMedium,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: FutureBuilder<List<UnraidFileEntry>>(
+                future: _shareFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const _StateMessage(
+                      icon: Icons.folder_open,
+                      title: '正在读取目录',
+                      message: '正在加载共享文件...',
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return _StateMessage(
+                      icon: Icons.error_outline,
+                      title: '读取失败',
+                      message: snapshot.error.toString(),
+                      actionLabel: '重试',
+                      onAction: () => _openSharePath(currentPath),
+                    );
+                  }
+
+                  final entries = snapshot.data ?? const <UnraidFileEntry>[];
+                  if (entries.isEmpty) {
+                    return const _StateMessage(
+                      icon: Icons.inbox_outlined,
+                      title: '目录为空',
+                      message: '这里还没有可浏览的文件。',
+                    );
+                  }
+
+                  return ListView(
+                    padding: const EdgeInsets.fromLTRB(30, 0, 30, 30),
+                    children: [
+                      if (_canGoUp(args))
+                        _FileEntryTile(
+                          icon: Icons.drive_folder_upload,
+                          title: '上一级',
+                          subtitle: _parentPath(currentPath),
+                          onTap: () => _openSharePath(_parentPath(currentPath)),
+                        ),
+                      for (final entry in entries)
+                        _FileEntryTile(
+                          icon: entry.isDirectory
+                              ? Icons.folder
+                              : entry.isImage
+                                  ? Icons.image
+                                  : Icons.insert_drive_file,
+                          title: entry.name,
+                          subtitle:
+                              entry.isDirectory ? '文件夹' : _fileSubtitle(entry),
+                          onTap: () {
+                            if (entry.isDirectory) {
+                              _openSharePath(entry.path);
+                            } else if (entry.isImage) {
+                              _previewImage(args, entry);
+                            } else {
+                              _showMessage('暂不支持预览该文件类型');
+                            }
+                          },
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _runAction(
+    ManagementDetailArgs args,
+    ManagementAction action,
+    String label,
+  ) async {
+    final client = args.apiClient;
+    if (client == null || args.data.id.isEmpty) {
+      _showMessage('缺少服务器连接或项目 ID');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await client.runManagementAction(
+        type: args.data.type,
+        id: args.data.id,
+        action: action,
+      );
+      if (!mounted) {
+        return;
+      }
+      _showMessage('$label 操作已提交');
+    } on UnraidApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage(error.message);
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$action 操作已提交')),
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _ensureShareBrowser(ManagementDetailArgs args) {
+    if (_sharePath != null && _shareFuture != null) {
+      return;
+    }
+    final root = _shareRoot(args);
+    _sharePath = root;
+    _shareFuture = args.apiClient?.fetchDirectory(root) ??
+        Future<List<UnraidFileEntry>>.error('缺少服务器连接');
+  }
+
+  void _openSharePath(String path) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final detailArgs = args is ManagementDetailArgs ? args : null;
+    final client = detailArgs?.apiClient;
+    if (client == null) {
+      _showMessage('缺少服务器连接');
+      return;
+    }
+    setState(() {
+      _sharePath = path;
+      _shareFuture = client.fetchDirectory(path);
+    });
+  }
+
+  bool _canGoUp(ManagementDetailArgs args) {
+    final current = _sharePath ?? _shareRoot(args);
+    return current != _shareRoot(args);
+  }
+
+  String _shareRoot(ManagementDetailArgs args) {
+    return '/mnt/user/${args.data.title}';
+  }
+
+  String _parentPath(String path) {
+    final normalized = path.endsWith('/') && path.length > 1
+        ? path.substring(0, path.length - 1)
+        : path;
+    final index = normalized.lastIndexOf('/');
+    if (index <= 0) {
+      return normalized;
+    }
+    return normalized.substring(0, index);
+  }
+
+  String _fileSubtitle(UnraidFileEntry entry) {
+    final parts = [
+      if (entry.size.isNotEmpty) entry.size,
+      if (entry.modified.isNotEmpty) entry.modified,
+    ];
+    return parts.isEmpty ? '文件' : parts.join(' · ');
+  }
+
+  Future<void> _previewImage(
+    ManagementDetailArgs args,
+    UnraidFileEntry entry,
+  ) async {
+    final client = args.apiClient;
+    if (client == null) {
+      _showMessage('缺少服务器连接');
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(18),
+        child: _ImagePreview(client: client, entry: entry),
+      ),
     );
   }
 }
@@ -742,7 +1125,7 @@ class _ManagementActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -759,6 +1142,220 @@ class _ManagementActionButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FileEntryTile extends StatelessWidget {
+  const _FileEntryTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppTheme.background,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.softLine),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: AppTheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textDark,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textLight,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(
+                icon == Icons.image ? Icons.visibility : Icons.chevron_right,
+                color: AppTheme.textLight,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ImagePreview extends StatelessWidget {
+  const _ImagePreview({
+    required this.client,
+    required this.entry,
+  });
+
+  final UnraidApiClient client;
+  final UnraidFileEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 860, maxHeight: 720),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 8, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    entry.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.textDark,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: '关闭',
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: FutureBuilder(
+              future: client.fetchFileBytes(entry.path),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Padding(
+                    padding: EdgeInsets.all(48),
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                if (snapshot.hasError || !snapshot.hasData) {
+                  return Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      snapshot.error?.toString() ?? '图片加载失败',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppTheme.danger,
+                        fontSize: 14,
+                      ),
+                    ),
+                  );
+                }
+
+                return InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4,
+                  child: Image.memory(
+                    snapshot.data!,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StateMessage extends StatelessWidget {
+  const _StateMessage({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: AppTheme.primary, size: 42),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppTheme.textDark,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppTheme.textMedium,
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: onAction,
+                child: Text(actionLabel!),
+              ),
+            ],
+          ],
         ),
       ),
     );
