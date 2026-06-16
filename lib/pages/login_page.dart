@@ -29,6 +29,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _loginSucceeded = false;
   bool _hasInputFocus = false;
   bool _isSubmitting = false;
+  bool _showApiKey = false;
   String? _errorMessage;
 
   @override
@@ -158,8 +159,19 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _apiKeyController,
                         focusNode: _apiKeyFocusNode,
                         hint: '请输入 API 密钥',
-                        obscureText: true,
-                        icon: Icons.vpn_key,
+                        obscureText: !_showApiKey,
+                        suffixIcon: IconButton(
+                          tooltip: _showApiKey ? '隐藏 API 密钥' : '显示 API 密钥',
+                          onPressed: () {
+                            setState(() => _showApiKey = !_showApiKey);
+                          },
+                          icon: Icon(
+                            _showApiKey
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: const Color(0xFFA0A8B9),
+                          ),
+                        ),
                         validator: (value) {
                           if ((value ?? '').trim().isEmpty) {
                             return '请输入有效的 API 密钥';

@@ -272,6 +272,8 @@ class _ServerInfoPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       _ServerInfoChips(dashboard: dashboard),
+                      const SizedBox(height: 16),
+                      _DashboardInfoPanel(dashboard: dashboard),
                     ],
                   ),
                 ),
@@ -339,13 +341,182 @@ class _ServerInfoChips extends StatelessWidget {
         ),
         _ServerInfoChip(
           icon: Icons.verified_user,
-          label: '注册',
-          value: dashboard.registration,
+          label: '版本',
+          value: dashboard.version,
         ),
         _ServerInfoChip(
           icon: Icons.schedule,
           label: '运行',
           value: dashboard.uptime,
+        ),
+        _ServerInfoChip(
+          icon: Icons.wifi_tethering,
+          label: 'LAN',
+          value: dashboard.lanIp,
+        ),
+      ],
+    );
+  }
+}
+
+class _DashboardInfoPanel extends StatelessWidget {
+  const _DashboardInfoPanel({required this.dashboard});
+
+  final UnraidDashboard dashboard;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _InfoLine(
+          icon: Icons.power,
+          label: '状态',
+          value: dashboard.status,
+        ),
+        const SizedBox(height: 8),
+        _InfoLine(
+          icon: Icons.memory,
+          label: 'CPU',
+          value: dashboard.cpuSummary,
+        ),
+        const SizedBox(height: 8),
+        _MetricLine(
+          icon: Icons.speed,
+          label: 'CPU 使用',
+          value: '${(dashboard.cpuPercent * 100).toStringAsFixed(1)}%',
+          progress: dashboard.cpuPercent,
+        ),
+        const SizedBox(height: 8),
+        _MetricLine(
+          icon: Icons.storage,
+          label: '内存',
+          value: dashboard.memoryUsage,
+          progress: dashboard.memoryPercent,
+        ),
+        const SizedBox(height: 8),
+        _MetricLine(
+          icon: Icons.dns,
+          label: '阵列 ${dashboard.arrayState}',
+          value: dashboard.arrayUsage,
+          progress: dashboard.arrayPercent,
+        ),
+        const SizedBox(height: 8),
+        _InfoLine(
+          icon: Icons.developer_board,
+          label: '主板',
+          value: dashboard.baseboardSummary,
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  const _InfoLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppTheme.primary, size: 18),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 54,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppTheme.textLight,
+              fontSize: 12,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.textMedium,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              height: 1.25,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricLine extends StatelessWidget {
+  const _MetricLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.progress,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = progress > 0.85
+        ? AppTheme.danger
+        : progress > 0.65
+            ? const Color(0xFFFF8A00)
+            : AppTheme.primary;
+    return Row(
+      children: [
+        Icon(icon, color: AppTheme.primary, size: 18),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 54,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppTheme.textLight,
+              fontSize: 12,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 7,
+              value: progress,
+              backgroundColor: AppTheme.softLine,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 74, maxWidth: 100),
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: AppTheme.textMedium,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ],
     );

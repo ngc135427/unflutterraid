@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class UnraidApiException implements Exception {
@@ -51,7 +51,7 @@ class UnraidApiClient {
   }
 
   Future<UnraidDashboard> fetchDashboard() async {
-    final data = await _request(_dashboardQuery);
+    final data = await _request(_dashboardQuery, allowPartialData: true);
     return UnraidDashboard.fromJson(data);
   }
 
@@ -77,6 +77,12 @@ class UnraidApiClient {
   }
 
   Future<List<UnraidFileEntry>> fetchDirectory(String path) async {
+    if (kIsWeb) {
+      throw const UnraidApiException(
+        '浏览器会拦截 Unraid WebGUI 文件接口的跨域请求。请使用 Android/Windows 客户端浏览共享目录，或为 Web 版本配置同源代理。',
+      );
+    }
+
     final uri = Uri.parse('$baseUrl/webGui/include/Browse.php').replace(
       queryParameters: {
         'dir': path,
@@ -103,6 +109,12 @@ class UnraidApiClient {
   }
 
   Future<Uint8List> fetchFileBytes(String path) async {
+    if (kIsWeb) {
+      throw const UnraidApiException(
+        '浏览器会拦截 Unraid WebGUI 文件接口的跨域请求。请使用 Android/Windows 客户端预览文件，或为 Web 版本配置同源代理。',
+      );
+    }
+
     final uri = _fileUri(path);
     late http.Response response;
     try {
@@ -132,6 +144,7 @@ class UnraidApiClient {
   Future<Map<String, dynamic>> _request(
     String query, {
     Map<String, dynamic>? variables,
+    bool allowPartialData = false,
   }) async {
     late http.Response response;
     try {
@@ -155,25 +168,27 @@ class UnraidApiClient {
       throw UnraidApiException('无法连接服务器：$error');
     }
 
+    final decoded = _decodeGraphqlResponse(response.body);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw UnraidApiException('服务器返回 HTTP ${response.statusCode}');
+      final message = _firstGraphqlErrorMessage(decoded);
+      throw UnraidApiException(
+        message ?? '服务器返回 HTTP ${response.statusCode}',
+      );
     }
 
-    final decoded = jsonDecode(response.body);
     if (decoded is! Map<String, dynamic>) {
       throw const UnraidApiException('服务器返回了无效数据');
     }
 
+    final data = decoded['data'];
     final errors = decoded['errors'];
     if (errors is List && errors.isNotEmpty) {
-      final first = errors.first;
-      final message = first is Map<String, dynamic>
-          ? first['message']?.toString()
-          : first.toString();
-      throw UnraidApiException(message ?? 'GraphQL 请求失败');
+      final message = _firstGraphqlErrorMessage(decoded);
+      if (!allowPartialData || data is! Map<String, dynamic>) {
+        throw UnraidApiException(message ?? 'GraphQL 请求失败');
+      }
     }
 
-    final data = decoded['data'];
     if (data is! Map<String, dynamic>) {
       throw const UnraidApiException('响应中缺少 data 字段');
     }
@@ -198,8 +213,18 @@ class UnraidDashboard {
     required this.serverName,
     required this.serverDescription,
     required this.model,
-    required this.registration,
+    required this.version,
+    required this.status,
+    required this.lanIp,
     required this.uptime,
+    required this.cpuSummary,
+    required this.cpuPercent,
+    required this.baseboardSummary,
+    required this.memoryUsage,
+    required this.memoryPercent,
+    required this.arrayState,
+    required this.arrayUsage,
+    required this.arrayPercent,
     required this.dockerItems,
     required this.vmItems,
     required this.shareItems,
@@ -208,20 +233,47 @@ class UnraidDashboard {
   final String serverName;
   final String serverDescription;
   final String model;
-  final String registration;
+  final String version;
+  final String status;
+  final String lanIp;
   final String uptime;
+  final String cpuSummary;
+  final double cpuPercent;
+  final String baseboardSummary;
+  final String memoryUsage;
+  final double memoryPercent;
+  final String arrayState;
+  final String arrayUsage;
+  final double arrayPercent;
   final List<UnraidManagementItem> dockerItems;
   final List<UnraidManagementItem> vmItems;
   final List<UnraidManagementItem> shareItems;
 
   factory UnraidDashboard.fromJson(Map<String, dynamic> json) {
     final server = _asMap(json['server']);
+    final vars = _asMap(json['vars']);
     final info = _asMap(json['info']);
     final os = _asMap(info['os']);
-    final system = _asMap(info['system']);
-    final registration = _asMap(json['registration']);
+    final cpu = _asMap(info['cpu']);
+    final baseboard = _asMap(info['baseboard']);
+    final metrics = _asMap(json['metrics']);
+    final cpuMetrics = _asMap(metrics['cpu']);
+    final memory = _asMap(metrics['memory']);
+    final array = _asMap(json['array']);
+    final arrayCapacity = _asMap(_asMap(array['capacity'])['kilobytes']);
     final docker = _asMap(json['docker']);
-    final vms = _asMap(json['vms']);
+    final vms = json['vms'];
+
+    final memoryTotal = _asDouble(memory['total']);
+    final memoryAvailable = _asDouble(memory['available']);
+    final memoryUsed = _firstNumber([
+      memory['used'],
+      memoryTotal == null || memoryAvailable == null
+          ? null
+          : memoryTotal - memoryAvailable,
+    ]);
+    final arrayTotalKb = _asDouble(arrayCapacity['total']);
+    final arrayUsedKb = _asDouble(arrayCapacity['used']);
 
     return UnraidDashboard(
       serverName: _firstText([
@@ -231,26 +283,36 @@ class UnraidDashboard {
       ]),
       serverDescription: _firstText([
         server['comment'],
-        system['model'],
         os['distro'],
+        cpu['brand'],
         'Media server',
       ]),
       model: _firstText([
-        system['model'],
-        system['manufacturer'],
+        baseboard['model'],
+        baseboard['manufacturer'],
+        cpu['brand'],
         'Custom',
       ]),
-      registration: _firstText([
-        registration['type'],
-        registration['state'],
+      version: _firstText([
+        vars['version'],
+        os['release'],
         '未知',
       ]),
+      status: _formatStatus(server['status']),
+      lanIp: _firstText([server['lanip'], '未知']),
       uptime: _formatUptime(os['uptime']),
+      cpuSummary: _formatCpuSummary(cpu),
+      cpuPercent: _percent(cpuMetrics['percentTotal'], 100),
+      baseboardSummary: _formatBaseboardSummary(baseboard),
+      memoryUsage: _formatBytesUsage(memoryUsed, memoryTotal),
+      memoryPercent: _percent(memoryUsed, memoryTotal),
+      arrayState: _formatStatus(array['state']),
+      arrayUsage: _formatKilobytesUsage(arrayUsedKb, arrayTotalKb),
+      arrayPercent: _percent(arrayUsedKb, arrayTotalKb),
       dockerItems: _asList(docker['containers'])
           .map(UnraidManagementItem.fromDocker)
           .toList(),
-      vmItems:
-          _asList(vms['domains']).map(UnraidManagementItem.fromVm).toList(),
+      vmItems: _vmList(vms).map(UnraidManagementItem.fromVm).toList(),
       shareItems:
           _asList(json['shares']).map(UnraidManagementItem.fromShare).toList(),
     );
@@ -276,6 +338,7 @@ class UnraidManagementItem {
     final json = _asMap(value);
     final names = _asList(json['names']);
     final name = names.isEmpty ? null : names.first;
+    final labels = _asMap(json['labels']);
     return UnraidManagementItem(
       id: json['id']?.toString() ?? '',
       title: _cleanDockerName(name?.toString()) ??
@@ -284,7 +347,7 @@ class UnraidManagementItem {
       description: _firstText([
         json['status'],
         json['image'],
-        json['webUiUrl'],
+        labels['net.unraid.docker.webui'],
         'Docker 容器',
       ]),
       type: ManagementItemType.docker,
@@ -293,10 +356,11 @@ class UnraidManagementItem {
 
   factory UnraidManagementItem.fromVm(Object? value) {
     final json = _asMap(value);
+    final domain = _asMap(json['domain']);
     return UnraidManagementItem(
-      id: json['id']?.toString() ?? '',
-      title: _firstText([json['name'], '未命名虚拟机']),
-      status: _formatStatus(json['state']),
+      id: _firstText([domain['id'], json['id']]),
+      title: _firstText([domain['name'], json['name'], '未命名虚拟机']),
+      status: _formatStatus(domain['state'] ?? json['state']),
       description: '虚拟机',
       type: ManagementItemType.vm,
     );
@@ -305,7 +369,7 @@ class UnraidManagementItem {
   factory UnraidManagementItem.fromShare(Object? value) {
     final json = _asMap(value);
     return UnraidManagementItem(
-      id: json['id']?.toString() ?? '',
+      id: _firstText([json['id'], json['name'], json['nameOrig']]),
       title: _firstText([json['name'], json['nameOrig'], '未命名共享']),
       status: json['cache'] == true ? '缓存' : '阵列',
       description: _firstText([
@@ -373,28 +437,62 @@ const _dashboardQuery = '''
 query Dashboard {
   server {
     id
+    guid
     name
-    comment
     status
     localurl
     remoteurl
     lanip
     wanip
   }
-  registration {
-    type
-    state
+  vars {
+    version
   }
   info {
+    cpu {
+      id
+      manufacturer
+      brand
+      vendor
+      threads
+      cores
+      socket
+    }
+    baseboard {
+      id
+      manufacturer
+      model
+    }
     os {
       hostname
       distro
       release
       uptime
     }
-    system {
-      manufacturer
-      model
+  }
+  metrics {
+    cpu {
+      id
+      percentTotal
+    }
+    memory {
+      id
+      total
+      used
+      free
+      available
+      percentTotal
+    }
+  }
+  array {
+    id
+    state
+    capacity {
+      kilobytes {
+        free
+        used
+        total
+      }
     }
   }
   docker {
@@ -404,25 +502,27 @@ query Dashboard {
       image
       state
       status
-      webUiUrl
+      labels
       autoStart
     }
   }
   vms {
-    domains {
+    id
+    domain {
       id
+      uuid
       name
       state
     }
   }
   shares {
-    id
     name
     nameOrig
     comment
-    cache
+    free
     used
     size
+    cache
   }
 }
 ''';
@@ -483,6 +583,48 @@ List<Object?> _asList(Object? value) {
   return value is List ? value : const [];
 }
 
+List<Object?> _vmList(Object? value) {
+  if (value is List) {
+    return value;
+  }
+  if (value is Map<String, dynamic>) {
+    final domain = value['domain'];
+    if (domain is List) {
+      return domain.map((item) => {'domain': item}).toList();
+    }
+    if (domain is Map<String, dynamic>) {
+      return [value];
+    }
+    return _asList(value['domains']);
+  }
+  return const [];
+}
+
+Object? _decodeGraphqlResponse(String body) {
+  try {
+    return jsonDecode(body);
+  } on FormatException {
+    return null;
+  }
+}
+
+String? _firstGraphqlErrorMessage(Object? decoded) {
+  if (decoded is! Map<String, dynamic>) {
+    return null;
+  }
+  final errors = decoded['errors'];
+  if (errors is! List || errors.isEmpty) {
+    return null;
+  }
+  final first = errors.first;
+  if (first is Map<String, dynamic>) {
+    final message = first['message']?.toString().trim();
+    return message == null || message.isEmpty ? null : message;
+  }
+  final message = first?.toString().trim();
+  return message == null || message.isEmpty ? null : message;
+}
+
 String _firstText(List<Object?> values) {
   for (final value in values) {
     final text = value?.toString().trim();
@@ -491,6 +633,94 @@ String _firstText(List<Object?> values) {
     }
   }
   return '';
+}
+
+double? _asDouble(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+  return double.tryParse(value?.toString() ?? '');
+}
+
+double? _firstNumber(List<Object?> values) {
+  for (final value in values) {
+    final number = _asDouble(value);
+    if (number != null) {
+      return number;
+    }
+  }
+  return null;
+}
+
+double _percent(Object? used, Object? total) {
+  final usedNumber = _asDouble(used);
+  final totalNumber = _asDouble(total);
+  if (usedNumber == null || totalNumber == null || totalNumber <= 0) {
+    return 0;
+  }
+  return (usedNumber / totalNumber).clamp(0, 1).toDouble();
+}
+
+String _formatCpuSummary(Map<String, dynamic> cpu) {
+  final brand = _firstText([cpu['brand'], cpu['manufacturer'], '未知 CPU']);
+  final cores = _firstText([cpu['cores']]);
+  final threads = _firstText([cpu['threads']]);
+  final specs = [
+    if (cores.isNotEmpty) '$cores 核',
+    if (threads.isNotEmpty) '$threads 线程',
+  ];
+  if (specs.isEmpty) {
+    return brand;
+  }
+  return '$brand · ${specs.join(' / ')}';
+}
+
+String _formatBaseboardSummary(Map<String, dynamic> baseboard) {
+  return _firstText([
+    [
+      baseboard['manufacturer'],
+      baseboard['model'],
+    ].where((value) => _firstText([value]).isNotEmpty).join(' '),
+    '未知主板',
+  ]);
+}
+
+String _formatBytesUsage(Object? used, Object? total) {
+  final usedText = _formatBytes(used);
+  final totalText = _formatBytes(total);
+  if (usedText == null && totalText == null) {
+    return '未知';
+  }
+  if (usedText == null) {
+    return '总计 $totalText';
+  }
+  if (totalText == null) {
+    return '已用 $usedText';
+  }
+  return '$usedText / $totalText';
+}
+
+String _formatKilobytesUsage(Object? used, Object? total) {
+  final usedText = _formatKilobytes(used);
+  final totalText = _formatKilobytes(total);
+  if (usedText == null && totalText == null) {
+    return '未知';
+  }
+  if (usedText == null) {
+    return '总计 $totalText';
+  }
+  if (totalText == null) {
+    return '已用 $usedText';
+  }
+  return '$usedText / $totalText';
+}
+
+String? _formatBytes(Object? value) {
+  final number = _asDouble(value);
+  if (number == null) {
+    return null;
+  }
+  return _formatByteAmount(number);
 }
 
 String? _cleanDockerName(String? value) {
@@ -505,6 +735,10 @@ String _formatStatus(Object? value) {
   final raw = value?.toString().trim();
   return switch (raw) {
     'RUNNING' => '运行中',
+    'ONLINE' => '在线',
+    'OFFLINE' => '离线',
+    'STARTED' => '已启动',
+    'STOPPED' => '已停止',
     'PAUSED' => '已暂停',
     'EXITED' => '已停止',
     'IDLE' => '空闲',
@@ -532,13 +766,17 @@ String _formatShareSize(Object? used, Object? total) {
 }
 
 String? _formatKilobytes(Object? value) {
-  final number = int.tryParse(value?.toString() ?? '');
+  final number = _asDouble(value);
   if (number == null) {
     return null;
   }
   final bytes = number * 1024;
+  return _formatByteAmount(bytes);
+}
+
+String _formatByteAmount(double bytes) {
   const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  var amount = bytes.toDouble();
+  var amount = bytes;
   var unit = 0;
   while (amount >= 1024 && unit < units.length - 1) {
     amount /= 1024;

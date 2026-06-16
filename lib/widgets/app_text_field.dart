@@ -12,6 +12,7 @@ class AppTextField extends StatelessWidget {
     this.obscureText = false,
     this.focusNode,
     this.validator,
+    this.suffixIcon,
   });
 
   final String label;
@@ -21,6 +22,7 @@ class AppTextField extends StatelessWidget {
   final bool obscureText;
   final FocusNode? focusNode;
   final String? Function(String?)? validator;
+  final Widget? suffixIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +45,10 @@ class AppTextField extends StatelessWidget {
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
-            suffixIcon: icon == null
-                ? null
-                : Icon(icon, color: const Color(0xFFA0A8B9)),
+            suffixIcon: suffixIcon ??
+                (icon == null
+                    ? null
+                    : Icon(icon, color: const Color(0xFFA0A8B9))),
           ),
         ),
       ],
