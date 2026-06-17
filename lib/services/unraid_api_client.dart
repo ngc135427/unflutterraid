@@ -212,19 +212,43 @@ class UnraidDashboard {
   const UnraidDashboard({
     required this.serverName,
     required this.serverDescription,
+    required this.guid,
+    required this.ownerName,
+    required this.registration,
     required this.model,
     required this.version,
     required this.status,
     required this.lanIp,
+    required this.wanIp,
+    required this.localUrl,
+    required this.remoteUrl,
     required this.uptime,
     required this.cpuSummary,
     required this.cpuPercent,
     required this.baseboardSummary,
+    required this.osSummary,
+    required this.packagesSummary,
     required this.memoryUsage,
     required this.memoryPercent,
     required this.arrayState,
     required this.arrayUsage,
     required this.arrayPercent,
+    required this.paritySummary,
+    required this.notificationInfo,
+    required this.notificationWarning,
+    required this.notificationAlert,
+    required this.notificationTotal,
+    required this.notifications,
+    required this.diskItems,
+    required this.networkItems,
+    required this.upsItems,
+    required this.pluginItems,
+    required this.securityItems,
+    required this.cloudItems,
+    required this.logItems,
+    required this.servicesSummary,
+    required this.dockerNetworkSummary,
+    required this.dockerConflictSummary,
     required this.dockerItems,
     required this.vmItems,
     required this.shareItems,
@@ -232,19 +256,43 @@ class UnraidDashboard {
 
   final String serverName;
   final String serverDescription;
+  final String guid;
+  final String ownerName;
+  final String registration;
   final String model;
   final String version;
   final String status;
   final String lanIp;
+  final String wanIp;
+  final String localUrl;
+  final String remoteUrl;
   final String uptime;
   final String cpuSummary;
   final double cpuPercent;
   final String baseboardSummary;
+  final String osSummary;
+  final String packagesSummary;
   final String memoryUsage;
   final double memoryPercent;
   final String arrayState;
   final String arrayUsage;
   final double arrayPercent;
+  final String paritySummary;
+  final int notificationInfo;
+  final int notificationWarning;
+  final int notificationAlert;
+  final int notificationTotal;
+  final List<UnraidNotification> notifications;
+  final List<UnraidInfoItem> diskItems;
+  final List<UnraidInfoItem> networkItems;
+  final List<UnraidInfoItem> upsItems;
+  final List<UnraidInfoItem> pluginItems;
+  final List<UnraidInfoItem> securityItems;
+  final List<UnraidInfoItem> cloudItems;
+  final List<UnraidInfoItem> logItems;
+  final String servicesSummary;
+  final String dockerNetworkSummary;
+  final String dockerConflictSummary;
   final List<UnraidManagementItem> dockerItems;
   final List<UnraidManagementItem> vmItems;
   final List<UnraidManagementItem> shareItems;
@@ -263,6 +311,15 @@ class UnraidDashboard {
     final arrayCapacity = _asMap(_asMap(array['capacity'])['kilobytes']);
     final docker = _asMap(json['docker']);
     final vms = json['vms'];
+    final notifications = _asMap(json['notifications']);
+    final unreadNotifications =
+        _asMap(_asMap(notifications['overview'])['unread']);
+    final registration = _asMap(json['registration']);
+    final owner = _asMap(json['owner']);
+    final network = _asMap(json['network']);
+    final remoteAccess = _asMap(json['remoteAccess']);
+    final connect = _asMap(json['connect']);
+    final cloud = _asMap(json['cloud']);
 
     final memoryTotal = _asDouble(memory['total']);
     final memoryAvailable = _asDouble(memory['available']);
@@ -274,6 +331,14 @@ class UnraidDashboard {
     ]);
     final arrayTotalKb = _asDouble(arrayCapacity['total']);
     final arrayUsedKb = _asDouble(arrayCapacity['used']);
+    final services = _asList(json['services']);
+    final plugins = _asList(json['plugins']);
+    final installedPlugins = _asList(json['installedUnraidPlugins']);
+    final apiKeys = _asList(json['apiKeys']);
+    final oidcProviders = _asList(json['oidcProviders']);
+    final dockerNetworks = _asList(docker['networks']);
+    final portConflicts = _asMap(docker['portConflicts']);
+    final logFiles = _asList(json['logFiles']);
 
     return UnraidDashboard(
       serverName: _firstText([
@@ -286,6 +351,17 @@ class UnraidDashboard {
         os['distro'],
         cpu['brand'],
         'Media server',
+      ]),
+      guid: _firstText([server['guid'], '未知']),
+      ownerName: _firstText([
+        owner['username'],
+        _asMap(server['owner'])['username'],
+        '未绑定',
+      ]),
+      registration: _firstText([
+        registration['type'],
+        registration['state'],
+        '未知',
       ]),
       model: _firstText([
         baseboard['model'],
@@ -300,15 +376,105 @@ class UnraidDashboard {
       ]),
       status: _formatStatus(server['status']),
       lanIp: _firstText([server['lanip'], '未知']),
+      wanIp: _firstText([server['wanip'], '未知']),
+      localUrl: _firstText([server['localurl'], '未返回']),
+      remoteUrl: _firstText([server['remoteurl'], '未返回']),
       uptime: _formatUptime(os['uptime']),
       cpuSummary: _formatCpuSummary(cpu),
       cpuPercent: _percent(cpuMetrics['percentTotal'], 100),
       baseboardSummary: _formatBaseboardSummary(baseboard),
+      osSummary: _formatOsSummary(os),
+      packagesSummary:
+          _formatPackagesSummary(_asMap(_asMap(info['versions'])['packages'])),
       memoryUsage: _formatBytesUsage(memoryUsed, memoryTotal),
       memoryPercent: _percent(memoryUsed, memoryTotal),
       arrayState: _formatStatus(array['state']),
       arrayUsage: _formatKilobytesUsage(arrayUsedKb, arrayTotalKb),
       arrayPercent: _percent(arrayUsedKb, arrayTotalKb),
+      paritySummary: _formatParitySummary(_asMap(array['parityCheckStatus'])),
+      notificationInfo: _asInt(unreadNotifications['info']),
+      notificationWarning: _asInt(unreadNotifications['warning']),
+      notificationAlert: _asInt(unreadNotifications['alert']),
+      notificationTotal: _asInt(unreadNotifications['total']),
+      notifications: _asList(notifications['warningsAndAlerts'])
+          .map(UnraidNotification.fromJson)
+          .toList(),
+      diskItems: _asList(json['disks']).map(UnraidInfoItem.fromDisk).toList(),
+      networkItems: _asList(json['networkInterfaces']).isNotEmpty
+          ? _asList(json['networkInterfaces'])
+              .map(UnraidInfoItem.fromNetworkInterface)
+              .toList()
+          : _asList(network['accessUrls'])
+              .map(UnraidInfoItem.fromAccessUrl)
+              .toList(),
+      upsItems:
+          _asList(json['upsDevices']).map(UnraidInfoItem.fromUps).toList(),
+      pluginItems: [
+        ...plugins.map(UnraidInfoItem.fromPlugin),
+        if (installedPlugins.isNotEmpty)
+          UnraidInfoItem(
+            title: '已安装插件',
+            value: '${installedPlugins.length} 个',
+            description: installedPlugins.take(3).join(' · '),
+            severity: InfoSeverity.normal,
+          ),
+        ..._asList(json['pluginInstallOperations'])
+            .map(UnraidInfoItem.fromPluginOperation),
+      ],
+      securityItems: [
+        UnraidInfoItem(
+          title: 'API Keys',
+          value: '${apiKeys.length} 个',
+          description: '可用角色与权限来自 apiKeyPossibleRoles',
+          severity: InfoSeverity.normal,
+        ),
+        UnraidInfoItem(
+          title: 'SSO',
+          value: json['isSSOEnabled'] == true ? '已启用' : '未启用',
+          description: '${oidcProviders.length} 个 OIDC 提供方',
+          severity: json['isSSOEnabled'] == true
+              ? InfoSeverity.success
+              : InfoSeverity.warning,
+        ),
+      ],
+      cloudItems: [
+        UnraidInfoItem(
+          title: 'Cloud',
+          value: _formatStatus(_asMap(cloud['cloud'])['status']),
+          description: _firstText([
+            _asMap(cloud['cloud'])['ip'],
+            _asMap(cloud['cloud'])['error'],
+            'Unraid Cloud 状态',
+          ]),
+          severity: _severityForStatus(_asMap(cloud['cloud'])['status']),
+        ),
+        UnraidInfoItem(
+          title: 'Relay',
+          value: _formatStatus(_asMap(cloud['relay'])['status']),
+          description: _firstText([
+            _asMap(cloud['relay'])['error'],
+            '动态远程访问 ${_firstText([
+                  _asMap(connect['dynamicRemoteAccess'])['runningType'],
+                  remoteAccess['accessType'],
+                  '未知'
+                ])}',
+          ]),
+          severity: _severityForStatus(_asMap(cloud['relay'])['status']),
+        ),
+        UnraidInfoItem(
+          title: '远程访问',
+          value: _firstText([remoteAccess['accessType'], '未知']),
+          description: '${_firstText([
+                remoteAccess['forwardType'],
+                'forward 未知'
+              ])} · 端口 ${_firstText([remoteAccess['port'], '未知'])}',
+          severity: InfoSeverity.normal,
+        ),
+      ],
+      logItems: logFiles.map(UnraidInfoItem.fromLogFile).toList(),
+      servicesSummary: _formatServicesSummary(services),
+      dockerNetworkSummary: _formatDockerNetworkSummary(dockerNetworks),
+      dockerConflictSummary: _formatDockerConflictSummary(portConflicts),
       dockerItems: _asList(docker['containers'])
           .map(UnraidManagementItem.fromDocker)
           .toList(),
@@ -326,6 +492,9 @@ class UnraidManagementItem {
     required this.status,
     required this.description,
     required this.type,
+    this.progress = 0,
+    this.tags = const [],
+    this.details = const [],
   });
 
   final String id;
@@ -333,12 +502,20 @@ class UnraidManagementItem {
   final String status;
   final String description;
   final ManagementItemType type;
+  final double progress;
+  final List<String> tags;
+  final List<UnraidInfoItem> details;
 
   factory UnraidManagementItem.fromDocker(Object? value) {
     final json = _asMap(value);
     final names = _asList(json['names']);
     final name = names.isEmpty ? null : names.first;
     final labels = _asMap(json['labels']);
+    final ports = _asList(json['ports']);
+    final hostConfig = _asMap(json['hostConfig']);
+    final tailscale = _asMap(json['tailscaleStatus']);
+    final updateStatus = _firstText([json['updateStatus']]);
+    final networkMode = _firstText([hostConfig['networkMode']]);
     return UnraidManagementItem(
       id: json['id']?.toString() ?? '',
       title: _cleanDockerName(name?.toString()) ??
@@ -351,23 +528,77 @@ class UnraidManagementItem {
         'Docker 容器',
       ]),
       type: ManagementItemType.docker,
+      tags: [
+        if (networkMode.isNotEmpty) networkMode,
+        if (json['autoStart'] == true) '自启动',
+        if (json['isUpdateAvailable'] == true || updateStatus.isNotEmpty) '有更新',
+        if (json['tailscaleEnabled'] == true) 'Tailscale',
+      ],
+      details: [
+        UnraidInfoItem(
+          title: '镜像',
+          value: _firstText([json['image'], '未知']),
+          description: _firstText([json['imageId'], 'Docker image']),
+          severity: InfoSeverity.normal,
+        ),
+        UnraidInfoItem(
+          title: '端口',
+          value: _formatContainerPorts(ports),
+          description: _firstText([json['lanIpPorts'], '未返回端口映射']),
+          severity: InfoSeverity.normal,
+        ),
+        if (json['tailscaleEnabled'] == true)
+          UnraidInfoItem(
+            title: 'Tailscale',
+            value: tailscale['online'] == true ? '在线' : '离线',
+            description: _firstText([
+              tailscale['dnsName'],
+              tailscale['hostname'],
+              tailscale['backendState'],
+            ]),
+            severity: tailscale['online'] == true
+                ? InfoSeverity.success
+                : InfoSeverity.warning,
+          ),
+      ],
     );
   }
 
   factory UnraidManagementItem.fromVm(Object? value) {
     final json = _asMap(value);
     final domain = _asMap(json['domain']);
+    final state = domain['state'] ?? json['state'];
     return UnraidManagementItem(
       id: _firstText([domain['id'], json['id']]),
       title: _firstText([domain['name'], json['name'], '未命名虚拟机']),
-      status: _formatStatus(domain['state'] ?? json['state']),
+      status: _formatStatus(state),
       description: '虚拟机',
       type: ManagementItemType.vm,
+      tags: [
+        if (_firstText([domain['uuid']]).isNotEmpty) 'UUID',
+        if (_formatStatus(state) == '运行中') 'VNC 可用',
+      ],
+      details: [
+        UnraidInfoItem(
+          title: 'UUID',
+          value: _firstText([domain['uuid'], '未知']),
+          description: '虚拟机域标识',
+          severity: InfoSeverity.normal,
+        ),
+        UnraidInfoItem(
+          title: '状态',
+          value: _formatStatus(state),
+          description: '来自 vms.domain.state',
+          severity: _severityForStatus(state),
+        ),
+      ],
     );
   }
 
   factory UnraidManagementItem.fromShare(Object? value) {
     final json = _asMap(value);
+    final used = _asDouble(json['used']);
+    final total = _asDouble(json['size']);
     return UnraidManagementItem(
       id: _firstText([json['id'], json['name'], json['nameOrig']]),
       title: _firstText([json['name'], json['nameOrig'], '未命名共享']),
@@ -378,7 +609,182 @@ class UnraidManagementItem {
         '共享目录',
       ]),
       type: ManagementItemType.share,
+      progress: _percent(used, total),
+      tags: [
+        if (json['cache'] == true) 'cache',
+        if (_firstText([json['include']]).isNotEmpty)
+          'include ${json['include']}',
+        if (_firstText([json['exclude']]).isNotEmpty)
+          'exclude ${json['exclude']}',
+        if (_firstText([json['luksStatus']]).isNotEmpty)
+          '${json['luksStatus']}',
+      ],
+      details: [
+        UnraidInfoItem(
+          title: '容量',
+          value: _formatShareSize(json['used'], json['size']),
+          description: 'free ${_formatKilobytes(json['free']) ?? '未知'}',
+          severity: _percent(used, total) > 0.85
+              ? InfoSeverity.warning
+              : InfoSeverity.normal,
+        ),
+        UnraidInfoItem(
+          title: '分配策略',
+          value: _firstText([json['allocator'], '未知']),
+          description: 'split level ${_firstText([json['splitLevel'], '默认'])}',
+          severity: InfoSeverity.normal,
+        ),
+        UnraidInfoItem(
+          title: '说明',
+          value: _firstText([json['comment'], '无']),
+          description: '共享目录配置',
+          severity: InfoSeverity.normal,
+        ),
+      ],
     );
+  }
+}
+
+enum InfoSeverity { normal, success, warning, danger }
+
+class UnraidInfoItem {
+  const UnraidInfoItem({
+    required this.title,
+    required this.value,
+    required this.description,
+    required this.severity,
+  });
+
+  final String title;
+  final String value;
+  final String description;
+  final InfoSeverity severity;
+
+  factory UnraidInfoItem.fromDisk(Object? value) {
+    final json = _asMap(value);
+    final temp = _firstText([json['temperature']]);
+    return UnraidInfoItem(
+      title: _firstText([json['name'], json['device'], '未知磁盘']),
+      value: _firstText([json['smartStatus'], json['type'], '未知']),
+      description: [
+        if (_firstText([json['vendor']]).isNotEmpty) json['vendor'],
+        if (_formatBytes(json['size']) != null) _formatBytes(json['size']),
+        if (temp.isNotEmpty) '$temp°C',
+        if (json['isSpinning'] == false) '休眠',
+      ].join(' · '),
+      severity: _severityForSmart(json['smartStatus'], json['temperature']),
+    );
+  }
+
+  factory UnraidInfoItem.fromNetworkInterface(Object? value) {
+    final json = _asMap(value);
+    return UnraidInfoItem(
+      title: _firstText([json['name'], json['iface'], '网络接口']),
+      value: _firstText([json['status'], json['operstate'], '未知']),
+      description: [
+        _firstText([json['ipAddress'], json['macAddress'], '无地址']),
+        if (_firstText([json['speed']]).isNotEmpty) '${json['speed']} Mbps',
+        if (_firstText([json['type']]).isNotEmpty) json['type'],
+      ].join(' · '),
+      severity: _severityForStatus(json['status'] ?? json['operstate']),
+    );
+  }
+
+  factory UnraidInfoItem.fromAccessUrl(Object? value) {
+    final json = _asMap(value);
+    return UnraidInfoItem(
+      title: _firstText([json['name'], json['type'], '访问地址']),
+      value: _firstText([json['ipv4'], json['ipv6'], '未返回']),
+      description: _firstText([json['type'], 'network.accessUrls']),
+      severity: InfoSeverity.normal,
+    );
+  }
+
+  factory UnraidInfoItem.fromUps(Object? value) {
+    final json = _asMap(value);
+    final battery = _asMap(json['battery']);
+    final power = _asMap(json['power']);
+    return UnraidInfoItem(
+      title: _firstText([json['name'], json['model'], 'UPS']),
+      value: _formatStatus(json['status']),
+      description: '电量 ${_firstText([
+            battery['chargeLevel'],
+            '未知'
+          ])}% · 负载 ${_firstText([power['loadPercentage'], '未知'])}%',
+      severity: _severityForStatus(json['status']),
+    );
+  }
+
+  factory UnraidInfoItem.fromPlugin(Object? value) {
+    final json = _asMap(value);
+    return UnraidInfoItem(
+      title: _firstText([json['name'], '插件']),
+      value: _firstText([json['version'], '未知版本']),
+      description:
+          'API ${json['hasApiModule'] == true ? '有' : '无'} · CLI ${json['hasCliModule'] == true ? '有' : '无'}',
+      severity: json['hasApiModule'] == true
+          ? InfoSeverity.success
+          : InfoSeverity.normal,
+    );
+  }
+
+  factory UnraidInfoItem.fromPluginOperation(Object? value) {
+    final json = _asMap(value);
+    return UnraidInfoItem(
+      title: _firstText([json['name'], json['url'], '插件安装任务']),
+      value: _formatStatus(json['status']),
+      description: _firstText([json['updatedAt'], json['createdAt'], '安装任务']),
+      severity: _severityForStatus(json['status']),
+    );
+  }
+
+  factory UnraidInfoItem.fromLogFile(Object? value) {
+    final json = _asMap(value);
+    return UnraidInfoItem(
+      title: _firstText([json['name'], json['path'], '日志']),
+      value: _formatBytes(json['size']) ?? '未知大小',
+      description: _firstText([json['modifiedAt'], json['path'], 'logFiles']),
+      severity: InfoSeverity.normal,
+    );
+  }
+}
+
+class UnraidNotification {
+  const UnraidNotification({
+    required this.title,
+    required this.subject,
+    required this.description,
+    required this.importance,
+    required this.timestamp,
+  });
+
+  final String title;
+  final String subject;
+  final String description;
+  final String importance;
+  final String timestamp;
+
+  factory UnraidNotification.fromJson(Object? value) {
+    final json = _asMap(value);
+    return UnraidNotification(
+      title: _firstText([json['title'], json['subject'], '通知']),
+      subject: _firstText([json['subject'], json['type'], '']),
+      description: _firstText([json['description'], json['link'], '']),
+      importance: _firstText([json['importance'], json['type'], 'info']),
+      timestamp:
+          _firstText([json['formattedTimestamp'], json['timestamp'], '']),
+    );
+  }
+
+  InfoSeverity get severity {
+    final raw = importance.toLowerCase();
+    if (raw.contains('alert') || raw.contains('critical')) {
+      return InfoSeverity.danger;
+    }
+    if (raw.contains('warning')) {
+      return InfoSeverity.warning;
+    }
+    return InfoSeverity.normal;
   }
 }
 
@@ -435,18 +841,51 @@ query ServicesCheck {
 
 const _dashboardQuery = '''
 query Dashboard {
+  owner {
+    username
+    url
+    avatar
+  }
+  registration {
+    id
+    type
+    state
+    expiration
+  }
   server {
     id
     guid
     name
+    comment
     status
     localurl
     remoteurl
     lanip
     wanip
+    owner {
+      username
+    }
+  }
+  services {
+    id
+    name
+    online
+    version
+    uptime {
+      timestamp
+    }
   }
   vars {
     version
+    timeZone
+    useNtp
+    shareSmbEnabled
+    shareNfsEnabled
+    useSsl
+    port
+    portssl
+    useSsh
+    portssh
   }
   info {
     cpu {
@@ -462,12 +901,30 @@ query Dashboard {
       id
       manufacturer
       model
+      version
     }
     os {
+      id
+      platform
       hostname
       distro
       release
+      kernel
+      arch
       uptime
+    }
+    versions {
+      id
+      packages {
+        openssl
+        node
+        npm
+        pm2
+        git
+        nginx
+        php
+        docker
+      }
     }
   }
   metrics {
@@ -483,6 +940,53 @@ query Dashboard {
       available
       percentTotal
     }
+    temperature {
+      id
+      summary {
+        average
+        warningCount
+        criticalCount
+        hottest {
+          id
+          name
+          type
+          location
+          warning
+          critical
+        }
+      }
+    }
+    network {
+      id
+      name
+      operstate
+      rxSec
+      txSec
+      utilizationPercent
+      lastUpdated
+    }
+  }
+  notifications {
+    id
+    overview {
+      unread {
+        info
+        warning
+        alert
+        total
+      }
+    }
+    warningsAndAlerts {
+      id
+      title
+      subject
+      description
+      importance
+      link
+      type
+      timestamp
+      formattedTimestamp
+    }
   }
   array {
     id
@@ -494,16 +998,93 @@ query Dashboard {
         total
       }
     }
+    parityCheckStatus {
+      date
+      duration
+      speed
+      status
+      errors
+      progress
+      correcting
+      paused
+      running
+    }
+  }
+  parityHistory {
+    date
+    duration
+    speed
+    status
+    errors
+    progress
+    correcting
+    paused
+    running
   }
   docker {
     containers {
       id
       names
       image
+      imageId
+      command
+      created
+      lanIpPorts
+      sizeRootFs
+      sizeRw
+      sizeLog
       state
       status
+      hostConfig {
+        networkMode
+      }
       labels
       autoStart
+      autoStartOrder
+      webUiUrl
+      templatePath
+      isOrphaned
+      isUpdateAvailable
+      isRebuildReady
+      tailscaleEnabled
+      tailscaleStatus {
+        online
+        hostname
+        dnsName
+        backendState
+      }
+      ports {
+        ip
+        privatePort
+        publicPort
+        type
+      }
+    }
+    networks {
+      id
+      name
+      scope
+      driver
+      containers
+    }
+    portConflicts {
+      containerPorts {
+        privatePort
+        type
+        containers {
+          id
+          name
+        }
+      }
+      lanPorts {
+        lanIpPort
+        publicPort
+        type
+      }
+    }
+    containerUpdateStatuses {
+      name
+      updateStatus
     }
   }
   vms {
@@ -516,13 +1097,133 @@ query Dashboard {
     }
   }
   shares {
+    id
     name
     nameOrig
     comment
     free
     used
     size
+    include
+    exclude
     cache
+    allocator
+    splitLevel
+    floor
+    cow
+    color
+    luksStatus
+  }
+  disks {
+    id
+    device
+    type
+    name
+    vendor
+    size
+    smartStatus
+    temperature
+    interfaceType
+    isSpinning
+  }
+  networkInterfaces {
+    id
+    name
+    description
+    macAddress
+    mtu
+    speed
+    operstate
+    type
+    status
+    ipAddress
+    gateway
+  }
+  upsDevices {
+    id
+    name
+    model
+    status
+    battery {
+      chargeLevel
+      estimatedRuntime
+      health
+    }
+    power {
+      loadPercentage
+      currentPower
+      nominalPower
+    }
+  }
+  apiKeys {
+    id
+  }
+  isSSOEnabled
+  oidcProviders {
+    id
+    name
+  }
+  pluginInstallOperations {
+    id
+    url
+    name
+    status
+    createdAt
+    updatedAt
+  }
+  installedUnraidPlugins
+  plugins {
+    name
+    version
+    hasApiModule
+    hasCliModule
+  }
+  remoteAccess {
+    accessType
+    forwardType
+    port
+  }
+  connect {
+    id
+    dynamicRemoteAccess {
+      enabledType
+      runningType
+      error
+    }
+  }
+  network {
+    id
+    accessUrls {
+      type
+      name
+      ipv4
+      ipv6
+    }
+  }
+  cloud {
+    error
+    relay {
+      status
+      timeout
+      error
+    }
+    cloud {
+      status
+      ip
+      error
+    }
+    minigraphql {
+      status
+      timeout
+      error
+    }
+    allowedOrigins
+  }
+  logFiles {
+    name
+    path
+    size
+    modifiedAt
   }
 }
 ''';
@@ -642,6 +1343,16 @@ double? _asDouble(Object? value) {
   return double.tryParse(value?.toString() ?? '');
 }
 
+int _asInt(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
 double? _firstNumber(List<Object?> values) {
   for (final value in values) {
     final number = _asDouble(value);
@@ -683,6 +1394,140 @@ String _formatBaseboardSummary(Map<String, dynamic> baseboard) {
     ].where((value) => _firstText([value]).isNotEmpty).join(' '),
     '未知主板',
   ]);
+}
+
+String _formatOsSummary(Map<String, dynamic> os) {
+  return _firstText([
+    [
+      os['distro'],
+      os['release'],
+      os['kernel'],
+      os['arch'],
+    ].where((value) => _firstText([value]).isNotEmpty).join(' · '),
+    '未知系统',
+  ]);
+}
+
+String _formatPackagesSummary(Map<String, dynamic> packages) {
+  final names = ['docker', 'nginx', 'php', 'node', 'git']
+      .where((key) => _firstText([packages[key]]).isNotEmpty)
+      .map((key) => '$key ${packages[key]}')
+      .toList();
+  if (names.isEmpty) {
+    return '未返回包版本';
+  }
+  return names.take(3).join(' · ');
+}
+
+String _formatParitySummary(Map<String, dynamic> parity) {
+  final status = _formatStatus(parity['status']);
+  final progress = _firstText([parity['progress']]);
+  final errors = _firstText([parity['errors']]);
+  final speed = _firstText([parity['speed']]);
+  final parts = [
+    status,
+    if (progress.isNotEmpty) '$progress%',
+    if (speed.isNotEmpty) speed,
+    if (errors.isNotEmpty) '$errors errors',
+  ];
+  return parts.where((part) => part.isNotEmpty && part != '未知').join(' · ');
+}
+
+String _formatServicesSummary(List<Object?> services) {
+  final online =
+      services.where((value) => _asMap(value)['online'] == true).length;
+  final names = services
+      .map((value) => _firstText([_asMap(value)['name']]))
+      .where((value) => value.isNotEmpty)
+      .take(3)
+      .toList();
+  if (services.isEmpty) {
+    return '未返回服务';
+  }
+  return '$online/${services.length} 在线 · ${names.join(' · ')}';
+}
+
+String _formatDockerNetworkSummary(List<Object?> networks) {
+  if (networks.isEmpty) {
+    return '未返回网络';
+  }
+  final names = networks
+      .map((value) => _firstText([_asMap(value)['name']]))
+      .where((value) => value.isNotEmpty)
+      .take(3)
+      .join(' · ');
+  return '${networks.length} 个网络${names.isEmpty ? '' : ' · $names'}';
+}
+
+String _formatDockerConflictSummary(Map<String, dynamic> conflicts) {
+  final containerPorts = _asList(conflicts['containerPorts']);
+  final lanPorts = _asList(conflicts['lanPorts']);
+  final total = containerPorts.length + lanPorts.length;
+  if (total == 0) {
+    return '未发现端口冲突';
+  }
+  return '$total 个端口冲突';
+}
+
+String _formatContainerPorts(List<Object?> ports) {
+  final mapped = ports.map((value) {
+    final json = _asMap(value);
+    final privatePort = _firstText([json['privatePort']]);
+    final publicPort = _firstText([json['publicPort']]);
+    final type = _firstText([json['type'], 'tcp']);
+    if (privatePort.isEmpty && publicPort.isEmpty) {
+      return '';
+    }
+    if (publicPort.isEmpty) {
+      return '$privatePort/$type';
+    }
+    return '$publicPort:$privatePort/$type';
+  }).where((value) => value.isNotEmpty);
+  return mapped.take(3).join(' · ');
+}
+
+InfoSeverity _severityForStatus(Object? value) {
+  final raw = value?.toString().toLowerCase() ?? '';
+  if (raw.contains('alert') ||
+      raw.contains('critical') ||
+      raw.contains('error') ||
+      raw.contains('fail') ||
+      raw.contains('down') ||
+      raw.contains('offline') ||
+      raw.contains('crash')) {
+    return InfoSeverity.danger;
+  }
+  if (raw.contains('warn') ||
+      raw.contains('pause') ||
+      raw.contains('stop') ||
+      raw.contains('idle')) {
+    return InfoSeverity.warning;
+  }
+  if (raw.contains('online') ||
+      raw.contains('running') ||
+      raw.contains('started') ||
+      raw.contains('ok') ||
+      raw.contains('active')) {
+    return InfoSeverity.success;
+  }
+  return InfoSeverity.normal;
+}
+
+InfoSeverity _severityForSmart(Object? smartStatus, Object? temperature) {
+  final smart = smartStatus?.toString().toLowerCase() ?? '';
+  final temp = _asDouble(temperature);
+  if (smart.contains('fail') ||
+      smart.contains('bad') ||
+      (temp != null && temp >= 55)) {
+    return InfoSeverity.danger;
+  }
+  if (smart.contains('warn') || (temp != null && temp >= 45)) {
+    return InfoSeverity.warning;
+  }
+  if (smart.contains('ok') || smart.contains('passed')) {
+    return InfoSeverity.success;
+  }
+  return InfoSeverity.normal;
 }
 
 String _formatBytesUsage(Object? used, Object? total) {

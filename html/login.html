@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>移动端登录页面设计</title>
+    <title>Unraid API 登录页面设计</title>
     <style>
         * {
             margin: 0;
@@ -399,8 +399,8 @@
         <!-- 登录页面原型 -->
         <div class="login-container">
             <div class="login-header">
-                <h1>欢迎回来</h1>
-                <p>请登录您的账号</p>
+                <h1>连接 Unraid</h1>
+                <p>使用 GraphQL API 密钥登录</p>
             </div>
             <div class="login-form">
                 <div class="form-group">
@@ -412,23 +412,17 @@
                     <div class="error-message">请输入有效的IP地址或域名</div>
                 </div>
                 <div class="form-group">
-                    <label for="username">用户名</label>
-                    <input type="text" id="username" placeholder="请输入用户名">
-                    <span class="material-icons icon">person</span>
-                    <div class="error-message">请输入有效的用户名</div>
-                </div>
-                <div class="form-group">
-                    <label for="password">密码</label>
-                    <input type="password" id="password" placeholder="请输入密码">
-                    <span class="material-icons icon">lock</span>
-                    <div class="error-message">密码不能少于6位</div>
+                    <label for="apiKey">API 密钥</label>
+                    <input type="password" id="apiKey" placeholder="请输入 x-api-key">
+                    <span class="material-icons icon">vpn_key</span>
+                    <div class="error-message">请输入有效的 API 密钥</div>
                 </div>
                 <div class="remember-forgot">
                     <div class="remember-me">
                         <input type="checkbox" id="remember">
                         <label for="remember">记住我</label>
                     </div>
-                    <a href="#" class="forgot-password">忘记密码?</a>
+                    <a href="server_info.html" class="forgot-password">进入原型</a>
                 </div>
                 <button class="login-button" id="loginBtn">登录</button>
             </div>
@@ -488,8 +482,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const protocolSelector = document.getElementById('protocolSelector');
             const domainInput = document.getElementById('domain');
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
+            const apiKeyInput = document.getElementById('apiKey');
             const loginBtn = document.getElementById('loginBtn');
             
             // 协议切换功能
@@ -517,20 +510,10 @@
                 }
             });
             
-            // 用户名验证
-            usernameInput.addEventListener('blur', function() {
+            // API 密钥验证
+            apiKeyInput.addEventListener('blur', function() {
                 const parent = this.parentElement;
                 if (this.value.trim() === '') {
-                    parent.classList.add('error');
-                } else {
-                    parent.classList.remove('error');
-                }
-            });
-            
-            // 密码验证
-            passwordInput.addEventListener('blur', function() {
-                const parent = this.parentElement;
-                if (this.value.length < 6) {
                     parent.classList.add('error');
                 } else {
                     parent.classList.remove('error');
@@ -560,28 +543,21 @@
                     isValid = false;
                 }
                 
-                // 验证用户名
-                if (usernameInput.value.trim() === '') {
-                    usernameInput.parentElement.classList.add('error');
-                    isValid = false;
-                }
-                
-                // 验证密码
-                if (passwordInput.value.length < 6) {
-                    passwordInput.parentElement.classList.add('error');
+                // 验证 API 密钥
+                if (apiKeyInput.value.trim() === '') {
+                    apiKeyInput.parentElement.classList.add('error');
                     isValid = false;
                 }
                 
                 if (isValid) {
-                    // 模拟登录成功
-                    this.innerHTML = '<span class="material-icons">check</span> 登录成功';
+                    // 模拟 API 连接成功
+                    this.innerHTML = '<span class="material-icons">check</span> 连接成功';
                     this.style.backgroundColor = '#52c41a';
                     
-                    // 2秒后恢复
+                    // 进入完整管理台原型
                     setTimeout(() => {
-                        this.innerHTML = '登录';
-                        this.style.backgroundColor = '';
-                    }, 2000);
+                        window.location.href = 'server_info.html';
+                    }, 700);
                 }
             });
         });

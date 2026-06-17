@@ -5,7 +5,6 @@ import '../theme/app_theme.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/fade_slide.dart';
 import '../widgets/gradient_button.dart';
-import '../widgets/management_list_tile.dart';
 import '../widgets/phone_frame.dart';
 import '../widgets/server_icon.dart';
 import 'album_page.dart';
@@ -145,6 +144,7 @@ class _MainShellPageState extends State<MainShellPage> {
         return _ManagementPage(
           key: const ValueKey('docker'),
           type: 'Docker',
+          dashboard: dashboard,
           items: dashboard.dockerItems
               .map((item) => ManagementData.fromApi(item, Icons.layers))
               .toList(),
@@ -154,6 +154,7 @@ class _MainShellPageState extends State<MainShellPage> {
         return _ManagementPage(
           key: const ValueKey('vm'),
           type: '虚拟机',
+          dashboard: dashboard,
           items: dashboard.vmItems
               .map((item) => ManagementData.fromApi(item, Icons.computer))
               .toList(),
@@ -163,6 +164,7 @@ class _MainShellPageState extends State<MainShellPage> {
         return _ManagementPage(
           key: const ValueKey('share'),
           type: '共享',
+          dashboard: dashboard,
           items: dashboard.shareItems
               .map((item) => ManagementData.fromApi(item, Icons.folder_shared))
               .toList(),
@@ -175,6 +177,8 @@ class _MainShellPageState extends State<MainShellPage> {
           dashboard: dashboard,
           onEditIcon: _showIconPicker,
           onPowerAction: _showPowerDialog,
+          onOpenDetails: () => _openDashboardDetails(dashboard),
+          onOpenModule: (module) => _showDashboardModule(module, dashboard),
         );
     }
   }
@@ -223,6 +227,43 @@ class _MainShellPageState extends State<MainShellPage> {
       );
     }
   }
+
+  void _openDashboardDetails(UnraidDashboard dashboard) {
+    Navigator.of(context).pushNamed(
+      DetailPage.routeName,
+      arguments: dashboard,
+    );
+  }
+
+  Future<void> _showDashboardModule(
+    _DashboardModule module,
+    UnraidDashboard dashboard,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => _DashboardModuleSheet(
+        module: module,
+        dashboard: dashboard,
+      ),
+    );
+  }
+}
+
+enum _DashboardModule {
+  notifications,
+  disks,
+  network,
+  ups,
+  plugins,
+  security,
+  cloud,
+  logs,
 }
 
 class _ServerInfoPage extends StatelessWidget {
@@ -232,89 +273,87 @@ class _ServerInfoPage extends StatelessWidget {
     required this.dashboard,
     required this.onEditIcon,
     required this.onPowerAction,
+    required this.onOpenDetails,
+    required this.onOpenModule,
   });
 
   final ServerIconVariant iconVariant;
   final UnraidDashboard dashboard;
   final VoidCallback onEditIcon;
   final ValueChanged<String> onPowerAction;
+  final VoidCallback onOpenDetails;
+  final ValueChanged<_DashboardModule> onOpenModule;
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(30, 30, 30, 82),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 86),
       child: FadeSlide(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        dashboard.serverName,
-                        style: TextStyle(
-                          color: AppTheme.textDark,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        dashboard.serverDescription,
-                        style: TextStyle(
-                          color: AppTheme.textMedium,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _ServerInfoChips(dashboard: dashboard),
-                      const SizedBox(height: 16),
-                      _DashboardInfoPanel(dashboard: dashboard),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  width: 126,
-                  child: Column(
-                    children: [
-                      ServerIconView(variant: iconVariant, size: 120),
-                      const SizedBox(height: 14),
-                      _OutlineActionButton(
-                        label: '编辑',
-                        onPressed: onEditIcon,
-                      ),
-                      const SizedBox(height: 10),
-                      _OutlineActionButton(
-                        label: '关机',
-                        icon: Icons.power_settings_new,
-                        color: AppTheme.danger,
-                        onPressed: () => onPowerAction('关闭'),
-                      ),
-                      const SizedBox(height: 10),
-                      _OutlineActionButton(
-                        label: '重启',
-                        icon: Icons.refresh,
-                        color: const Color(0xFF3498DB),
-                        onPressed: () => onPowerAction('重启'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            _ServerHeroCard(
+              dashboard: dashboard,
+              iconVariant: iconVariant,
+              onEditIcon: onEditIcon,
+              onPowerAction: onPowerAction,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
+            _HomeStatsGrid(dashboard: dashboard),
+            const SizedBox(height: 18),
             GradientButton(
               label: '查看完整信息',
               icon: Icons.info_outline,
-              onPressed: () => Navigator.of(context).pushNamed(
-                DetailPage.routeName,
+              onPressed: onOpenDetails,
+            ),
+            const SizedBox(height: 22),
+            _SectionHeader(
+              title: '实时指标',
+              trailing: 'metrics',
+            ),
+            const SizedBox(height: 10),
+            _MetricPanel(dashboard: dashboard),
+            const SizedBox(height: 22),
+            _SectionHeader(
+              title: '阵列与服务',
+              trailing: 'array / services',
+            ),
+            const SizedBox(height: 10),
+            _InfoCard(
+              children: [
+                _InfoPair(label: '阵列状态', value: dashboard.arrayState),
+                _InfoPair(label: '阵列容量', value: dashboard.arrayUsage),
+                _InfoPair(
+                  label: 'Parity',
+                  value: dashboard.paritySummary.isEmpty
+                      ? '暂无校验任务'
+                      : dashboard.paritySummary,
+                ),
+                _InfoPair(label: '服务在线', value: dashboard.servicesSummary),
+              ],
+            ),
+            const SizedBox(height: 22),
+            _SectionHeader(
+              title: '最近通知',
+              trailingButton: TextButton(
+                onPressed: () => onOpenModule(_DashboardModule.notifications),
+                child: const Text('全部'),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 10),
+            _NotificationPreviewList(
+              notifications: dashboard.notifications,
+              warningCount: dashboard.notificationWarning,
+              alertCount: dashboard.notificationAlert,
+            ),
+            const SizedBox(height: 22),
+            _SectionHeader(
+              title: '扩展管理',
+              trailing: '接口模块',
+            ),
+            const SizedBox(height: 10),
+            _QuickModuleGrid(onOpenModule: onOpenModule),
+            const SizedBox(height: 24),
             const _HomeAppShortcuts(),
           ],
         ),
@@ -323,93 +362,971 @@ class _ServerInfoPage extends StatelessWidget {
   }
 }
 
-class _ServerInfoChips extends StatelessWidget {
-  const _ServerInfoChips({required this.dashboard});
+class _ServerHeroCard extends StatelessWidget {
+  const _ServerHeroCard({
+    required this.dashboard,
+    required this.iconVariant,
+    required this.onEditIcon,
+    required this.onPowerAction,
+  });
+
+  final UnraidDashboard dashboard;
+  final ServerIconVariant iconVariant;
+  final VoidCallback onEditIcon;
+  final ValueChanged<String> onPowerAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'UNRAID SERVER',
+                      style: TextStyle(
+                        color: AppTheme.primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      dashboard.serverName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textDark,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      dashboard.serverDescription,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textMedium,
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _StatusChip(
+                          label: dashboard.status,
+                          severity: _severityFromStatus(dashboard.status),
+                        ),
+                        _StatusChip(label: dashboard.version),
+                        if (dashboard.notificationTotal > 0)
+                          _StatusChip(
+                            label: '${dashboard.notificationTotal} 条提醒',
+                            severity: dashboard.notificationAlert > 0
+                                ? InfoSeverity.danger
+                                : InfoSeverity.warning,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              ServerIconView(variant: iconVariant, size: 96),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _CompactActionButton(
+                  icon: Icons.palette,
+                  label: '编辑',
+                  onPressed: onEditIcon,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _CompactActionButton(
+                  icon: Icons.power_settings_new,
+                  label: '关机',
+                  color: AppTheme.danger,
+                  onPressed: () => onPowerAction('关闭'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _CompactActionButton(
+                  icon: Icons.refresh,
+                  label: '重启',
+                  color: const Color(0xFF3498DB),
+                  onPressed: () => onPowerAction('重启'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeStatsGrid extends StatelessWidget {
+  const _HomeStatsGrid({required this.dashboard});
 
   final UnraidDashboard dashboard;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 1.34,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       children: [
-        _ServerInfoChip(
-          icon: Icons.devices,
-          label: '型号',
-          value: dashboard.model,
+        _StatCard(
+          icon: Icons.speed,
+          label: 'CPU',
+          value: '${(dashboard.cpuPercent * 100).toStringAsFixed(0)}%',
+          subtitle: dashboard.cpuSummary,
+          progress: dashboard.cpuPercent,
         ),
-        _ServerInfoChip(
-          icon: Icons.verified_user,
-          label: '版本',
-          value: dashboard.version,
+        _StatCard(
+          icon: Icons.memory,
+          label: '内存',
+          value: dashboard.memoryUsage.split('/').first.trim(),
+          subtitle: dashboard.memoryUsage,
+          progress: dashboard.memoryPercent,
         ),
-        _ServerInfoChip(
-          icon: Icons.schedule,
-          label: '运行',
-          value: dashboard.uptime,
+        _StatCard(
+          icon: Icons.dns,
+          label: '阵列',
+          value: dashboard.arrayUsage.split('/').first.trim(),
+          subtitle: dashboard.arrayUsage,
+          progress: dashboard.arrayPercent,
         ),
-        _ServerInfoChip(
-          icon: Icons.wifi_tethering,
-          label: 'LAN',
-          value: dashboard.lanIp,
+        _StatCard(
+          icon: Icons.campaign,
+          label: '通知',
+          value: dashboard.notificationTotal.toString(),
+          subtitle:
+              '${dashboard.notificationWarning} 警告 · ${dashboard.notificationAlert} 严重',
+          progress: dashboard.notificationTotal == 0
+              ? 0
+              : (dashboard.notificationWarning + dashboard.notificationAlert) /
+                  dashboard.notificationTotal,
+          severity: dashboard.notificationAlert > 0
+              ? InfoSeverity.danger
+              : dashboard.notificationWarning > 0
+                  ? InfoSeverity.warning
+                  : InfoSeverity.normal,
         ),
       ],
     );
   }
 }
 
-class _DashboardInfoPanel extends StatelessWidget {
-  const _DashboardInfoPanel({required this.dashboard});
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.subtitle,
+    required this.progress,
+    this.severity = InfoSeverity.normal,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final String subtitle;
+  final double progress;
+  final InfoSeverity severity;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = severity == InfoSeverity.normal
+        ? _progressColor(progress)
+        : _severityColor(severity);
+    return _SurfaceCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textLight,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              Icon(icon, color: AppTheme.textLight, size: 19),
+            ],
+          ),
+          Text(
+            value.isEmpty ? '未知' : value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.textDark,
+              fontSize: 21,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 6,
+              value: progress.clamp(0, 1).toDouble(),
+              backgroundColor: AppTheme.softLine,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+          Text(
+            subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.textLight,
+              fontSize: 11,
+              height: 1.25,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    this.trailing,
+    this.trailingButton,
+  });
+
+  final String title;
+  final String? trailing;
+  final Widget? trailingButton;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              color: AppTheme.textDark,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        if (trailingButton != null)
+          trailingButton!
+        else if (trailing != null)
+          Text(
+            trailing!,
+            style: const TextStyle(color: AppTheme.textLight, fontSize: 12),
+          ),
+      ],
+    );
+  }
+}
+
+class _MetricPanel extends StatelessWidget {
+  const _MetricPanel({required this.dashboard});
 
   final UnraidDashboard dashboard;
 
   @override
   Widget build(BuildContext context) {
+    return _SurfaceCard(
+      child: Column(
+        children: [
+          _MetricLine(
+            icon: Icons.speed,
+            label: 'CPU 使用',
+            value: '${(dashboard.cpuPercent * 100).toStringAsFixed(1)}%',
+            progress: dashboard.cpuPercent,
+          ),
+          const SizedBox(height: 10),
+          _MetricLine(
+            icon: Icons.storage,
+            label: '内存',
+            value: dashboard.memoryUsage,
+            progress: dashboard.memoryPercent,
+          ),
+          const SizedBox(height: 10),
+          _MetricLine(
+            icon: Icons.dns,
+            label: '阵列',
+            value: dashboard.arrayUsage,
+            progress: dashboard.arrayPercent,
+          ),
+          const SizedBox(height: 10),
+          _InfoLine(
+            icon: Icons.developer_board,
+            label: '主板',
+            value: dashboard.baseboardSummary,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotificationPreviewList extends StatelessWidget {
+  const _NotificationPreviewList({
+    required this.notifications,
+    required this.warningCount,
+    required this.alertCount,
+  });
+
+  final List<UnraidNotification> notifications;
+  final int warningCount;
+  final int alertCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = notifications.take(3).toList();
+    if (preview.isEmpty) {
+      return _SurfaceCard(
+        child: Row(
+          children: [
+            _IconBadge(
+                icon: Icons.check_circle, severity: InfoSeverity.success),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                '暂无警告或严重通知',
+                style: TextStyle(color: AppTheme.textMedium, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _InfoLine(
-          icon: Icons.power,
-          label: '状态',
-          value: dashboard.status,
-        ),
-        const SizedBox(height: 8),
-        _InfoLine(
-          icon: Icons.memory,
-          label: 'CPU',
-          value: dashboard.cpuSummary,
-        ),
-        const SizedBox(height: 8),
-        _MetricLine(
-          icon: Icons.speed,
-          label: 'CPU 使用',
-          value: '${(dashboard.cpuPercent * 100).toStringAsFixed(1)}%',
-          progress: dashboard.cpuPercent,
-        ),
-        const SizedBox(height: 8),
-        _MetricLine(
-          icon: Icons.storage,
-          label: '内存',
-          value: dashboard.memoryUsage,
-          progress: dashboard.memoryPercent,
-        ),
-        const SizedBox(height: 8),
-        _MetricLine(
-          icon: Icons.dns,
-          label: '阵列 ${dashboard.arrayState}',
-          value: dashboard.arrayUsage,
-          progress: dashboard.arrayPercent,
-        ),
-        const SizedBox(height: 8),
-        _InfoLine(
-          icon: Icons.developer_board,
-          label: '主板',
-          value: dashboard.baseboardSummary,
-        ),
+        for (final notification in preview)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _NoticeTile(notification: notification),
+          ),
       ],
     );
   }
+}
+
+class _QuickModuleGrid extends StatelessWidget {
+  const _QuickModuleGrid({required this.onOpenModule});
+
+  final ValueChanged<_DashboardModule> onOpenModule;
+
+  @override
+  Widget build(BuildContext context) {
+    const modules = [
+      _DashboardModule.disks,
+      _DashboardModule.network,
+      _DashboardModule.ups,
+      _DashboardModule.plugins,
+      _DashboardModule.security,
+      _DashboardModule.cloud,
+    ];
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 2.14,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        for (final module in modules)
+          _QuickModuleCard(
+            module: module,
+            onTap: () => onOpenModule(module),
+          ),
+      ],
+    );
+  }
+}
+
+class _QuickModuleCard extends StatelessWidget {
+  const _QuickModuleCard({
+    required this.module,
+    required this.onTap,
+  });
+
+  final _DashboardModule module;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final severity = _moduleSeverity(module);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: _SurfaceCard(
+          padding: const EdgeInsets.all(11),
+          child: Row(
+            children: [
+              _IconBadge(icon: _moduleIcon(module), severity: severity),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _moduleTitle(module),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _moduleSubtitle(module),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textLight,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardModuleSheet extends StatelessWidget {
+  const _DashboardModuleSheet({
+    required this.module,
+    required this.dashboard,
+  });
+
+  final _DashboardModule module;
+  final UnraidDashboard dashboard;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _moduleItems(module, dashboard);
+    return SafeArea(
+      top: false,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.78,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  _IconBadge(
+                    icon: _moduleIcon(module),
+                    severity: _moduleSeverity(module),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _moduleTitle(module),
+                          style: const TextStyle(
+                            color: AppTheme.textDark,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _moduleSubtitle(module),
+                          style: const TextStyle(
+                            color: AppTheme.textLight,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (module == _DashboardModule.notifications)
+                for (final notification in dashboard.notifications)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _NoticeTile(notification: notification),
+                  )
+              else if (items.isEmpty)
+                _StateMessage(
+                  icon: _moduleIcon(module),
+                  title: '暂无数据',
+                  message: '服务器没有返回${_moduleTitle(module)}相关信息。',
+                )
+              else
+                for (final item in items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _InfoItemTile(item: item),
+                  ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SurfaceCard extends StatelessWidget {
+  const _SurfaceCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(14),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.softLine),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      child: Column(children: children),
+    );
+  }
+}
+
+class _InfoPair extends StatelessWidget {
+  const _InfoPair({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 70,
+            child: Text(
+              label,
+              style: const TextStyle(color: AppTheme.textLight, fontSize: 12),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? '未知' : value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: AppTheme.textDark,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactActionButton extends StatelessWidget {
+  const _CompactActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.color = AppTheme.primary,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: color,
+          side: const BorderSide(color: AppTheme.line),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({
+    required this.label,
+    this.severity = InfoSeverity.normal,
+  });
+
+  final String label;
+  final InfoSeverity severity;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _severityColor(severity);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Text(
+        label.isEmpty ? '未知' : label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: severity == InfoSeverity.normal ? AppTheme.textMedium : color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _NoticeTile extends StatelessWidget {
+  const _NoticeTile({required this.notification});
+
+  final UnraidNotification notification;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      padding: const EdgeInsets.all(10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _IconBadge(
+            icon: notification.severity == InfoSeverity.danger
+                ? Icons.error_outline
+                : Icons.warning_amber,
+            severity: notification.severity,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notification.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  notification.description.isEmpty
+                      ? notification.subject
+                      : notification.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textMedium,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+                if (notification.timestamp.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    notification.timestamp,
+                    style: const TextStyle(
+                      color: AppTheme.textLight,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoItemTile extends StatelessWidget {
+  const _InfoItemTile({required this.item});
+
+  final UnraidInfoItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          _IconBadge(icon: Icons.info_outline, severity: item.severity),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textDark,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textLight,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 96),
+            child: Text(
+              item.value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: AppTheme.textMedium,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IconBadge extends StatelessWidget {
+  const _IconBadge({
+    required this.icon,
+    this.severity = InfoSeverity.normal,
+  });
+
+  final IconData icon;
+  final InfoSeverity severity;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _severityColor(severity);
+    return Container(
+      width: 30,
+      height: 30,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(icon, color: color, size: 18),
+    );
+  }
+}
+
+List<UnraidInfoItem> _moduleItems(
+  _DashboardModule module,
+  UnraidDashboard dashboard,
+) {
+  return switch (module) {
+    _DashboardModule.notifications => const [],
+    _DashboardModule.disks => dashboard.diskItems,
+    _DashboardModule.network => dashboard.networkItems,
+    _DashboardModule.ups => dashboard.upsItems,
+    _DashboardModule.plugins => dashboard.pluginItems,
+    _DashboardModule.security => dashboard.securityItems,
+    _DashboardModule.cloud => dashboard.cloudItems,
+    _DashboardModule.logs => dashboard.logItems,
+  };
+}
+
+String _moduleTitle(_DashboardModule module) {
+  return switch (module) {
+    _DashboardModule.notifications => '通知中心',
+    _DashboardModule.disks => '磁盘',
+    _DashboardModule.network => '网络',
+    _DashboardModule.ups => 'UPS',
+    _DashboardModule.plugins => '插件',
+    _DashboardModule.security => '权限',
+    _DashboardModule.cloud => '连接',
+    _DashboardModule.logs => '日志',
+  };
+}
+
+String _moduleSubtitle(_DashboardModule module) {
+  return switch (module) {
+    _DashboardModule.notifications => 'overview / warningsAndAlerts',
+    _DashboardModule.disks => 'SMART / 分区 / 温度',
+    _DashboardModule.network => '接口 / 访问地址',
+    _DashboardModule.ups => '电量 / 负载 / 策略',
+    _DashboardModule.plugins => '安装任务 / 模块',
+    _DashboardModule.security => 'API Key / OIDC',
+    _DashboardModule.cloud => '远程访问 / Cloud',
+    _DashboardModule.logs => 'logFiles',
+  };
+}
+
+IconData _moduleIcon(_DashboardModule module) {
+  return switch (module) {
+    _DashboardModule.notifications => Icons.notifications,
+    _DashboardModule.disks => Icons.storage,
+    _DashboardModule.network => Icons.settings_ethernet,
+    _DashboardModule.ups => Icons.battery_charging_full,
+    _DashboardModule.plugins => Icons.extension,
+    _DashboardModule.security => Icons.vpn_key,
+    _DashboardModule.cloud => Icons.cloud_done,
+    _DashboardModule.logs => Icons.receipt_long,
+  };
+}
+
+InfoSeverity _moduleSeverity(_DashboardModule module) {
+  return switch (module) {
+    _DashboardModule.ups => InfoSeverity.warning,
+    _DashboardModule.security => InfoSeverity.danger,
+    _DashboardModule.cloud => InfoSeverity.success,
+    _ => InfoSeverity.normal,
+  };
+}
+
+Color _severityColor(InfoSeverity severity) {
+  return switch (severity) {
+    InfoSeverity.normal => AppTheme.primary,
+    InfoSeverity.success => AppTheme.success,
+    InfoSeverity.warning => const Color(0xFFFF8A00),
+    InfoSeverity.danger => AppTheme.danger,
+  };
+}
+
+IconData _iconForInfoSeverity(InfoSeverity severity) {
+  return switch (severity) {
+    InfoSeverity.normal => Icons.info_outline,
+    InfoSeverity.success => Icons.check_circle_outline,
+    InfoSeverity.warning => Icons.warning_amber,
+    InfoSeverity.danger => Icons.error_outline,
+  };
+}
+
+InfoSeverity _severityFromStatus(String value) {
+  final lower = value.toLowerCase();
+  if (lower.contains('在线') ||
+      lower.contains('运行') ||
+      lower.contains('started') ||
+      lower.contains('online')) {
+    return InfoSeverity.success;
+  }
+  if (lower.contains('警告') ||
+      lower.contains('停止') ||
+      lower.contains('paused')) {
+    return InfoSeverity.warning;
+  }
+  if (lower.contains('错误') || lower.contains('离线') || lower.contains('异常')) {
+    return InfoSeverity.danger;
+  }
+  return InfoSeverity.normal;
+}
+
+Color _progressColor(double progress) {
+  if (progress >= 0.85) {
+    return AppTheme.danger;
+  }
+  if (progress >= 0.65) {
+    return const Color(0xFFFF8A00);
+  }
+  return AppTheme.primary;
 }
 
 class _InfoLine extends StatelessWidget {
@@ -523,47 +1440,6 @@ class _MetricLine extends StatelessWidget {
   }
 }
 
-class _ServerInfoChip extends StatelessWidget {
-  const _ServerInfoChip({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.softLine),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: AppTheme.primary, size: 15),
-          const SizedBox(width: 5),
-          Text(
-            '$label $value',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppTheme.textMedium,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _HomeAppShortcuts extends StatelessWidget {
   const _HomeAppShortcuts();
 
@@ -653,41 +1529,6 @@ class _HomeAppShortcut extends StatelessWidget {
   }
 }
 
-class _OutlineActionButton extends StatelessWidget {
-  const _OutlineActionButton({
-    required this.label,
-    required this.onPressed,
-    this.icon,
-    this.color = AppTheme.primary,
-  });
-
-  final String label;
-  final VoidCallback onPressed;
-  final IconData? icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 18),
-        label: Text(label),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: color,
-          side: const BorderSide(color: AppTheme.line),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          padding: EdgeInsets.zero,
-        ),
-      ),
-    );
-  }
-}
-
 class ManagementData {
   const ManagementData({
     required this.id,
@@ -696,6 +1537,9 @@ class ManagementData {
     required this.status,
     required this.description,
     required this.type,
+    required this.progress,
+    required this.tags,
+    required this.details,
   });
 
   factory ManagementData.fromApi(UnraidManagementItem item, IconData icon) {
@@ -706,6 +1550,9 @@ class ManagementData {
       status: item.status,
       description: item.description,
       type: item.type,
+      progress: item.progress,
+      tags: item.tags,
+      details: item.details,
     );
   }
 
@@ -715,57 +1562,159 @@ class ManagementData {
   final String status;
   final String description;
   final ManagementItemType type;
+  final double progress;
+  final List<String> tags;
+  final List<UnraidInfoItem> details;
 }
 
-class _ManagementPage extends StatelessWidget {
+class _ManagementPage extends StatefulWidget {
   const _ManagementPage({
     super.key,
     required this.type,
+    required this.dashboard,
     required this.items,
     required this.apiClient,
   });
 
   final String type;
+  final UnraidDashboard dashboard;
   final List<ManagementData> items;
   final UnraidApiClient? apiClient;
 
   @override
+  State<_ManagementPage> createState() => _ManagementPageState();
+}
+
+class _ManagementPageState extends State<_ManagementPage> {
+  final _searchController = TextEditingController();
+  final Set<String> _submittingIds = {};
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final query = _searchController.text.trim().toLowerCase();
+    final filteredItems = widget.items.where((item) {
+      if (query.isEmpty) {
+        return true;
+      }
+      return [
+        item.title,
+        item.status,
+        item.description,
+        ...item.tags,
+      ].join(' ').toLowerCase().contains(query);
+    }).toList();
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(30, 30, 30, 82),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 86),
       child: FadeSlide(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (final item in items)
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () => Navigator.of(context).pushNamed(
-                    ManagementDetailPage.routeName,
-                    arguments: ManagementDetailArgs(
-                      type: type,
-                      data: item,
-                      apiClient: apiClient,
+            _ManagementStats(type: widget.type, dashboard: widget.dashboard),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: '搜索${widget.type}项目',
+                      prefixIcon: const Icon(Icons.search),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 12),
                     ),
                   ),
-                  child: ManagementListTile(
-                    icon: item.icon,
-                    title: item.title,
-                    status: item.status,
-                  ),
                 ),
+                const SizedBox(width: 8),
+                _CompactActionButton(
+                  icon: Icons.sync,
+                  label: '刷新',
+                  onPressed: () => _showMessage('${widget.type}刷新已提交'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            for (final item in filteredItems)
+              _ManagementCard(
+                item: item,
+                isSubmitting: _submittingIds.contains(item.id),
+                onTap: () => _openDetail(item),
+                onAction: item.type == ManagementItemType.share
+                    ? null
+                    : (action) => _runAction(item, action),
               ),
-            if (items.isEmpty)
+            if (widget.items.isEmpty)
               _StateMessage(
                 icon: Icons.inbox_outlined,
-                title: '$type 为空',
-                message: '服务器当前没有返回$type项目。',
+                title: '${widget.type}为空',
+                message: '服务器当前没有返回${widget.type}项目。',
+              ),
+            if (widget.items.isNotEmpty && filteredItems.isEmpty)
+              _StateMessage(
+                icon: Icons.search_off,
+                title: '没有匹配项',
+                message: '换一个关键词试试。',
               ),
           ],
         ),
       ),
+    );
+  }
+
+  void _openDetail(ManagementData item) {
+    Navigator.of(context).pushNamed(
+      ManagementDetailPage.routeName,
+      arguments: ManagementDetailArgs(
+        type: widget.type,
+        data: item,
+        apiClient: widget.apiClient,
+      ),
+    );
+  }
+
+  Future<void> _runAction(
+    ManagementData item,
+    ManagementAction action,
+  ) async {
+    final client = widget.apiClient;
+    if (client == null || item.id.isEmpty) {
+      _showMessage('缺少服务器连接或项目 ID');
+      return;
+    }
+
+    setState(() => _submittingIds.add(item.id));
+    try {
+      await client.runManagementAction(
+        type: item.type,
+        id: item.id,
+        action: action,
+      );
+      if (!mounted) {
+        return;
+      }
+      _showMessage('${item.title} ${_actionLabel(action)}操作已提交');
+    } on UnraidApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage(error.message);
+    } finally {
+      if (mounted) {
+        setState(() => _submittingIds.remove(item.id));
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }
@@ -780,6 +1729,248 @@ class ManagementDetailArgs {
   final String type;
   final ManagementData data;
   final UnraidApiClient? apiClient;
+}
+
+class _ManagementStats extends StatelessWidget {
+  const _ManagementStats({
+    required this.type,
+    required this.dashboard,
+  });
+
+  final String type;
+  final UnraidDashboard dashboard;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = switch (type) {
+      'Docker' => dashboard.dockerItems,
+      '虚拟机' => dashboard.vmItems,
+      _ => dashboard.shareItems,
+    };
+    final running = items.where((item) => _isRunningStatus(item.status)).length;
+    final secondary = switch (type) {
+      'Docker' => dashboard.dockerNetworkSummary,
+      '虚拟机' => '$running 运行中 · ${items.length - running} 未运行',
+      _ => '阵列 ${dashboard.arrayUsage}',
+    };
+    final icon = switch (type) {
+      'Docker' => Icons.layers,
+      '虚拟机' => Icons.computer,
+      _ => Icons.folder_shared,
+    };
+    final secondIcon = switch (type) {
+      'Docker' => Icons.hub,
+      '虚拟机' => Icons.memory,
+      _ => Icons.move_down,
+    };
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 1.72,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        _StatCard(
+          icon: icon,
+          label: type,
+          value: items.length.toString(),
+          subtitle: '$running 运行中',
+          progress: items.isEmpty ? 0 : running / items.length,
+          severity: running == 0 && items.isNotEmpty
+              ? InfoSeverity.warning
+              : InfoSeverity.normal,
+        ),
+        _StatCard(
+          icon: secondIcon,
+          label: type == '共享' ? 'Mover' : '概览',
+          value: type == '共享' ? '02:00' : running.toString(),
+          subtitle: secondary,
+          progress: dashboard.arrayPercent,
+        ),
+      ],
+    );
+  }
+}
+
+class _ManagementCard extends StatelessWidget {
+  const _ManagementCard({
+    required this.item,
+    required this.isSubmitting,
+    required this.onTap,
+    required this.onAction,
+  });
+
+  final ManagementData item;
+  final bool isSubmitting;
+  final VoidCallback onTap;
+  final ValueChanged<ManagementAction>? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final running = _isRunningStatus(item.status);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: _SurfaceCard(
+            padding: const EdgeInsets.all(13),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _IconBadge(
+                      icon: item.icon,
+                      severity:
+                          running ? InfoSeverity.success : InfoSeverity.warning,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppTheme.textDark,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            item.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppTheme.textLight,
+                              fontSize: 12,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _StatusChip(
+                      label: item.status,
+                      severity:
+                          running ? InfoSeverity.success : InfoSeverity.warning,
+                    ),
+                  ],
+                ),
+                if (item.progress > 0) ...[
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      minHeight: 6,
+                      value: item.progress.clamp(0, 1).toDouble(),
+                      backgroundColor: AppTheme.softLine,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _progressColor(item.progress),
+                      ),
+                    ),
+                  ),
+                ],
+                if (item.tags.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final tag in item.tags.take(4))
+                        _StatusChip(label: tag),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                if (onAction == null)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _CompactActionButton(
+                          icon: Icons.folder_open,
+                          label: '浏览',
+                          onPressed: onTap,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _CompactActionButton(
+                          icon: Icons.tune,
+                          label: '设置',
+                          onPressed: onTap,
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _CompactActionButton(
+                          icon: running ? Icons.restart_alt : Icons.play_arrow,
+                          label: running ? '重启' : '启动',
+                          onPressed: isSubmitting
+                              ? null
+                              : () => onAction!(
+                                    running
+                                        ? ManagementAction.restart
+                                        : ManagementAction.start,
+                                  ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _CompactActionButton(
+                          icon: Icons.stop,
+                          label: '停止',
+                          color: AppTheme.danger,
+                          onPressed: isSubmitting
+                              ? null
+                              : () => onAction!(ManagementAction.stop),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _CompactActionButton(
+                          icon: Icons.visibility,
+                          label: '详情',
+                          onPressed: onTap,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+bool _isRunningStatus(String value) {
+  return value.contains('运行') ||
+      value.contains('在线') ||
+      value.toLowerCase().contains('running') ||
+      value.toLowerCase().contains('online') ||
+      value.toLowerCase().contains('started');
+}
+
+String _actionLabel(ManagementAction action) {
+  return switch (action) {
+    ManagementAction.start => '启动',
+    ManagementAction.stop => '停止',
+    ManagementAction.restart => '重启',
+  };
 }
 
 class ManagementDetailPage extends StatefulWidget {
@@ -810,6 +2001,9 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
               status: '未知',
               description: '暂无信息',
               type: ManagementItemType.share,
+              progress: 0,
+              tags: const [],
+              details: const [],
             ),
             apiClient: null,
           );
@@ -902,8 +2096,27 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                           ? '/mnt/user/${detailArgs.data.title}'
                           : detailArgs.data.title,
                     ),
+                    for (final detail in detailArgs.data.details)
+                      _DetailInfoRow(
+                        icon: _iconForInfoSeverity(detail.severity),
+                        label: detail.title,
+                        value: detail.value.isEmpty
+                            ? detail.description
+                            : '${detail.value} · ${detail.description}',
+                      ),
                   ],
                 ),
+                if (detailArgs.data.tags.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final tag in detailArgs.data.tags)
+                        _StatusChip(label: tag),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 18),
                 _DetailPanel(
                   children: [
