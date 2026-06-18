@@ -541,7 +541,7 @@ class UnraidManagementItem {
         UnraidInfoItem(
           title: '端口',
           value: _formatContainerPorts(ports),
-          description: _firstText([json['lanIpPorts'], '未返回端口映射']),
+          description: _formatContainerPortDescription(ports),
           severity: InfoSeverity.normal,
         ),
         if (json['tailscaleEnabled'] == true)
@@ -989,7 +989,6 @@ query Dashboard {
       imageId
       command
       created
-      lanIpPorts
       sizeRootFs
       sizeRw
       sizeLog
@@ -1444,6 +1443,25 @@ String _formatContainerPorts(List<Object?> ports) {
     return '$publicPort:$privatePort/$type';
   }).where((value) => value.isNotEmpty);
   return mapped.take(3).join(' · ');
+}
+
+String _formatContainerPortDescription(List<Object?> ports) {
+  final mapped = ports.map((value) {
+    final json = _asMap(value);
+    final ip = _firstText([json['ip']]);
+    final privatePort = _firstText([json['privatePort']]);
+    final publicPort = _firstText([json['publicPort']]);
+    final type = _firstText([json['type'], 'tcp']);
+    if (privatePort.isEmpty && publicPort.isEmpty) {
+      return '';
+    }
+    final binding = publicPort.isEmpty
+        ? privatePort
+        : '$publicPort -> ${privatePort.isEmpty ? '?' : privatePort}';
+    return '${ip.isEmpty ? '容器' : ip} · $binding/$type';
+  }).where((value) => value.isNotEmpty);
+  final description = mapped.take(3).join(' · ');
+  return description.isEmpty ? '未返回端口映射' : description;
 }
 
 InfoSeverity _severityForStatus(Object? value) {

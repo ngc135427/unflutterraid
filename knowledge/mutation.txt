@@ -790,7 +790,6 @@ query ExampleQuery($apiKeyId: PrefixedID!, $roles: [Role!]!, $diskId: PrefixedID
         publicPort
         type
       }
-      lanIpPorts
       sizeRootFs
       sizeRw
       sizeLog
@@ -893,7 +892,6 @@ query ExampleQuery($apiKeyId: PrefixedID!, $roles: [Role!]!, $diskId: PrefixedID
       imageId
       command
       created
-      lanIpPorts
       sizeRootFs
       sizeRw
       sizeLog
@@ -940,7 +938,6 @@ query ExampleQuery($apiKeyId: PrefixedID!, $roles: [Role!]!, $diskId: PrefixedID
             imageId
             command
             created
-            lanIpPorts
             sizeRootFs
             sizeRw
             sizeLog

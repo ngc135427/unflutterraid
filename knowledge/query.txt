@@ -790,7 +790,6 @@ privatePort
 publicPort
 type
 }
-lanIpPorts
 sizeRootFs
 sizeRw
 sizeLog
@@ -893,7 +892,6 @@ image
 imageId
 command
 created
-lanIpPorts
 sizeRootFs
 sizeRw
 sizeLog
@@ -940,7 +938,6 @@ image
 imageId
 command
 created
-lanIpPorts
 sizeRootFs
 sizeRw
 sizeLog
