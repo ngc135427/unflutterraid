@@ -347,7 +347,6 @@ class UnraidDashboard {
         'Unraid',
       ]),
       serverDescription: _firstText([
-        server['comment'],
         os['distro'],
         cpu['brand'],
         'Media server',
@@ -396,9 +395,7 @@ class UnraidDashboard {
       notificationWarning: _asInt(unreadNotifications['warning']),
       notificationAlert: _asInt(unreadNotifications['alert']),
       notificationTotal: _asInt(unreadNotifications['total']),
-      notifications: _asList(notifications['warningsAndAlerts'])
-          .map(UnraidNotification.fromJson)
-          .toList(),
+      notifications: const [],
       diskItems: _asList(json['disks']).map(UnraidInfoItem.fromDisk).toList(),
       networkItems: _asList(json['networkInterfaces']).isNotEmpty
           ? _asList(json['networkInterfaces'])
@@ -856,7 +853,6 @@ query Dashboard {
     id
     guid
     name
-    comment
     status
     localurl
     remoteurl
@@ -940,31 +936,6 @@ query Dashboard {
       available
       percentTotal
     }
-    temperature {
-      id
-      summary {
-        average
-        warningCount
-        criticalCount
-        hottest {
-          id
-          name
-          type
-          location
-          warning
-          critical
-        }
-      }
-    }
-    network {
-      id
-      name
-      operstate
-      rxSec
-      txSec
-      utilizationPercent
-      lastUpdated
-    }
   }
   notifications {
     id
@@ -975,17 +946,6 @@ query Dashboard {
         alert
         total
       }
-    }
-    warningsAndAlerts {
-      id
-      title
-      subject
-      description
-      importance
-      link
-      type
-      timestamp
-      formattedTimestamp
     }
   }
   array {

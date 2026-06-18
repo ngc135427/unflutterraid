@@ -887,11 +887,18 @@ class _DashboardModuleSheet extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               if (module == _DashboardModule.notifications)
-                for (final notification in dashboard.notifications)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _NoticeTile(notification: notification),
+                if (dashboard.notifications.isEmpty)
+                  _StateMessage(
+                    icon: _moduleIcon(module),
+                    title: '暂无通知详情',
+                    message: '服务器仅返回了通知数量，未返回警告或严重通知列表。',
                   )
+                else
+                  for (final notification in dashboard.notifications)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _NoticeTile(notification: notification),
+                    )
               else if (items.isEmpty)
                 _StateMessage(
                   icon: _moduleIcon(module),
@@ -1249,7 +1256,7 @@ String _moduleTitle(_DashboardModule module) {
 
 String _moduleSubtitle(_DashboardModule module) {
   return switch (module) {
-    _DashboardModule.notifications => 'overview / warningsAndAlerts',
+    _DashboardModule.notifications => 'overview',
     _DashboardModule.disks => 'SMART / 分区 / 温度',
     _DashboardModule.network => '接口 / 访问地址',
     _DashboardModule.ups => '电量 / 负载 / 策略',

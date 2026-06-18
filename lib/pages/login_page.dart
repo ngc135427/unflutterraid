@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../services/login_preferences.dart';
 import '../services/unraid_api_client.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/fade_slide.dart';
@@ -37,6 +38,7 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _domainFocusNode.addListener(_handleFocusChange);
     _apiKeyFocusNode.addListener(_handleFocusChange);
+    _loadRememberedLogin();
   }
 
   @override
@@ -76,6 +78,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await client.checkConnection();
+      await _saveRememberedLogin();
       if (!mounted) {
         return;
       }
@@ -107,6 +110,31 @@ class _LoginPageState extends State<LoginPage> {
         _isSubmitting = false;
       });
     }
+  }
+
+  Future<void> _loadRememberedLogin() async {
+    final rememberedLogin = await LoginPreferences.load();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _rememberMe = rememberedLogin.rememberMe;
+      if (rememberedLogin.rememberMe) {
+        _domainController.text = rememberedLogin.domain;
+        _apiKeyController.text = rememberedLogin.apiKey;
+        _useHttps = rememberedLogin.useHttps;
+      }
+    });
+  }
+
+  Future<void> _saveRememberedLogin() async {
+    await LoginPreferences.save(
+      rememberMe: _rememberMe,
+      domain: _domainController.text.trim(),
+      apiKey: _apiKeyController.text.trim(),
+      useHttps: _useHttps,
+    );
   }
 
   String _buildBaseUrl() {
