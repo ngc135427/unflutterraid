@@ -790,9 +790,6 @@ privatePort
 publicPort
 type
 }
-sizeRootFs
-sizeRw
-sizeLog
 labels
 state
 status
@@ -892,9 +889,6 @@ image
 imageId
 command
 created
-sizeRootFs
-sizeRw
-sizeLog
 labels
 state
 status
@@ -938,9 +932,6 @@ image
 imageId
 command
 created
-sizeRootFs
-sizeRw
-sizeLog
 labels
 state
 status

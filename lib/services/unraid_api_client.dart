@@ -989,9 +989,6 @@ query Dashboard {
       imageId
       command
       created
-      sizeRootFs
-      sizeRw
-      sizeLog
       state
       status
       hostConfig {

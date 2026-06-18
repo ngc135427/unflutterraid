@@ -790,9 +790,6 @@ query ExampleQuery($apiKeyId: PrefixedID!, $roles: [Role!]!, $diskId: PrefixedID
         publicPort
         type
       }
-      sizeRootFs
-      sizeRw
-      sizeLog
       labels
       state
       status
@@ -892,9 +889,6 @@ query ExampleQuery($apiKeyId: PrefixedID!, $roles: [Role!]!, $diskId: PrefixedID
       imageId
       command
       created
-      sizeRootFs
-      sizeRw
-      sizeLog
       labels
       state
       status
@@ -938,9 +932,6 @@ query ExampleQuery($apiKeyId: PrefixedID!, $roles: [Role!]!, $diskId: PrefixedID
             imageId
             command
             created
-            sizeRootFs
-            sizeRw
-            sizeLog
             labels
             state
             status
