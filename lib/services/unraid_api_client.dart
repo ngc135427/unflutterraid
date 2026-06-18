@@ -996,7 +996,6 @@ query Dashboard {
       }
       labels
       autoStart
-      autoStartOrder
       webUiUrl
       templatePath
       isOrphaned
