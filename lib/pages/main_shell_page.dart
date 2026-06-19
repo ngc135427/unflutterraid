@@ -175,6 +175,7 @@ class _MainShellPageState extends State<MainShellPage> {
           key: const ValueKey('server'),
           iconVariant: _serverIcon,
           dashboard: dashboard,
+          apiClient: _apiClient,
           onEditIcon: _showIconPicker,
           onPowerAction: _showPowerDialog,
           onOpenDetails: () => _openDashboardDetails(dashboard),
@@ -271,6 +272,7 @@ class _ServerInfoPage extends StatelessWidget {
     super.key,
     required this.iconVariant,
     required this.dashboard,
+    required this.apiClient,
     required this.onEditIcon,
     required this.onPowerAction,
     required this.onOpenDetails,
@@ -279,6 +281,7 @@ class _ServerInfoPage extends StatelessWidget {
 
   final ServerIconVariant iconVariant;
   final UnraidDashboard dashboard;
+  final UnraidApiClient? apiClient;
   final VoidCallback onEditIcon;
   final ValueChanged<String> onPowerAction;
   final VoidCallback onOpenDetails;
@@ -354,7 +357,7 @@ class _ServerInfoPage extends StatelessWidget {
             const SizedBox(height: 10),
             _QuickModuleGrid(onOpenModule: onOpenModule),
             const SizedBox(height: 24),
-            const _HomeAppShortcuts(),
+            _HomeAppShortcuts(apiClient: apiClient),
           ],
         ),
       ),
@@ -1448,7 +1451,9 @@ class _MetricLine extends StatelessWidget {
 }
 
 class _HomeAppShortcuts extends StatelessWidget {
-  const _HomeAppShortcuts();
+  const _HomeAppShortcuts({required this.apiClient});
+
+  final UnraidApiClient? apiClient;
 
   @override
   Widget build(BuildContext context) {
@@ -1458,7 +1463,22 @@ class _HomeAppShortcuts extends StatelessWidget {
           label: '相册',
           icon: Icons.photo_library,
           colors: const [AppTheme.primary, AppTheme.secondary],
-          onTap: () => Navigator.of(context).pushNamed(AlbumPage.routeName),
+          onTap: () {
+            final client = apiClient;
+            if (client == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('请先连接服务器')),
+              );
+              return;
+            }
+            Navigator.of(context).pushNamed(
+              AlbumPage.routeName,
+              arguments: AlbumPageArgs(
+                apiClient: client,
+                rootPath: '/mnt/user/photos',
+              ),
+            );
+          },
         ),
         const SizedBox(width: 20),
         _HomeAppShortcut(

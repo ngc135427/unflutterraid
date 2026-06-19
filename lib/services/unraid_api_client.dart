@@ -141,6 +141,47 @@ class UnraidApiClient {
     return Uri.parse(baseUrl).resolve(encodedPath);
   }
 
+  /// Recursively scans [rootPath] for image and video files.
+  ///
+  /// Returns all media entries found, sorted by modified date descending.
+  /// [maxDepth] limits recursive directory traversal (default 3).
+  Future<List<UnraidFileEntry>> fetchMediaFiles(
+    String rootPath, {
+    int maxDepth = 3,
+  }) async {
+    final result = <UnraidFileEntry>[];
+    await _scanDirectory(rootPath, result, maxDepth, 0);
+    result.sort((a, b) {
+      final da = a.modifiedDate ?? DateTime(0);
+      final db = b.modifiedDate ?? DateTime(0);
+      return db.compareTo(da);
+    });
+    return result;
+  }
+
+  Future<void> _scanDirectory(
+    String path,
+    List<UnraidFileEntry> result,
+    int maxDepth,
+    int currentDepth,
+  ) async {
+    if (currentDepth > maxDepth) return;
+    late List<UnraidFileEntry> entries;
+    try {
+      entries = await fetchDirectory(path);
+    } on UnraidApiException {
+      if (currentDepth == 0) rethrow;
+      return;
+    }
+    for (final entry in entries) {
+      if (entry.isMedia) {
+        result.add(entry);
+      } else if (entry.isDirectory && currentDepth < maxDepth) {
+        await _scanDirectory(entry.path, result, maxDepth, currentDepth + 1);
+      }
+    }
+  }
+
   Future<Map<String, dynamic>> _request(
     String query, {
     Map<String, dynamic>? variables,
@@ -823,6 +864,20 @@ class UnraidFileEntry {
   final String size;
   final String modified;
 
+  static const _videoExtensions = {
+    'mp4',
+    'mov',
+    'avi',
+    'mkv',
+    'webm',
+    'flv',
+    'wmv',
+    'm4v',
+    '3gp',
+    'mpg',
+    'mpeg',
+  };
+
   bool get isImage {
     final ext = name.split('.').last.toLowerCase();
     return const {
@@ -837,6 +892,18 @@ class UnraidFileEntry {
       'tiff',
       'webp',
     }.contains(ext);
+  }
+
+  bool get isVideo {
+    final ext = name.split('.').last.toLowerCase();
+    return _videoExtensions.contains(ext);
+  }
+
+  bool get isMedia => isImage || isVideo;
+
+  DateTime? get modifiedDate {
+    if (modified.isEmpty) return null;
+    return DateTime.tryParse(modified);
   }
 }
 
