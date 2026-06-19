@@ -337,8 +337,9 @@ class UnraidDashboard {
     final apiKeys = _asList(json['apiKeys']);
     final oidcProviders = _asList(json['oidcProviders']);
     final dockerNetworks = _asList(docker['networks']);
-    final portConflicts = _asMap(docker['portConflicts']);
     final logFiles = _asList(json['logFiles']);
+    final networkInterfaces = _asList(json['networkInterfaces']);
+    final accessUrls = _asList(network['accessUrls']);
 
     return UnraidDashboard(
       serverName: _firstText([
@@ -397,13 +398,11 @@ class UnraidDashboard {
       notificationTotal: _asInt(unreadNotifications['total']),
       notifications: const [],
       diskItems: _asList(json['disks']).map(UnraidInfoItem.fromDisk).toList(),
-      networkItems: _asList(json['networkInterfaces']).isNotEmpty
-          ? _asList(json['networkInterfaces'])
-              .map(UnraidInfoItem.fromNetworkInterface)
-              .toList()
-          : _asList(network['accessUrls'])
-              .map(UnraidInfoItem.fromAccessUrl)
-              .toList(),
+      networkItems: networkInterfaces.isNotEmpty
+          ? networkInterfaces.map(UnraidInfoItem.fromNetworkInterface).toList()
+          : accessUrls.isNotEmpty
+              ? accessUrls.map(UnraidInfoItem.fromAccessUrl).toList()
+              : _serverNetworkItems(server),
       upsItems:
           _asList(json['upsDevices']).map(UnraidInfoItem.fromUps).toList(),
       pluginItems: [
@@ -471,7 +470,8 @@ class UnraidDashboard {
       logItems: logFiles.map(UnraidInfoItem.fromLogFile).toList(),
       servicesSummary: _formatServicesSummary(services),
       dockerNetworkSummary: _formatDockerNetworkSummary(dockerNetworks),
-      dockerConflictSummary: _formatDockerConflictSummary(portConflicts),
+      dockerConflictSummary:
+          _formatDockerConflictSummary(docker['portConflicts']),
       dockerItems: _asList(docker['containers'])
           .map(UnraidManagementItem.fromDocker)
           .toList(),
@@ -746,6 +746,29 @@ class UnraidInfoItem {
   }
 }
 
+List<UnraidInfoItem> _serverNetworkItems(Map<String, dynamic> server) {
+  final lanIp = _firstText([server['lanip']]);
+  final wanIp = _firstText([server['wanip']]);
+  final localUrl = _firstText([server['localurl']]);
+  final remoteUrl = _firstText([server['remoteurl']]);
+  return [
+    if (lanIp.isNotEmpty || localUrl.isNotEmpty)
+      UnraidInfoItem(
+        title: 'LAN',
+        value: _firstText([lanIp, '未返回']),
+        description: _firstText([localUrl, '本地访问地址']),
+        severity: InfoSeverity.normal,
+      ),
+    if (wanIp.isNotEmpty || remoteUrl.isNotEmpty)
+      UnraidInfoItem(
+        title: 'WAN',
+        value: _firstText([wanIp, '未返回']),
+        description: _firstText([remoteUrl, '远程访问地址']),
+        severity: InfoSeverity.normal,
+      ),
+  ];
+}
+
 class UnraidNotification {
   const UnraidNotification({
     required this.title,
@@ -970,44 +993,18 @@ query Dashboard {
       running
     }
   }
-  parityHistory {
-    date
-    duration
-    speed
-    status
-    errors
-    progress
-    correcting
-    paused
-    running
-  }
   docker {
     containers {
       id
       names
       image
       imageId
-      command
-      created
       state
       status
       hostConfig {
         networkMode
       }
       labels
-      autoStart
-      webUiUrl
-      templatePath
-      isOrphaned
-      isUpdateAvailable
-      isRebuildReady
-      tailscaleEnabled
-      tailscaleStatus {
-        online
-        hostname
-        dnsName
-        backendState
-      }
       ports {
         ip
         privatePort
@@ -1021,34 +1018,6 @@ query Dashboard {
       scope
       driver
       containers
-    }
-    portConflicts {
-      containerPorts {
-        privatePort
-        type
-        containers {
-          id
-          name
-        }
-      }
-      lanPorts {
-        lanIpPort
-        publicPort
-        type
-      }
-    }
-    containerUpdateStatuses {
-      name
-      updateStatus
-    }
-  }
-  vms {
-    id
-    domain {
-      id
-      uuid
-      name
-      state
     }
   }
   shares {
@@ -1081,35 +1050,6 @@ query Dashboard {
     interfaceType
     isSpinning
   }
-  networkInterfaces {
-    id
-    name
-    description
-    macAddress
-    mtu
-    speed
-    operstate
-    type
-    status
-    ipAddress
-    gateway
-  }
-  upsDevices {
-    id
-    name
-    model
-    status
-    battery {
-      chargeLevel
-      estimatedRuntime
-      health
-    }
-    power {
-      loadPercentage
-      currentPower
-      nominalPower
-    }
-  }
   apiKeys {
     id
   }
@@ -1118,61 +1058,11 @@ query Dashboard {
     id
     name
   }
-  pluginInstallOperations {
-    id
-    url
-    name
-    status
-    createdAt
-    updatedAt
-  }
-  installedUnraidPlugins
   plugins {
     name
     version
     hasApiModule
     hasCliModule
-  }
-  remoteAccess {
-    accessType
-    forwardType
-    port
-  }
-  connect {
-    id
-    dynamicRemoteAccess {
-      enabledType
-      runningType
-      error
-    }
-  }
-  network {
-    id
-    accessUrls {
-      type
-      name
-      ipv4
-      ipv6
-    }
-  }
-  cloud {
-    error
-    relay {
-      status
-      timeout
-      error
-    }
-    cloud {
-      status
-      ip
-      error
-    }
-    minigraphql {
-      status
-      timeout
-      error
-    }
-    allowedOrigins
   }
   logFiles {
     name
@@ -1414,7 +1304,11 @@ String _formatDockerNetworkSummary(List<Object?> networks) {
   return '${networks.length} 个网络${names.isEmpty ? '' : ' · $names'}';
 }
 
-String _formatDockerConflictSummary(Map<String, dynamic> conflicts) {
+String _formatDockerConflictSummary(Object? conflictsValue) {
+  if (conflictsValue == null) {
+    return '未返回端口冲突信息';
+  }
+  final conflicts = _asMap(conflictsValue);
   final containerPorts = _asList(conflicts['containerPorts']);
   final lanPorts = _asList(conflicts['lanPorts']);
   final total = containerPorts.length + lanPorts.length;
