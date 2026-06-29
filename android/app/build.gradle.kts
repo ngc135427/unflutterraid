@@ -4,6 +4,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val androidReleaseAbis = listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+
 android {
     namespace = "com.example.unflutterraid"
     compileSdk = flutter.compileSdkVersion
@@ -23,10 +25,23 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        ndk {
+            abiFilters += androidReleaseAbis
+        }
     }
 
     lint {
         checkReleaseBuilds = false
+    }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include(*androidReleaseAbis.toTypedArray())
+            isUniversalApk = true
+        }
     }
 
     buildTypes {

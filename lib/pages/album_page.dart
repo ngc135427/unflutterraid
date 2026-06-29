@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -1476,32 +1477,85 @@ class _TimelineSection extends StatelessWidget {
   }
 }
 
-class _MediaTile extends StatelessWidget {
+class _MediaTile extends StatefulWidget {
   const _MediaTile({required this.item, required this.isVideo});
 
   final _MediaItem item;
   final bool isVideo;
 
   @override
+  State<_MediaTile> createState() => _MediaTileState();
+}
+
+class _MediaTileState extends State<_MediaTile> {
+  late final Future<Uint8List> _previewFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _previewFuture = widget.item.apiClient.fileManager.readPreviewBytes(
+      widget.item.file.path,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: DecoratedBox(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppTheme.background,
         ),
-        child: _buildPlaceholder(),
+        child: FutureBuilder<Uint8List>(
+          future: _previewFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.memory(
+                    snapshot.data!,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                  ),
+                  if (widget.isVideo)
+                    const Align(
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.play_circle_fill,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                ],
+              );
+            }
+            return _buildPlaceholder(
+              loading: snapshot.connectionState != ConnectionState.done,
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildPlaceholder() {
-    return Center(
-      child: Icon(
-        isVideo ? Icons.videocam : Icons.image_outlined,
-        color: AppTheme.textLight,
-        size: 28,
-      ),
+  Widget _buildPlaceholder({required bool loading}) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Center(
+          child: Icon(
+            widget.isVideo ? Icons.videocam : Icons.image_outlined,
+            color: AppTheme.textLight,
+            size: 28,
+          ),
+        ),
+        if (loading)
+          const Align(
+            alignment: Alignment.bottomCenter,
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
+      ],
     );
   }
 }

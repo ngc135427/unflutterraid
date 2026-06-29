@@ -2348,7 +2348,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
     }
     final root = _shareRoot(args);
     _sharePath = root;
-    _shareFuture = args.apiClient?.fetchDirectory(root) ??
+    _shareFuture = args.apiClient?.fileManager.listDirectory(root) ??
         Future<List<UnraidFileEntry>>.error('缺少服务器连接');
   }
 
@@ -2362,7 +2362,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
     }
     setState(() {
       _sharePath = path;
-      _shareFuture = client.fetchDirectory(path);
+      _shareFuture = client.fileManager.listDirectory(path);
     });
   }
 
@@ -2626,7 +2626,7 @@ class _ImagePreview extends StatelessWidget {
           ),
           Flexible(
             child: FutureBuilder(
-              future: client.fetchFileBytes(entry.path),
+              future: client.fileManager.readFileBytes(entry.path),
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
                   return const Padding(

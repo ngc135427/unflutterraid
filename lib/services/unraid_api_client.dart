@@ -17,16 +17,21 @@ class UnraidApiClient {
   UnraidApiClient({
     required String baseUrl,
     required String apiKey,
+    String? fileBrowserBaseUrl,
     http.Client? httpClient,
   })  : baseUrl = _normalizeBaseUrl(baseUrl),
+        fileBrowserBaseUrl = _normalizeBaseUrl(
+            fileBrowserBaseUrl ?? _deriveFileBrowserBaseUrl(baseUrl)),
         apiKey = apiKey.trim(),
         _httpClient = httpClient ?? http.Client();
 
   final String baseUrl;
+  final String fileBrowserBaseUrl;
   final String apiKey;
   final http.Client _httpClient;
 
   static const _clientOrigin = 'unflutterraid';
+  static const defaultFileBrowserPort = 8080;
 
   Uri get _graphqlUri => Uri.parse('$baseUrl/graphql');
 
@@ -158,6 +163,20 @@ class UnraidApiClient {
         : trimmed;
     return withoutTrailingSlash;
   }
+
+  static String _deriveFileBrowserBaseUrl(String unraidBaseUrl) {
+    final normalized = _normalizeBaseUrl(unraidBaseUrl);
+    final uri = Uri.parse(normalized);
+    return uri
+        .replace(
+          port: defaultFileBrowserPort,
+          path: '',
+          query: null,
+          fragment: null,
+        )
+        .toString()
+        .replaceFirst(RegExp(r'/$'), '');
+  }
 }
 
 class UnraidFileManager {
@@ -170,33 +189,110 @@ class UnraidFileManager {
   }
 
   Future<List<UnraidFileEntry>> listDirectory(String path) async {
-    final normalizedPath = _normalizeSharePath(path);
-    if (!_isGraphQLShareRoot(normalizedPath)) {
-      throw const UnraidApiException(
-        '当前 File Manager 仅接入 GraphQL 共享根目录，子目录浏览等待后续 GraphQL 文件管理能力。',
-      );
-    }
-
-    final data = await _client._request(_sharesDirectoryQuery);
-    final shares = _asList(data['shares'])
-        .map(UnraidFileEntry.fromShare)
-        .where((entry) => entry.name.isNotEmpty)
-        .toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    return shares;
+    final decoded = await _requestJson(
+      _fileBrowserUri('/api/resources', path),
+      actionLabel: '读取目录',
+    );
+    final entries = _parseFileBrowserDirectory(decoded, path)
+      ..sort(_compareFileEntries);
+    return entries;
   }
 
   Future<List<UnraidFileEntry>> listMedia(
     String rootPath, {
     int maxDepth = 3,
   }) async {
-    return const <UnraidFileEntry>[];
+    final decoded = await _requestJson(
+      _fileBrowserUri('/api/resources/recursive', rootPath),
+      actionLabel: '扫描媒体文件',
+    );
+    final entries = <UnraidFileEntry>[];
+    _collectFileBrowserEntries(decoded, rootPath, entries);
+    entries.removeWhere((entry) => entry.isDirectory || !entry.isMedia);
+    entries.sort((a, b) {
+      final da = a.modifiedDate ?? DateTime(0);
+      final db = b.modifiedDate ?? DateTime(0);
+      return db.compareTo(da);
+    });
+    return entries;
   }
 
   Future<Uint8List> readFileBytes(String path) async {
-    throw const UnraidApiException(
-      '当前 File Manager 尚未接入 GraphQL 文件内容读取能力。',
+    return _requestBytes(
+      _fileBrowserUri('/api/raw', path),
+      actionLabel: '读取文件',
     );
+  }
+
+  Future<Uint8List> readPreviewBytes(
+    String path, {
+    String size = 'thumb',
+  }) async {
+    return _requestBytes(
+      _fileBrowserUri('/api/preview/$size', path, queryParameters: {
+        'inline': 'true',
+      }),
+      actionLabel: '读取缩略图',
+    );
+  }
+
+  Future<Object?> _requestJson(Uri uri, {required String actionLabel}) async {
+    final response = await _get(uri, actionLabel: actionLabel);
+    try {
+      return jsonDecode(response.body);
+    } on FormatException {
+      throw UnraidApiException('File Browser 返回了无效 JSON：$actionLabel');
+    }
+  }
+
+  Future<Uint8List> _requestBytes(
+    Uri uri, {
+    required String actionLabel,
+  }) async {
+    final response = await _get(uri, actionLabel: actionLabel);
+    return response.bodyBytes;
+  }
+
+  Future<http.Response> _get(Uri uri, {required String actionLabel}) async {
+    late http.Response response;
+    try {
+      response = await _client._httpClient.get(uri,
+          headers: {'accept': '*/*'}).timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      throw UnraidApiException('File Browser $actionLabel超时');
+    } on Object catch (error) {
+      throw UnraidApiException('无法连接 File Browser：$error');
+    }
+
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      throw UnraidApiException(
+        'File Browser 拒绝访问，请检查匿名访问或反向代理认证配置（HTTP ${response.statusCode}）',
+      );
+    }
+    if (response.statusCode == 404) {
+      throw UnraidApiException('File Browser 未找到路径（HTTP 404）');
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw UnraidApiException(
+        'File Browser $actionLabel失败：HTTP ${response.statusCode}',
+      );
+    }
+    return response;
+  }
+
+  Uri _fileBrowserUri(
+    String apiPath,
+    String appPath, {
+    Map<String, String>? queryParameters,
+  }) {
+    final base = Uri.parse(_client.fileBrowserBaseUrl);
+    final fileBrowserPath = _appPathToFileBrowserPath(appPath);
+    final fullPath = _joinUriPaths([
+      base.path,
+      apiPath,
+      fileBrowserPath == '/' ? '' : fileBrowserPath,
+    ]);
+    return base.replace(path: fullPath, queryParameters: queryParameters);
   }
 }
 
@@ -831,6 +927,41 @@ class UnraidFileEntry {
     );
   }
 
+  factory UnraidFileEntry.fromFileBrowserResource(
+    Object? value, {
+    required String parentPath,
+  }) {
+    final json = _asMap(value);
+    final name = _firstText([
+      json['name'],
+      _lastPathSegment(_firstText([json['path'], json['url']])),
+      '未命名',
+    ]);
+    final type = _firstText([json['type']]).toLowerCase();
+    final isDirectory = json['isDir'] == true ||
+        json['isDirectory'] == true ||
+        type == 'directory' ||
+        type == 'dir' ||
+        type == 'folder';
+    final rawPath = _firstText([json['path'], json['url']]);
+    final path = rawPath.isEmpty
+        ? _joinAppPaths(parentPath, name)
+        : _fileBrowserPathToAppPath(rawPath, parentPath);
+    final modified = _firstText([
+      json['modified'],
+      json['modifiedAt'],
+      json['modTime'],
+      json['updatedAt'],
+    ]);
+    return UnraidFileEntry(
+      name: name,
+      path: path,
+      isDirectory: isDirectory,
+      size: isDirectory ? '目录' : _formatBytes(json['size']) ?? '',
+      modified: modified,
+    );
+  }
+
   static const _videoExtensions = {
     'mp4',
     'mov',
@@ -889,20 +1020,6 @@ query ServicesCheck {
     id
     name
     version
-  }
-}
-''';
-
-const _sharesDirectoryQuery = '''
-query SharesDirectory {
-  shares {
-    id
-    name
-    nameOrig
-    free
-    used
-    size
-    comment
   }
 }
 ''';
@@ -1565,17 +1682,167 @@ String _formatUptime(Object? value) {
   return '${elapsed.inMinutes} 分钟';
 }
 
-String _normalizeSharePath(String path) {
+List<UnraidFileEntry> _parseFileBrowserDirectory(
+  Object? decoded,
+  String requestedPath,
+) {
+  final entries = <UnraidFileEntry>[];
+  if (decoded is List) {
+    for (final item in decoded) {
+      entries.add(UnraidFileEntry.fromFileBrowserResource(
+        item,
+        parentPath: requestedPath,
+      ));
+    }
+    return entries;
+  }
+
+  final json = _asMap(decoded);
+  final items = _asList(json['items']);
+  if (items.isNotEmpty) {
+    for (final item in items) {
+      entries.add(UnraidFileEntry.fromFileBrowserResource(
+        item,
+        parentPath: requestedPath,
+      ));
+    }
+    return entries;
+  }
+
+  if (json.isNotEmpty) {
+    final entry = UnraidFileEntry.fromFileBrowserResource(
+      json,
+      parentPath: _parentAppPath(requestedPath),
+    );
+    if (entry.path != requestedPath || !entry.isDirectory) {
+      entries.add(entry);
+    }
+  }
+  return entries;
+}
+
+void _collectFileBrowserEntries(
+  Object? decoded,
+  String parentPath,
+  List<UnraidFileEntry> result,
+) {
+  if (decoded is List) {
+    for (final item in decoded) {
+      _collectFileBrowserEntries(item, parentPath, result);
+    }
+    return;
+  }
+
+  final json = _asMap(decoded);
+  if (json.isEmpty) {
+    return;
+  }
+
+  final entry = UnraidFileEntry.fromFileBrowserResource(
+    json,
+    parentPath: parentPath,
+  );
+  result.add(entry);
+
+  final childParent = entry.isDirectory ? entry.path : parentPath;
+  for (final item in _asList(json['items'])) {
+    _collectFileBrowserEntries(item, childParent, result);
+  }
+}
+
+int _compareFileEntries(UnraidFileEntry a, UnraidFileEntry b) {
+  if (a.isDirectory != b.isDirectory) {
+    return a.isDirectory ? -1 : 1;
+  }
+  return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+}
+
+String _appPathToFileBrowserPath(String path) {
   final trimmed = path.trim();
-  if (trimmed.isEmpty || trimmed == '/') {
-    return '/mnt/user';
+  if (trimmed.isEmpty || trimmed == '/' || trimmed == '/mnt/user') {
+    return '/';
   }
   final withoutTrailingSlash = trimmed.endsWith('/') && trimmed.length > 1
       ? trimmed.substring(0, trimmed.length - 1)
       : trimmed;
-  return withoutTrailingSlash;
+  if (withoutTrailingSlash == '/mnt/user') {
+    return '/';
+  }
+  if (withoutTrailingSlash.startsWith('/mnt/user/')) {
+    return withoutTrailingSlash.substring('/mnt/user'.length);
+  }
+  return withoutTrailingSlash.startsWith('/')
+      ? withoutTrailingSlash
+      : '/$withoutTrailingSlash';
 }
 
-bool _isGraphQLShareRoot(String path) {
-  return path == '/mnt/user' || path == '/mnt/user/';
+String _fileBrowserPathToAppPath(String value, String fallbackParent) {
+  final clean = value.split('?').first.trim();
+  if (clean.isEmpty || clean == '/') {
+    return '/mnt/user';
+  }
+  if (clean.startsWith('/mnt/user')) {
+    return clean;
+  }
+  final normalized = clean.startsWith('/') ? clean : '/$clean';
+  if (normalized.startsWith('/api/resources/')) {
+    return _fileBrowserPathToAppPath(
+      normalized.substring('/api/resources'.length),
+      fallbackParent,
+    );
+  }
+  if (normalized.startsWith('/api/raw/')) {
+    return _fileBrowserPathToAppPath(
+      normalized.substring('/api/raw'.length),
+      fallbackParent,
+    );
+  }
+  if (normalized.startsWith('/api/preview/')) {
+    final parts = normalized.split('/').where((part) => part.isNotEmpty);
+    final withoutApiPreviewSize = parts.skip(3).join('/');
+    return _fileBrowserPathToAppPath('/$withoutApiPreviewSize', fallbackParent);
+  }
+  if (fallbackParent.startsWith('/mnt/user') && !clean.contains('/')) {
+    return _joinAppPaths(fallbackParent, clean);
+  }
+  return '/mnt/user$normalized';
+}
+
+String _joinUriPaths(List<String> parts) {
+  final segments = <String>[];
+  for (final part in parts) {
+    final clean = part.trim().replaceAll(RegExp(r'^/+|/+$'), '');
+    if (clean.isNotEmpty) {
+      segments.add(clean);
+    }
+  }
+  return '/${segments.join('/')}';
+}
+
+String _joinAppPaths(String parent, String name) {
+  final cleanParent = parent.endsWith('/') && parent.length > 1
+      ? parent.substring(0, parent.length - 1)
+      : parent;
+  final cleanName = name.replaceAll(RegExp(r'^/+'), '');
+  return cleanName.isEmpty ? cleanParent : '$cleanParent/$cleanName';
+}
+
+String _parentAppPath(String path) {
+  final normalized = path.endsWith('/') && path.length > 1
+      ? path.substring(0, path.length - 1)
+      : path;
+  final index = normalized.lastIndexOf('/');
+  if (index <= '/mnt/user'.length) {
+    return '/mnt/user';
+  }
+  return normalized.substring(0, index);
+}
+
+String _lastPathSegment(String path) {
+  final clean = path.split('?').first.replaceAll(RegExp(r'/+$'), '');
+  if (clean.isEmpty || clean == '/') {
+    return '';
+  }
+  final index = clean.lastIndexOf('/');
+  return index == -1 ? clean : clean.substring(index + 1);
 }

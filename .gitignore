@@ -7,6 +7,14 @@
 .pub-cache/
 .pub/
 build/
+dist/
+
+# Local AI/workspace helper directories
+.agents/
+.codex/
+.cursor/
+.trellis/
+
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
 android/.gradle/
