@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class UnraidApiException implements Exception {
@@ -29,6 +29,8 @@ class UnraidApiClient {
   static const _clientOrigin = 'unflutterraid';
 
   Uri get _graphqlUri => Uri.parse('$baseUrl/graphql');
+
+  UnraidFileManager get fileManager => UnraidFileManager._(this);
 
   Map<String, String> get _authHeaders => {
         'Origin': _clientOrigin,
@@ -77,109 +79,22 @@ class UnraidApiClient {
   }
 
   Future<List<UnraidFileEntry>> fetchDirectory(String path) async {
-    if (kIsWeb) {
-      throw const UnraidApiException(
-        '浏览器会拦截 Unraid WebGUI 文件接口的跨域请求。请使用 Android/Windows 客户端浏览共享目录，或为 Web 版本配置同源代理。',
-      );
-    }
-
-    final uri = Uri.parse('$baseUrl/webGui/include/Browse.php').replace(
-      queryParameters: {
-        'dir': path,
-        'path': 'Browse',
-      },
-    );
-
-    late http.Response response;
-    try {
-      response = await _httpClient
-          .get(uri, headers: _authHeaders)
-          .timeout(const Duration(seconds: 12));
-    } on TimeoutException {
-      throw const UnraidApiException('读取目录超时');
-    } on Object catch (error) {
-      throw UnraidApiException('无法读取目录：$error');
-    }
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw UnraidApiException('目录接口返回 HTTP ${response.statusCode}');
-    }
-
-    return _parseBrowseHtml(response.body);
+    return fileManager.listDirectory(path);
   }
 
   Future<Uint8List> fetchFileBytes(String path) async {
-    if (kIsWeb) {
-      throw const UnraidApiException(
-        '浏览器会拦截 Unraid WebGUI 文件接口的跨域请求。请使用 Android/Windows 客户端预览文件，或为 Web 版本配置同源代理。',
-      );
-    }
-
-    final uri = _fileUri(path);
-    late http.Response response;
-    try {
-      response = await _httpClient
-          .get(uri, headers: _authHeaders)
-          .timeout(const Duration(seconds: 20));
-    } on TimeoutException {
-      throw const UnraidApiException('加载图片超时');
-    } on Object catch (error) {
-      throw UnraidApiException('无法加载图片：$error');
-    }
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw UnraidApiException('图片接口返回 HTTP ${response.statusCode}');
-    }
-    return response.bodyBytes;
+    return fileManager.readFileBytes(path);
   }
 
-  Uri _fileUri(String path) {
-    final encodedPath = path
-        .split('/')
-        .map((segment) => Uri.encodeComponent(segment))
-        .join('/');
-    return Uri.parse(baseUrl).resolve(encodedPath);
-  }
-
-  /// Recursively scans [rootPath] for image and video files.
+  /// Media discovery requires a future GraphQL File Manager API.
   ///
-  /// Returns all media entries found, sorted by modified date descending.
-  /// [maxDepth] limits recursive directory traversal (default 3).
+  /// The current Unraid GraphQL schema used by this app only exposes share root
+  /// metadata, not recursive file listing or thumbnails.
   Future<List<UnraidFileEntry>> fetchMediaFiles(
     String rootPath, {
     int maxDepth = 3,
   }) async {
-    final result = <UnraidFileEntry>[];
-    await _scanDirectory(rootPath, result, maxDepth, 0);
-    result.sort((a, b) {
-      final da = a.modifiedDate ?? DateTime(0);
-      final db = b.modifiedDate ?? DateTime(0);
-      return db.compareTo(da);
-    });
-    return result;
-  }
-
-  Future<void> _scanDirectory(
-    String path,
-    List<UnraidFileEntry> result,
-    int maxDepth,
-    int currentDepth,
-  ) async {
-    if (currentDepth > maxDepth) return;
-    late List<UnraidFileEntry> entries;
-    try {
-      entries = await fetchDirectory(path);
-    } on UnraidApiException {
-      if (currentDepth == 0) rethrow;
-      return;
-    }
-    for (final entry in entries) {
-      if (entry.isMedia) {
-        result.add(entry);
-      } else if (entry.isDirectory && currentDepth < maxDepth) {
-        await _scanDirectory(entry.path, result, maxDepth, currentDepth + 1);
-      }
-    }
+    return fileManager.listMedia(rootPath, maxDepth: maxDepth);
   }
 
   Future<Map<String, dynamic>> _request(
@@ -242,6 +157,46 @@ class UnraidApiClient {
         ? trimmed.substring(0, trimmed.length - 1)
         : trimmed;
     return withoutTrailingSlash;
+  }
+}
+
+class UnraidFileManager {
+  const UnraidFileManager._(this._client);
+
+  final UnraidApiClient _client;
+
+  Future<List<UnraidFileEntry>> listRoot() {
+    return listDirectory('/mnt/user');
+  }
+
+  Future<List<UnraidFileEntry>> listDirectory(String path) async {
+    final normalizedPath = _normalizeSharePath(path);
+    if (!_isGraphQLShareRoot(normalizedPath)) {
+      throw const UnraidApiException(
+        '当前 File Manager 仅接入 GraphQL 共享根目录，子目录浏览等待后续 GraphQL 文件管理能力。',
+      );
+    }
+
+    final data = await _client._request(_sharesDirectoryQuery);
+    final shares = _asList(data['shares'])
+        .map(UnraidFileEntry.fromShare)
+        .where((entry) => entry.name.isNotEmpty)
+        .toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return shares;
+  }
+
+  Future<List<UnraidFileEntry>> listMedia(
+    String rootPath, {
+    int maxDepth = 3,
+  }) async {
+    return const <UnraidFileEntry>[];
+  }
+
+  Future<Uint8List> readFileBytes(String path) async {
+    throw const UnraidApiException(
+      '当前 File Manager 尚未接入 GraphQL 文件内容读取能力。',
+    );
   }
 }
 
@@ -864,6 +819,18 @@ class UnraidFileEntry {
   final String size;
   final String modified;
 
+  factory UnraidFileEntry.fromShare(Object? value) {
+    final json = _asMap(value);
+    final name = _firstText([json['name'], json['nameOrig']]);
+    return UnraidFileEntry(
+      name: name,
+      path: '/mnt/user/$name',
+      isDirectory: true,
+      size: _formatShareSize(json['used'], json['size']),
+      modified: _firstText([json['comment']]),
+    );
+  }
+
   static const _videoExtensions = {
     'mp4',
     'mov',
@@ -922,6 +889,20 @@ query ServicesCheck {
     id
     name
     version
+  }
+}
+''';
+
+const _sharesDirectoryQuery = '''
+query SharesDirectory {
+  shares {
+    id
+    name
+    nameOrig
+    free
+    used
+    size
+    comment
   }
 }
 ''';
@@ -1584,75 +1565,17 @@ String _formatUptime(Object? value) {
   return '${elapsed.inMinutes} 分钟';
 }
 
-List<UnraidFileEntry> _parseBrowseHtml(String html) {
-  final rows = RegExp(
-    r'<tr[^>]*>(.*?)</tr>',
-    caseSensitive: false,
-    dotAll: true,
-  ).allMatches(html);
-
-  return rows
-      .map((match) => _parseBrowseRow(match.group(1) ?? ''))
-      .whereType<UnraidFileEntry>()
-      .toList();
+String _normalizeSharePath(String path) {
+  final trimmed = path.trim();
+  if (trimmed.isEmpty || trimmed == '/') {
+    return '/mnt/user';
+  }
+  final withoutTrailingSlash = trimmed.endsWith('/') && trimmed.length > 1
+      ? trimmed.substring(0, trimmed.length - 1)
+      : trimmed;
+  return withoutTrailingSlash;
 }
 
-UnraidFileEntry? _parseBrowseRow(String row) {
-  final link = RegExp(
-    r'<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>',
-    caseSensitive: false,
-    dotAll: true,
-  ).firstMatch(row);
-  if (link == null) {
-    return null;
-  }
-
-  final href = _decodeHtml(link.group(1) ?? '').trim();
-  final name = _stripHtml(link.group(2) ?? '').trim();
-  if (name.isEmpty || name == 'Parent Directory') {
-    return null;
-  }
-
-  final isDirectory = href.contains('?dir=');
-  final path = isDirectory ? _pathFromBrowseHref(href) : href;
-  if (path.isEmpty) {
-    return null;
-  }
-
-  final cells = RegExp(
-    r'<td[^>]*>(.*?)</td>',
-    caseSensitive: false,
-    dotAll: true,
-  ).allMatches(row).map((match) => _stripHtml(match.group(1) ?? '')).toList();
-
-  return UnraidFileEntry(
-    name: name,
-    path: path,
-    isDirectory: isDirectory,
-    size: cells.length > 5 ? cells[5] : '',
-    modified: cells.length > 6 ? cells[6] : '',
-  );
-}
-
-String _pathFromBrowseHref(String href) {
-  final uri = Uri.tryParse(href);
-  final dir = uri?.queryParameters['dir'];
-  if (dir == null || dir.isEmpty) {
-    return '';
-  }
-  return Uri.decodeComponent(dir);
-}
-
-String _stripHtml(String value) {
-  return _decodeHtml(value.replaceAll(RegExp(r'<[^>]*>'), '').trim());
-}
-
-String _decodeHtml(String value) {
-  return value
-      .replaceAll('&amp;', '&')
-      .replaceAll('&lt;', '<')
-      .replaceAll('&gt;', '>')
-      .replaceAll('&quot;', '"')
-      .replaceAll('&#039;', "'")
-      .replaceAll('&nbsp;', ' ');
+bool _isGraphQLShareRoot(String path) {
+  return path == '/mnt/user' || path == '/mnt/user/';
 }

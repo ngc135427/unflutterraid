@@ -177,7 +177,6 @@ class _MainShellPageState extends State<MainShellPage> {
           dashboard: dashboard,
           apiClient: _apiClient,
           onEditIcon: _showIconPicker,
-          onPowerAction: _showPowerDialog,
           onOpenDetails: () => _openDashboardDetails(dashboard),
           onOpenModule: (module) => _showDashboardModule(module, dashboard),
         );
@@ -201,31 +200,6 @@ class _MainShellPageState extends State<MainShellPage> {
     );
     if (selected != null) {
       setState(() => _serverIcon = selected);
-    }
-  }
-
-  Future<void> _showPowerDialog(String action) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('确认$action'),
-        content: Text('确定要$action服务器吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('确认'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('服务器正在$action...')),
-      );
     }
   }
 
@@ -274,7 +248,6 @@ class _ServerInfoPage extends StatelessWidget {
     required this.dashboard,
     required this.apiClient,
     required this.onEditIcon,
-    required this.onPowerAction,
     required this.onOpenDetails,
     required this.onOpenModule,
   });
@@ -283,7 +256,6 @@ class _ServerInfoPage extends StatelessWidget {
   final UnraidDashboard dashboard;
   final UnraidApiClient? apiClient;
   final VoidCallback onEditIcon;
-  final ValueChanged<String> onPowerAction;
   final VoidCallback onOpenDetails;
   final ValueChanged<_DashboardModule> onOpenModule;
 
@@ -299,7 +271,6 @@ class _ServerInfoPage extends StatelessWidget {
               dashboard: dashboard,
               iconVariant: iconVariant,
               onEditIcon: onEditIcon,
-              onPowerAction: onPowerAction,
             ),
             const SizedBox(height: 18),
             _HomeStatsGrid(dashboard: dashboard),
@@ -370,13 +341,11 @@ class _ServerHeroCard extends StatelessWidget {
     required this.dashboard,
     required this.iconVariant,
     required this.onEditIcon,
-    required this.onPowerAction,
   });
 
   final UnraidDashboard dashboard;
   final ServerIconVariant iconVariant;
   final VoidCallback onEditIcon;
-  final ValueChanged<String> onPowerAction;
 
   @override
   Widget build(BuildContext context) {
@@ -454,24 +423,6 @@ class _ServerHeroCard extends StatelessWidget {
                   icon: Icons.palette,
                   label: '编辑',
                   onPressed: onEditIcon,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _CompactActionButton(
-                  icon: Icons.power_settings_new,
-                  label: '关机',
-                  color: AppTheme.danger,
-                  onPressed: () => onPowerAction('关闭'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _CompactActionButton(
-                  icon: Icons.refresh,
-                  label: '重启',
-                  color: const Color(0xFF3498DB),
-                  onPressed: () => onPowerAction('重启'),
                 ),
               ),
             ],
@@ -2286,7 +2237,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                     return const _StateMessage(
                       icon: Icons.folder_open,
                       title: '正在读取目录',
-                      message: '正在加载共享文件...',
+                      message: '正在通过 GraphQL 读取共享根目录...',
                     );
                   }
 
@@ -2304,8 +2255,8 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                   if (entries.isEmpty) {
                     return const _StateMessage(
                       icon: Icons.inbox_outlined,
-                      title: '目录为空',
-                      message: '这里还没有可浏览的文件。',
+                      title: '暂无共享目录',
+                      message: 'GraphQL 没有返回共享根目录数据。',
                     );
                   }
 
@@ -2327,11 +2278,12 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                                   ? Icons.image
                                   : Icons.insert_drive_file,
                           title: entry.name,
-                          subtitle:
-                              entry.isDirectory ? '文件夹' : _fileSubtitle(entry),
+                          subtitle: entry.isDirectory
+                              ? '共享根目录 · ${entry.size}'
+                              : _fileSubtitle(entry),
                           onTap: () {
                             if (entry.isDirectory) {
-                              _openSharePath(entry.path);
+                              _showMessage('子目录浏览将作为 File Manager 独立功能实现');
                             } else if (entry.isImage) {
                               _previewImage(args, entry);
                             } else {
@@ -2420,7 +2372,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
   }
 
   String _shareRoot(ManagementDetailArgs args) {
-    return '/mnt/user/${args.data.title}';
+    return '/mnt/user';
   }
 
   String _parentPath(String path) {

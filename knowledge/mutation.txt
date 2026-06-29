@@ -1,150 +1,792 @@
-query ExampleQuery($apiKeyId: PrefixedID!, $roles: [Role!]!, $diskId: PrefixedID!, $path: String!, $oidcProviderId: PrefixedID!, $token: String!, $upsDeviceByIdId: String!, $operationId: ID!, $filter: NotificationFilter!, $logsId: PrefixedID!, $containerId: PrefixedID!) {
-  apiKeys {
+mutation Mutation($input: NotificationData!, $deleteNotificationId: PrefixedID!, $type: NotificationType!, $archiveNotificationId: PrefixedID!, $ids: [PrefixedID!]!, $notifyIfUniqueInput2: NotificationData!, $unreadNotificationId: PrefixedID!, $unarchiveNotificationsIds2: [PrefixedID!]!, $name: String!, $updateSshSettingsInput2: UpdateSshInput!, $createDockerFolderName2: String!, $childrenIds: [String!]!, $entryIds: [String!]!, $sourceEntryIds: [String!]!, $destinationFolderId: String!, $moveDockerItemsToPositionSourceEntryIds2: [String!]!, $moveDockerItemsToPositionDestinationFolderId2: String!, $position: Float!, $folderId: String!, $newName: String!, $createDockerFolderWithItemsName2: String!, $prefs: JSON!, $initiateFlashBackupInput2: InitiateFlashBackupInput!, $updateSettingsInput2: JSON!, $updateTemperatureConfigInput2: TemperatureConfigInput!, $updateSystemTimeInput2: UpdateSystemTimeInput!, $config: UPSConfigInput!, $addPluginInput2: PluginManagementInput!, $removePluginInput2: PluginManagementInput!, $updateApiSettingsInput2: ConnectSettingsInput!, $connectSignInInput2: ConnectSignInInput!, $setupRemoteAccessInput2: SetupRemoteAccessInput!, $enableDynamicRemoteAccessInput2: EnableDynamicRemoteAccessInput!, $setStateInput2: ArrayStateInput!, $addDiskToArrayInput2: ArrayDiskInput!, $removeDiskFromArrayInput2: ArrayDiskInput!, $mountArrayDiskId: PrefixedID!, $unmountArrayDiskId: PrefixedID!, $clearArrayDiskStatisticsId: PrefixedID!, $startId: PrefixedID!, $stopId: PrefixedID!, $restartId: PrefixedID!, $pauseId: PrefixedID!, $unpauseId: PrefixedID!, $removeContainerId: PrefixedID!, $entries: [DockerAutostartEntryInput!]!, $updateContainerId: PrefixedID!, $updateContainersIds2: [PrefixedID!]!, $startId2: PrefixedID!, $stopId2: PrefixedID!, $pauseId2: PrefixedID!, $resumeId: PrefixedID!, $forceStopId: PrefixedID!, $rebootId: PrefixedID!, $resetId: PrefixedID!, $correct: Boolean!, $createInput2: CreateApiKeyInput!, $addRoleInput2: AddRoleForApiKeyInput!, $removeRoleInput2: RemoveRoleFromApiKeyInput!, $deleteInput2: DeleteApiKeyInput!, $updateInput2: UpdateApiKeyInput!, $theme: ThemeName!, $locale: String!, $createRCloneRemoteInput2: CreateRCloneRemoteInput!, $deleteRCloneRemoteInput2: DeleteRCloneRemoteInput!, $setOnboardingOverrideInput2: OnboardingOverrideInput!, $createInternalBootPoolInput2: CreateInternalBootPoolInput!, $installPluginInput2: InstallPluginInput!, $installLanguageInput2: InstallPluginInput!) {
+  createNotification(input: $input) {
     id
-  }
-  apiKeyPossibleRoles
-  apiKeyPossiblePermissions {
-    resource
-  }
-  apiKey(id: $apiKeyId) {
-    id
-    key
-    name
+    title
+    subject
     description
-    roles
-    createdAt
-    permissions {
-      resource
-      actions
+    importance
+    link
+    type
+    timestamp
+    formattedTimestamp
+  }
+  deleteNotification(id: $deleteNotificationId, type: $type) {
+    unread {
+      info
+      warning
+      alert
+      total
+    }
+    archive {
+      info
+      warning
+      alert
+      total
     }
   }
-  getPermissionsForRoles(roles: $roles) {
-    resource
-    actions
+  deleteArchivedNotifications {
+    
   }
-  previewEffectivePermissions {
-    resource
-    actions
-  }
-  getAvailableAuthActions
-  getApiKeyCreationFormSchema {
+  archiveNotification(id: $archiveNotificationId) {
     id
-    dataSchema
-    uiSchema
-    values
+    title
+    subject
+    description
+    importance
+    link
+    type
+    timestamp
+    formattedTimestamp
   }
-  config {
-    id
-    valid
-    error
+  archiveNotifications(ids: $ids) {
+    
   }
-  display {
+  notifyIfUnique(input: $notifyIfUniqueInput2) {
     id
-    case {
+    title
+    subject
+    description
+    importance
+    link
+    type
+    timestamp
+    formattedTimestamp
+  }
+  archiveAll {
+    
+  }
+  unreadNotification(id: $unreadNotificationId) {
+    id
+    title
+    subject
+    description
+    importance
+    link
+    type
+    timestamp
+    formattedTimestamp
+  }
+  unarchiveNotifications(ids: $unarchiveNotificationsIds2) {
+    
+  }
+  unarchiveAll {
+    
+  }
+  recalculateOverview {
+    
+  }
+  array {
+    setState(input: $setStateInput2) {
+      id
+      state
+      capacity {
+        kilobytes {
+          free
+          used
+          total
+        }
+        disks {
+          free
+          used
+          total
+        }
+      }
+      boot {
+        id
+        idx
+        name
+        device
+        size
+        status
+        rotational
+        temp
+        numReads
+        numWrites
+        numErrors
+        fsSize
+        fsFree
+        fsUsed
+        exportable
+        type
+        warning
+        critical
+        fsType
+        comment
+        format
+        transport
+        color
+        isSpinning
+      }
+      bootDevices {
+        id
+        idx
+        name
+        device
+        size
+        status
+        rotational
+        temp
+        numReads
+        numWrites
+        numErrors
+        fsSize
+        fsFree
+        fsUsed
+        exportable
+        type
+        warning
+        critical
+        fsType
+        comment
+        format
+        transport
+        color
+        isSpinning
+      }
+      parities {
+        id
+        idx
+        name
+        device
+        size
+        status
+        rotational
+        temp
+        numReads
+        numWrites
+        numErrors
+        fsSize
+        fsFree
+        fsUsed
+        exportable
+        type
+        warning
+        critical
+        fsType
+        comment
+        format
+        transport
+        color
+        isSpinning
+      }
+      parityCheckStatus {
+        date
+        duration
+        speed
+        status
+        errors
+        progress
+        correcting
+        paused
+        running
+      }
+      disks {
+        id
+        idx
+        name
+        device
+        size
+        status
+        rotational
+        temp
+        numReads
+        numWrites
+        numErrors
+        fsSize
+        fsFree
+        fsUsed
+        exportable
+        type
+        warning
+        critical
+        fsType
+        comment
+        format
+        transport
+        color
+        isSpinning
+      }
+      caches {
+        id
+        idx
+        name
+        device
+        size
+        status
+        rotational
+        temp
+        numReads
+        numWrites
+        numErrors
+        fsSize
+        fsFree
+        fsUsed
+        exportable
+        type
+        warning
+        critical
+        fsType
+        comment
+        format
+        transport
+        color
+        isSpinning
+      }
+    }
+    addDiskToArray(input: $addDiskToArrayInput2) {
+      id
+      state
+    }
+    removeDiskFromArray(input: $removeDiskFromArrayInput2) {
+      id
+      state
+    }
+    mountArrayDisk(id: $mountArrayDiskId) {
+      id
+      idx
+      name
+      device
+      size
+      status
+      rotational
+      temp
+      numReads
+      numWrites
+      numErrors
+      fsSize
+      fsFree
+      fsUsed
+      exportable
+      type
+      warning
+      critical
+      fsType
+      comment
+      format
+      transport
+      color
+      isSpinning
+    }
+    unmountArrayDisk(id: $unmountArrayDiskId) {
+      id
+      idx
+      name
+      device
+      size
+      status
+      rotational
+      temp
+      numReads
+      numWrites
+      numErrors
+      fsSize
+      fsFree
+      fsUsed
+      exportable
+      type
+      warning
+      critical
+      fsType
+      comment
+      format
+      transport
+      color
+      isSpinning
+    }
+    clearArrayDiskStatistics(id: $clearArrayDiskStatisticsId)
+  }
+  docker {
+    start(id: $startId) {
+      id
+      names
+      image
+      imageId
+      command
+      created
+      ports {
+        ip
+        privatePort
+        publicPort
+        type
+      }
+      lanIpPorts
+      sizeRootFs
+      sizeRw
+      sizeLog
+      labels
+      state
+      status
+      hostConfig {
+        networkMode
+      }
+      networkSettings
+      mounts
+      autoStart
+      autoStartOrder
+      autoStartWait
+      templatePath
+      projectUrl
+      registryUrl
+      supportUrl
+      iconUrl
+      webUiUrl
+      shell
+      templatePorts {
+        ip
+        privatePort
+        publicPort
+        type
+      }
+      isOrphaned
+      isUpdateAvailable
+      isRebuildReady
+      tailscaleEnabled
+      tailscaleStatus {
+        online
+        version
+        latestVersion
+        updateAvailable
+        hostname
+        dnsName
+        relay
+        relayName
+        tailscaleIps
+        primaryRoutes
+        isExitNode
+        exitNodeStatus {
+          online
+          tailscaleIps
+        }
+        webUiUrl
+        keyExpiry
+        keyExpiryDays
+        keyExpired
+        backendState
+        authUrl
+      }
+    }
+    stop(id: $stopId) {
+      id
+      names
+      image
+      imageId
+      command
+      created
+      lanIpPorts
+      sizeRootFs
+      sizeRw
+      sizeLog
+      labels
+      state
+      status
+      networkSettings
+      mounts
+      autoStart
+      autoStartOrder
+      autoStartWait
+      templatePath
+      projectUrl
+      registryUrl
+      supportUrl
+      iconUrl
+      webUiUrl
+      shell
+      isOrphaned
+      isUpdateAvailable
+      isRebuildReady
+      tailscaleEnabled
+    }
+    restart(id: $restartId) {
+      id
+      names
+      image
+      imageId
+      command
+      created
+      lanIpPorts
+      sizeRootFs
+      sizeRw
+      sizeLog
+      labels
+      state
+      status
+      networkSettings
+      mounts
+      autoStart
+      autoStartOrder
+      autoStartWait
+      templatePath
+      projectUrl
+      registryUrl
+      supportUrl
+      iconUrl
+      webUiUrl
+      shell
+      isOrphaned
+      isUpdateAvailable
+      isRebuildReady
+      tailscaleEnabled
+    }
+    pause(id: $pauseId) {
+      id
+      names
+      image
+      imageId
+      command
+      created
+      lanIpPorts
+      sizeRootFs
+      sizeRw
+      sizeLog
+      labels
+      state
+      status
+      networkSettings
+      mounts
+      autoStart
+      autoStartOrder
+      autoStartWait
+      templatePath
+      projectUrl
+      registryUrl
+      supportUrl
+      iconUrl
+      webUiUrl
+      shell
+      isOrphaned
+      isUpdateAvailable
+      isRebuildReady
+      tailscaleEnabled
+    }
+    unpause(id: $unpauseId) {
+      id
+      names
+      image
+      imageId
+      command
+      created
+      lanIpPorts
+      sizeRootFs
+      sizeRw
+      sizeLog
+      labels
+      state
+      status
+      networkSettings
+      mounts
+      autoStart
+      autoStartOrder
+      autoStartWait
+      templatePath
+      projectUrl
+      registryUrl
+      supportUrl
+      iconUrl
+      webUiUrl
+      shell
+      isOrphaned
+      isUpdateAvailable
+      isRebuildReady
+      tailscaleEnabled
+    }
+    removeContainer(id: $removeContainerId)
+    updateAutostartConfiguration(entries: $entries)
+    updateContainer(id: $updateContainerId) {
+      id
+      names
+      image
+      imageId
+      command
+      created
+      lanIpPorts
+      sizeRootFs
+      sizeRw
+      sizeLog
+      labels
+      state
+      status
+      networkSettings
+      mounts
+      autoStart
+      autoStartOrder
+      autoStartWait
+      templatePath
+      projectUrl
+      registryUrl
+      supportUrl
+      iconUrl
+      webUiUrl
+      shell
+      isOrphaned
+      isUpdateAvailable
+      isRebuildReady
+      tailscaleEnabled
+    }
+    updateContainers(ids: $updateContainersIds2) {
+      id
+      names
+      image
+      imageId
+      command
+      created
+      lanIpPorts
+      sizeRootFs
+      sizeRw
+      sizeLog
+      labels
+      state
+      status
+      networkSettings
+      mounts
+      autoStart
+      autoStartOrder
+      autoStartWait
+      templatePath
+      projectUrl
+      registryUrl
+      supportUrl
+      iconUrl
+      webUiUrl
+      shell
+      isOrphaned
+      isUpdateAvailable
+      isRebuildReady
+      tailscaleEnabled
+    }
+    updateAllContainers {
+      id
+      names
+      image
+      imageId
+      command
+      created
+      lanIpPorts
+      sizeRootFs
+      sizeRw
+      sizeLog
+      labels
+      state
+      status
+      networkSettings
+      mounts
+      autoStart
+      autoStartOrder
+      autoStartWait
+      templatePath
+      projectUrl
+      registryUrl
+      supportUrl
+      iconUrl
+      webUiUrl
+      shell
+      isOrphaned
+      isUpdateAvailable
+      isRebuildReady
+      tailscaleEnabled
+    }
+  }
+  vm {
+    start(id: $startId2)
+    stop(id: $stopId2)
+    pause(id: $pauseId2)
+    resume(id: $resumeId)
+    forceStop(id: $forceStopId)
+    reboot(id: $rebootId)
+    reset(id: $resetId)
+  }
+  parityCheck {
+    start(correct: $correct)
+    pause
+    resume
+    cancel
+  }
+  apiKey {
+    create(input: $createInput2) {
+      id
+      key
+      name
+      description
+      roles
+      createdAt
+      permissions {
+        resource
+        actions
+      }
+    }
+    addRole(input: $addRoleInput2)
+    removeRole(input: $removeRoleInput2)
+    delete(input: $deleteInput2)
+    update(input: $updateInput2) {
+      id
+      key
+      name
+      description
+      roles
+      createdAt
+    }
+  }
+  customization {
+    setTheme(theme: $theme) {
+      name
+      showBannerImage
+      showBannerGradient
+      showHeaderDescription
+      headerBackgroundColor
+      headerPrimaryTextColor
+      headerSecondaryTextColor
+    }
+    setLocale(locale: $locale)
+  }
+  rclone {
+    createRCloneRemote(input: $createRCloneRemoteInput2) {
+      name
+      type
+      parameters
+      config
+    }
+    deleteRCloneRemote(input: $deleteRCloneRemoteInput2)
+  }
+  onboarding {
+    completeOnboarding {
+      status
+      isPartnerBuild
+      completed
+      completedAtVersion
+      activationCode
+      shouldOpen
+      onboardingState {
+        registrationState
+        isRegistered
+        isFreshInstall
+        hasActivationCode
+        activationRequired
+      }
+    }
+    resetOnboarding {
+      status
+      isPartnerBuild
+      completed
+      completedAtVersion
+      activationCode
+      shouldOpen
+    }
+    openOnboarding {
+      status
+      isPartnerBuild
+      completed
+      completedAtVersion
+      activationCode
+      shouldOpen
+    }
+    closeOnboarding {
+      status
+      isPartnerBuild
+      completed
+      completedAtVersion
+      activationCode
+      shouldOpen
+    }
+    bypassOnboarding {
+      status
+      isPartnerBuild
+      completed
+      completedAtVersion
+      activationCode
+      shouldOpen
+    }
+    resumeOnboarding {
+      status
+      isPartnerBuild
+      completed
+      completedAtVersion
+      activationCode
+      shouldOpen
+    }
+    setOnboardingOverride(input: $setOnboardingOverrideInput2) {
+      status
+      isPartnerBuild
+      completed
+      completedAtVersion
+      activationCode
+      shouldOpen
+    }
+    clearOnboardingOverride {
+      status
+      isPartnerBuild
+      completed
+      completedAtVersion
+      activationCode
+      shouldOpen
+    }
+    createInternalBootPool(input: $createInternalBootPoolInput2) {
+      ok
+      code
+      output
+    }
+    refreshInternalBootContext {
+      arrayStopped
+      bootEligible
+      bootedFromFlashWithInternalBootSetup
+      enableBootTransfer
+      reservedNames
+      shareNames
+      poolNames
+      assignableDisks {
+        id
+        device
+        type
+        name
+        vendor
+        size
+        bytesPerSector
+        totalCylinders
+        totalHeads
+        totalSectors
+        totalTracks
+        tracksPerCylinder
+        sectorsPerTrack
+        firmwareRevision
+        serialNum
+        interfaceType
+        smartStatus
+        temperature
+        partitions {
+          name
+          fsType
+          size
+        }
+        isSpinning
+      }
+      driveWarnings {
+        diskId
+        device
+        warnings
+      }
+    }
+  }
+  unraidPlugins {
+    installPlugin(input: $installPluginInput2) {
       id
       url
-      icon
-      error
-      base64
+      name
+      status
+      createdAt
+      updatedAt
+      finishedAt
+      output
     }
-    theme
-    unit
-    scale
-    tabs
-    resize
-    wwn
-    total
-    usage
-    text
-    warning
-    critical
-    hot
-    max
-    locale
-  }
-  flash {
-    id
-    guid
-    vendor
-    product
-  }
-  me {
-    id
-    name
-    description
-    roles
-  }
-  notifications {
-    id
-    overview {
-      unread {
-        info
-        warning
-        alert
-        total
-      }
-      archive {
-        info
-        warning
-        alert
-        total
-      }
-    }
-    list(filter: $filter) {
+    installLanguage(input: $installLanguageInput2) {
       id
-      title
-      subject
-      description
-      importance
-      link
-      type
-      timestamp
-      formattedTimestamp
-    }
-    warningsAndAlerts {
-      id
-      title
-      subject
-      description
-      importance
-      link
-      type
-      timestamp
-      formattedTimestamp
+      url
+      name
+      status
+      createdAt
+      updatedAt
+      finishedAt
+      output
     }
   }
-  online
-  owner {
-    username
-    url
-    avatar
-  }
-  internalBootContext {
-    arrayStopped
-    bootEligible
-    bootedFromFlashWithInternalBootSetup
-    enableBootTransfer
-    reservedNames
-    shareNames
-    poolNames
-    driveWarnings {
-      diskId
-      device
-      warnings
-    }
-  }
-  registration {
-    id
-    type
-    keyFile {
-      location
-      contents
-    }
-    state
-    expiration
-    updateExpiration
-  }
-  server {
+  updateServerIdentity(name: $name) {
     id
     owner {
       id
@@ -162,46 +804,7 @@ query ExampleQuery($apiKeyId: PrefixedID!, $roles: [Role!]!, $diskId: PrefixedID
     localurl
     remoteurl
   }
-  servers {
-    id
-    guid
-    apikey
-    name
-    comment
-    status
-    wanip
-    lanip
-    localurl
-    remoteurl
-  }
-  services {
-    id
-    name
-    online
-    uptime {
-      timestamp
-    }
-    version
-  }
-  shares {
-    id
-    name
-    free
-    used
-    size
-    include
-    exclude
-    cache
-    nameOrig
-    comment
-    allocator
-    splitLevel
-    floor
-    cow
-    color
-    luksStatus
-  }
-  vars {
+  updateSshSettings(input: $updateSshSettingsInput2) {
     id
     version
     maxArraysz
@@ -351,1067 +954,112 @@ query ExampleQuery($apiKeyId: PrefixedID!, $roles: [Role!]!, $diskId: PrefixedID
     shareMoverActive
     csrfToken
   }
-  vms {
-    id
-    domains {
+  createDockerFolder(name: $createDockerFolderName2) {
+    version
+    views {
       id
       name
-      state
-      uuid
-    }
-    domain {
-      id
-      name
-      state
-      uuid
+      rootId
+      flatEntries {
+        id
+        type
+        name
+        parentId
+        depth
+        position
+        path
+        hasChildren
+        childrenIds
+        meta {
+          id
+          names
+          image
+          imageId
+          command
+          created
+          lanIpPorts
+          sizeRootFs
+          sizeRw
+          sizeLog
+          labels
+          state
+          status
+          networkSettings
+          mounts
+          autoStart
+          autoStartOrder
+          autoStartWait
+          templatePath
+          projectUrl
+          registryUrl
+          supportUrl
+          iconUrl
+          webUiUrl
+          shell
+          isOrphaned
+          isUpdateAvailable
+          isRebuildReady
+          tailscaleEnabled
+        }
+      }
+      prefs
     }
   }
-  parityHistory {
-    date
-    duration
-    speed
-    status
+  setDockerFolderChildren(childrenIds: $childrenIds) {
+    version
+  }
+  deleteDockerEntries(entryIds: $entryIds) {
+    version
+  }
+  moveDockerEntriesToFolder(sourceEntryIds: $sourceEntryIds, destinationFolderId: $destinationFolderId) {
+    version
+  }
+  moveDockerItemsToPosition(sourceEntryIds: $moveDockerItemsToPositionSourceEntryIds2, destinationFolderId: $moveDockerItemsToPositionDestinationFolderId2, position: $position) {
+    version
+  }
+  renameDockerFolder(folderId: $folderId, newName: $newName) {
+    version
+  }
+  createDockerFolderWithItems(name: $createDockerFolderWithItemsName2) {
+    version
+  }
+  updateDockerViewPreferences(prefs: $prefs) {
+    version
+  }
+  syncDockerTemplatePaths {
+    scanned
+    matched
+    skipped
     errors
-    progress
-    correcting
-    paused
-    running
   }
-  array {
-    id
-    state
-    capacity {
-      kilobytes {
-        free
-        used
-        total
-      }
-      disks {
-        free
-        used
-        total
-      }
-    }
-    boot {
-      id
-      idx
-      name
-      device
-      size
-      status
-      rotational
-      temp
-      numReads
-      numWrites
-      numErrors
-      fsSize
-      fsFree
-      fsUsed
-      exportable
-      type
-      warning
-      critical
-      fsType
-      comment
-      format
-      transport
-      color
-      isSpinning
-    }
-    bootDevices {
-      id
-      idx
-      name
-      device
-      size
-      status
-      rotational
-      temp
-      numReads
-      numWrites
-      numErrors
-      fsSize
-      fsFree
-      fsUsed
-      exportable
-      type
-      warning
-      critical
-      fsType
-      comment
-      format
-      transport
-      color
-      isSpinning
-    }
-    parities {
-      id
-      idx
-      name
-      device
-      size
-      status
-      rotational
-      temp
-      numReads
-      numWrites
-      numErrors
-      fsSize
-      fsFree
-      fsUsed
-      exportable
-      type
-      warning
-      critical
-      fsType
-      comment
-      format
-      transport
-      color
-      isSpinning
-    }
-    parityCheckStatus {
-      date
-      duration
-      speed
-      status
-      errors
-      progress
-      correcting
-      paused
-      running
-    }
-    disks {
-      id
-      idx
-      name
-      device
-      size
-      status
-      rotational
-      temp
-      numReads
-      numWrites
-      numErrors
-      fsSize
-      fsFree
-      fsUsed
-      exportable
-      type
-      warning
-      critical
-      fsType
-      comment
-      format
-      transport
-      color
-      isSpinning
-    }
-    caches {
-      id
-      idx
-      name
-      device
-      size
-      status
-      rotational
-      temp
-      numReads
-      numWrites
-      numErrors
-      fsSize
-      fsFree
-      fsUsed
-      exportable
-      type
-      warning
-      critical
-      fsType
-      comment
-      format
-      transport
-      color
-      isSpinning
-    }
-  }
-  customization {
-    activationCode {
-      code
-      partner {
-        name
-        url
-        hardwareSpecsUrl
-        manualUrl
-        supportUrl
-        extraLinks {
-          title
-          url
-        }
-      }
-      branding {
-        header
-        headermetacolor
-        background
-        showBannerGradient
-        theme
-        bannerImage
-        caseModel
-        caseModelImage
-        partnerLogoLightUrl
-        partnerLogoDarkUrl
-        hasPartnerLogo
-        onboardingTitle
-        onboardingSubtitle
-        onboardingTitleFreshInstall
-        onboardingSubtitleFreshInstall
-        onboardingTitleUpgrade
-        onboardingSubtitleUpgrade
-        onboardingTitleDowngrade
-        onboardingSubtitleDowngrade
-        onboardingTitleIncomplete
-        onboardingSubtitleIncomplete
-      }
-      system {
-        serverName
-        model
-        comment
-      }
-    }
-    onboarding {
-      status
-      isPartnerBuild
-      completed
-      completedAtVersion
-      activationCode
-      shouldOpen
-      onboardingState {
-        registrationState
-        isRegistered
-        isFreshInstall
-        hasActivationCode
-        activationRequired
-      }
-    }
-    availableLanguages {
-      code
-      name
-      url
-    }
-  }
-  isFreshInstall
-  publicTheme {
-    name
-    showBannerImage
-    showBannerGradient
-    showHeaderDescription
-    headerBackgroundColor
-    headerPrimaryTextColor
-    headerSecondaryTextColor
-  }
-  info {
-    id
-    time
-    baseboard {
-      id
-      manufacturer
-      model
-      version
-      serial
-      assetTag
-      memMax
-      memSlots
-    }
-    cpu {
-      id
-      manufacturer
-      brand
-      vendor
-      family
-      model
-      stepping
-      revision
-      voltage
-      speed
-      speedmin
-      speedmax
-      threads
-      cores
-      processors
-      socket
-      cache
-      flags
-      topology
-      packages {
-        id
-        totalPower
-        power
-        temp
-      }
-    }
-    devices {
-      id
-      gpu {
-        id
-        type
-        typeid
-        blacklisted
-        class
-        productid
-        vendorname
-      }
-      network {
-        id
-        iface
-        model
-        vendor
-        mac
-        virtual
-        speed
-        dhcp
-      }
-      pci {
-        id
-        type
-        typeid
-        vendorname
-        vendorid
-        productname
-        productid
-        blacklisted
-        class
-      }
-      usb {
-        id
-        name
-        bus
-        device
-      }
-    }
-    machineId
-    memory {
-      id
-      layout {
-        id
-        size
-        bank
-        type
-        clockSpeed
-        partNum
-        serialNum
-        manufacturer
-        formFactor
-        voltageConfigured
-        voltageMin
-        voltageMax
-      }
-    }
-    os {
-      id
-      platform
-      distro
-      release
-      codename
-      kernel
-      arch
-      hostname
-      fqdn
-      build
-      servicepack
-      uptime
-      logofile
-      serial
-      uefi
-    }
-    system {
-      id
-      manufacturer
-      model
-      version
-      serial
-      uuid
-      sku
-      virtual
-    }
-    versions {
-      id
-      core {
-        unraid
-        api
-        kernel
-      }
-      packages {
-        openssl
-        node
-        npm
-        pm2
-        git
-        nginx
-        php
-        docker
-      }
-    }
-    primaryNetwork {
-      id
-      name
-      description
-      macAddress
-      mtu
-      speed
-      duplex
-      internal
-      virtual
-      operstate
-      type
-      vlanId
-      status
-      protocol
-      ipAddress
-      netmask
-      gateway
-      useDhcp
-      ipv6Address
-      ipv6Netmask
-      ipv6Gateway
-      useDhcp6
-    }
-  }
-  docker {
-    id
-    containers {
-      id
-      names
-      image
-      imageId
-      command
-      created
-      ports {
-        ip
-        privatePort
-        publicPort
-        type
-      }
-      labels
-      state
-      status
-      hostConfig {
-        networkMode
-      }
-      networkSettings
-      mounts
-      autoStart
-      autoStartOrder
-      autoStartWait
-      templatePath
-      projectUrl
-      registryUrl
-      supportUrl
-      iconUrl
-      webUiUrl
-      shell
-      templatePorts {
-        ip
-        privatePort
-        publicPort
-        type
-      }
-      isOrphaned
-      isUpdateAvailable
-      isRebuildReady
-      tailscaleEnabled
-      tailscaleStatus {
-        online
-        version
-        latestVersion
-        updateAvailable
-        hostname
-        dnsName
-        relay
-        relayName
-        tailscaleIps
-        primaryRoutes
-        isExitNode
-        exitNodeStatus {
-          online
-          tailscaleIps
-        }
-        webUiUrl
-        keyExpiry
-        keyExpiryDays
-        keyExpired
-        backendState
-        authUrl
-      }
-    }
-    networks {
-      id
-      name
-      created
-      scope
-      driver
-      enableIPv6
-      ipam
-      internal
-      attachable
-      ingress
-      configFrom
-      configOnly
-      containers
-      options
-      labels
-    }
-    portConflicts {
-      containerPorts {
-        privatePort
-        type
-        containers {
-          id
-          name
-        }
-      }
-      lanPorts {
-        lanIpPort
-        publicPort
-        type
-      }
-    }
-    logs(id: $logsId) {
-      containerId
-      lines {
-        timestamp
-        message
-      }
-      cursor
-    }
-    container(id: $containerId) {
-      id
-      names
-      image
-      imageId
-      command
-      created
-      labels
-      state
-      status
-      networkSettings
-      mounts
-      autoStart
-      autoStartOrder
-      autoStartWait
-      templatePath
-      projectUrl
-      registryUrl
-      supportUrl
-      iconUrl
-      webUiUrl
-      shell
-      isOrphaned
-      isUpdateAvailable
-      isRebuildReady
-      tailscaleEnabled
-    }
-    organizer {
-      version
-      views {
-        id
-        name
-        rootId
-        flatEntries {
-          id
-          type
-          name
-          parentId
-          depth
-          position
-          path
-          hasChildren
-          childrenIds
-          meta {
-            id
-            names
-            image
-            imageId
-            command
-            created
-            labels
-            state
-            status
-            networkSettings
-            mounts
-            autoStart
-            autoStartOrder
-            autoStartWait
-            templatePath
-            projectUrl
-            registryUrl
-            supportUrl
-            iconUrl
-            webUiUrl
-            shell
-            isOrphaned
-            isUpdateAvailable
-            isRebuildReady
-            tailscaleEnabled
-          }
-        }
-        prefs
-      }
-    }
-    containerUpdateStatuses {
-      name
-      updateStatus
-    }
-  }
-  disks {
-    id
-    device
-    type
-    name
-    vendor
-    size
-    bytesPerSector
-    totalCylinders
-    totalHeads
-    totalSectors
-    totalTracks
-    tracksPerCylinder
-    sectorsPerTrack
-    firmwareRevision
-    serialNum
-    interfaceType
-    smartStatus
-    temperature
-    partitions {
-      name
-      fsType
-      size
-    }
-    isSpinning
-  }
-  assignableDisks {
-    id
-    device
-    type
-    name
-    vendor
-    size
-    bytesPerSector
-    totalCylinders
-    totalHeads
-    totalSectors
-    totalTracks
-    tracksPerCylinder
-    sectorsPerTrack
-    firmwareRevision
-    serialNum
-    interfaceType
-    smartStatus
-    temperature
-    isSpinning
-  }
-  disk(id: $diskId) {
-    id
-    device
-    type
-    name
-    vendor
-    size
-    bytesPerSector
-    totalCylinders
-    totalHeads
-    totalSectors
-    totalTracks
-    tracksPerCylinder
-    sectorsPerTrack
-    firmwareRevision
-    serialNum
-    interfaceType
-    smartStatus
-    temperature
-    isSpinning
-  }
-  rclone {
-    configForm {
-      id
-      dataSchema
-      uiSchema
-    }
-    drives {
-      name
-      options
-    }
-    remotes {
-      name
-      type
-      parameters
-      config
-    }
-  }
-  logFiles {
-    name
-    path
-    size
-    modifiedAt
-  }
-  logFile(path: $path) {
-    path
-    content
-    totalLines
-    startLine
-  }
-  settings {
-    id
-    unified {
-      id
-      dataSchema
-      uiSchema
-      values
-    }
-    sso {
-      id
-    }
-    api {
-      version
-      extraOrigins
-      sandbox
-      ssoSubIds
-      plugins
-    }
-  }
-  isSSOEnabled
-  publicOidcProviders {
-    id
-    name
-    buttonText
-    buttonIcon
-    buttonVariant
-    buttonStyle
-  }
-  oidcProviders {
-    id
-    name
-    clientId
-    clientSecret
-    issuer
-    authorizationEndpoint
-    tokenEndpoint
-    jwksUri
-    scopes
-    authorizationRules {
-      claim
-      operator
-      value
-    }
-    authorizationRuleMode
-    buttonText
-    buttonIcon
-    buttonVariant
-    buttonStyle
-  }
-  oidcProvider(id: $oidcProviderId) {
-    id
-    name
-    clientId
-    clientSecret
-    issuer
-    authorizationEndpoint
-    tokenEndpoint
-    jwksUri
-    scopes
-    authorizationRuleMode
-    buttonText
-    buttonIcon
-    buttonVariant
-    buttonStyle
-  }
-  oidcConfiguration {
-    providers {
-      id
-      name
-      clientId
-      clientSecret
-      issuer
-      authorizationEndpoint
-      tokenEndpoint
-      jwksUri
-      scopes
-      authorizationRuleMode
-      buttonText
-      buttonIcon
-      buttonVariant
-      buttonStyle
-    }
-    defaultAllowedOrigins
-  }
-  validateOidcSession(token: $token) {
-    valid
-    username
-  }
-  networkInterfaces {
-    id
-    name
-    description
-    macAddress
-    mtu
-    speed
-    duplex
-    internal
-    virtual
-    operstate
-    type
-    vlanId
-    ipv4Addresses {
-      address
-      netmask
-    }
-    ipv6Addresses {
-      address
-      prefixLength
-    }
+  resetDockerTemplateMappings
+  refreshDockerDigests
+  initiateFlashBackup(input: $initiateFlashBackupInput2) {
     status
-    protocol
-    ipAddress
-    netmask
-    gateway
-    useDhcp
-    ipv6Address
-    ipv6Netmask
-    ipv6Gateway
-    useDhcp6
+    jobId
   }
-  metrics {
-    id
-    cpu {
-      id
-      percentTotal
-      cpus {
-        percentTotal
-        percentUser
-        percentSystem
-        percentNice
-        percentIdle
-        percentIrq
-        percentGuest
-        percentSteal
-      }
-    }
-    memory {
-      id
-      total
-      used
-      free
-      available
-      active
-      buffcache
-      percentTotal
-      swapTotal
-      swapUsed
-      swapFree
-      percentSwapTotal
-    }
-    temperature {
-      id
-      sensors {
-        id
-        name
-        type
-        location
-        current {
-          value
-          unit
-          timestamp
-          status
-        }
-        min {
-          value
-          unit
-          timestamp
-          status
-        }
-        max {
-          value
-          unit
-          timestamp
-          status
-        }
-        warning
-        critical
-        history {
-          value
-          unit
-          timestamp
-          status
-        }
-      }
-      summary {
-        average
-        hottest {
-          id
-          name
-          type
-          location
-          warning
-          critical
-        }
-        coolest {
-          id
-          name
-          type
-          location
-          warning
-          critical
-        }
-        warningCount
-        criticalCount
-      }
-    }
-    network {
-      id
-      name
-      operstate
-      bytesReceived
-      bytesSent
-      packetsReceived
-      packetsSent
-      receiveErrors
-      transmitErrors
-      receiveDropped
-      transmitDropped
-      rxSec
-      txSec
-      utilizationPercent
-      lastUpdated
-    }
+  updateSettings(input: $updateSettingsInput2) {
+    restartRequired
+    values
+    warnings
   }
-  systemTime {
+  updateTemperatureConfig(input: $updateTemperatureConfigInput2)
+  updateSystemTime(input: $updateSystemTimeInput2) {
     currentTime
     timeZone
     useNtp
     ntpServers
   }
-  timeZoneOptions {
-    value
-    label
-  }
-  upsDevices {
-    id
-    name
-    model
-    status
-    battery {
-      chargeLevel
-      estimatedRuntime
-      health
-    }
-    power {
-      inputVoltage
-      outputVoltage
-      loadPercentage
-      nominalPower
-      currentPower
-    }
-  }
-  upsDeviceById(id: $upsDeviceByIdId) {
-    id
-    name
-    model
-    status
-  }
-  upsConfiguration {
-    service
-    upsCable
-    customUpsCable
-    upsType
-    device
-    overrideUpsCapacity
-    batteryLevel
-    minutes
-    timeout
-    killUps
-    nisIp
-    netServer
-    upsName
-    modelName
-  }
-  pluginInstallOperation(operationId: $operationId) {
-    id
-    url
-    name
-    status
-    createdAt
-    updatedAt
-    finishedAt
-    output
-  }
-  pluginInstallOperations {
-    id
-    url
-    name
-    status
-    createdAt
-    updatedAt
-    finishedAt
-    output
-  }
-  installedUnraidPlugins
-  plugins {
-    name
-    version
-    hasApiModule
-    hasCliModule
-  }
-  remoteAccess {
+  configureUps(config: $config)
+  addPlugin(input: $addPluginInput2)
+  removePlugin(input: $removePluginInput2)
+  updateApiSettings(input: $updateApiSettingsInput2) {
     accessType
     forwardType
     port
   }
-  connect {
-    id
-    dynamicRemoteAccess {
-      enabledType
-      runningType
-      error
-    }
-    settings {
-      id
-      dataSchema
-      uiSchema
-      values {
-        accessType
-        forwardType
-        port
-      }
-    }
-  }
-  network {
-    id
-    accessUrls {
-      type
-      name
-      ipv4
-      ipv6
-    }
-  }
-  cloud {
-    error
-    apiKey {
-      valid
-      error
-    }
-    relay {
-      status
-      timeout
-      error
-    }
-    minigraphql {
-      status
-      timeout
-      error
-    }
-    cloud {
-      status
-      ip
-      error
-    }
-    allowedOrigins
-  }
+  connectSignIn(input: $connectSignInInput2)
+  connectSignOut
+  setupRemoteAccess(input: $setupRemoteAccessInput2)
+  enableDynamicRemoteAccess(input: $enableDynamicRemoteAccessInput2)
 }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -51,7 +50,7 @@ class _AlbumPageState extends State<AlbumPage> {
       return;
     }
     try {
-      final files = await args.apiClient.fetchMediaFiles(args.rootPath);
+      final files = await args.apiClient.fileManager.listMedia(args.rootPath);
       final photos = files.where((f) => f.isImage).toList();
       final videos = files.where((f) => f.isVideo).toList();
       final sections = _groupByDate(photos, args.apiClient);
@@ -256,10 +255,11 @@ class _AlbumGroupsPageState extends State<AlbumGroupsPage> {
       return;
     }
     try {
-      final entries = await args.apiClient.fetchDirectory(args.rootPath);
+      final entries = await args.apiClient.fileManager.listRoot();
       final directories = entries.where((e) => e.isDirectory).toList();
 
-      final allMedia = await args.apiClient.fetchMediaFiles(args.rootPath);
+      final allMedia =
+          await args.apiClient.fileManager.listMedia(args.rootPath);
       final photoCount = allMedia.where((f) => f.isImage).length;
       final videoCount = allMedia.where((f) => f.isVideo).length;
 
@@ -267,7 +267,7 @@ class _AlbumGroupsPageState extends State<AlbumGroupsPage> {
       for (final dir in directories) {
         late List<UnraidFileEntry> dirFiles;
         try {
-          dirFiles = await args.apiClient.fetchDirectory(dir.path);
+          dirFiles = await args.apiClient.fileManager.listMedia(dir.path);
         } on UnraidApiException {
           continue;
         }
@@ -427,7 +427,7 @@ class _AlbumVideosPageState extends State<AlbumVideosPage> {
       return;
     }
     try {
-      final files = await args.apiClient.fetchMediaFiles(args.rootPath);
+      final files = await args.apiClient.fileManager.listMedia(args.rootPath);
       final photos = files.where((f) => f.isImage).toList();
       final videos = files.where((f) => f.isVideo).toList();
       final sections = _groupByDate(videos, args.apiClient);
@@ -672,13 +672,11 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
       );
       return;
     }
-    // Start from parent of current target, or /mnt/user
-    final parent = _parentPath(_targetDir);
     setState(() {
       _browsingDir = true;
-      _browsePath = parent;
+      _browsePath = '/mnt/user';
     });
-    _loadBrowseDir(parent);
+    _loadBrowseDir('/mnt/user');
   }
 
   void _closeDirBrowser() {
@@ -697,7 +695,7 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
       _browseEntries = [];
     });
     try {
-      final entries = await client.fetchDirectory(path);
+      final entries = await client.fileManager.listDirectory(path);
       if (!mounted) return;
       setState(() {
         _browseEntries = entries.where((e) => e.isDirectory).toList();
@@ -718,8 +716,11 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
     }
   }
 
-  void _navigateInto(UnraidFileEntry entry) {
-    _loadBrowseDir(entry.path);
+  void _selectEntryDir(UnraidFileEntry entry) {
+    setState(() {
+      _targetDir = entry.path;
+      _browsingDir = false;
+    });
   }
 
   void _navigateUp() {
@@ -822,7 +823,8 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton.icon(
-                            onPressed: _browseLoading ? null : _selectCurrentDir,
+                            onPressed:
+                                _browseLoading ? null : _selectCurrentDir,
                             icon: const Icon(Icons.check, size: 18),
                             label: Text('选择此目录'),
                           ),
@@ -832,7 +834,7 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
                   ),
                   const Divider(height: 1),
                   // Navigation: go up
-                  if (_browsePath != '/' && _browsePath.isNotEmpty)
+                  if (_browsePath != '/mnt/user' && _browsePath.isNotEmpty)
                     ListTile(
                       leading: const Icon(Icons.arrow_upward,
                           color: AppTheme.primary),
@@ -909,10 +911,10 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
                                           ),
                                         ),
                                         trailing: const Icon(
-                                          Icons.chevron_right,
+                                          Icons.check_circle_outline,
                                           color: AppTheme.textLight,
                                         ),
-                                        onTap: () => _navigateInto(entry),
+                                        onTap: () => _selectEntryDir(entry),
                                       );
                                     },
                                   ),
@@ -968,9 +970,7 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
           _BackupSettingRow(
             icon: Icons.sync,
             title: '自动备份',
-            subtitle: _permissionsOk
-                ? '将手机照片同步到 Unraid 共享目录'
-                : '请先授予媒体权限',
+            subtitle: _permissionsOk ? '将手机照片同步到 Unraid 共享目录' : '请先授予媒体权限',
             enabled: _autoBackup && _permissionsOk,
             onToggle: _permissionsOk
                 ? (value) => setState(() => _autoBackup = value)
@@ -1037,12 +1037,14 @@ class _BackupHeaderCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: allGranted ? AppTheme.brandGradient : LinearGradient(
-          colors: [
-            AppTheme.textLight.withValues(alpha: 0.7),
-            AppTheme.textLight.withValues(alpha: 0.4),
-          ],
-        ),
+        gradient: allGranted
+            ? AppTheme.brandGradient
+            : LinearGradient(
+                colors: [
+                  AppTheme.textLight.withValues(alpha: 0.7),
+                  AppTheme.textLight.withValues(alpha: 0.4),
+                ],
+              ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1072,9 +1074,7 @@ class _BackupHeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            allGranted
-                ? '照片和视频将同步到 Unraid'
-                : '请授予照片和视频访问权限以启用备份功能',
+            allGranted ? '照片和视频将同步到 Unraid' : '请授予照片和视频访问权限以启用备份功能',
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
@@ -1476,42 +1476,11 @@ class _TimelineSection extends StatelessWidget {
   }
 }
 
-class _MediaTile extends StatefulWidget {
+class _MediaTile extends StatelessWidget {
   const _MediaTile({required this.item, required this.isVideo});
 
   final _MediaItem item;
   final bool isVideo;
-
-  @override
-  State<_MediaTile> createState() => _MediaTileState();
-}
-
-class _MediaTileState extends State<_MediaTile> {
-  Uint8List? _bytes;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadThumbnail();
-  }
-
-  Future<void> _loadThumbnail() async {
-    try {
-      final bytes =
-          await widget.item.apiClient.fetchFileBytes(widget.item.file.path);
-      if (!mounted) return;
-      setState(() {
-        _bytes = bytes;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1521,45 +1490,18 @@ class _MediaTileState extends State<_MediaTile> {
         decoration: BoxDecoration(
           color: AppTheme.background,
         ),
-        child: _bytes != null
-            ? Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.memory(
-                    _bytes!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                  ),
-                  if (widget.isVideo)
-                    const Positioned(
-                      right: 8,
-                      bottom: 8,
-                      child: Icon(
-                        Icons.play_circle_fill,
-                        color: Colors.white70,
-                        size: 28,
-                      ),
-                    ),
-                ],
-              )
-            : _buildPlaceholder(),
+        child: _buildPlaceholder(),
       ),
     );
   }
 
   Widget _buildPlaceholder() {
     return Center(
-      child: _loading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Icon(
-              widget.isVideo ? Icons.videocam_off : Icons.broken_image,
-              color: AppTheme.textLight,
-              size: 28,
-            ),
+      child: Icon(
+        isVideo ? Icons.videocam : Icons.image_outlined,
+        color: AppTheme.textLight,
+        size: 28,
+      ),
     );
   }
 }
@@ -1598,10 +1540,14 @@ class _AlbumGroupTile extends StatelessWidget {
 
   IconData get _icon {
     final lower = group.name.toLowerCase();
-    if (lower.contains('photo') || lower.contains('照片') || lower.contains('pic')) {
+    if (lower.contains('photo') ||
+        lower.contains('照片') ||
+        lower.contains('pic')) {
       return Icons.photo;
     }
-    if (lower.contains('video') || lower.contains('视频') || lower.contains('movie')) {
+    if (lower.contains('video') ||
+        lower.contains('视频') ||
+        lower.contains('movie')) {
       return Icons.videocam;
     }
     if (lower.contains('backup') || lower.contains('备份')) {

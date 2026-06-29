@@ -163,99 +163,102 @@ class _LoginPageState extends State<LoginPage> {
               child: FadeSlide(
                 child: Form(
                   key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '服务器地址',
-                        style: TextStyle(
-                          color: AppTheme.textMedium,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _ProtocolDomainField(
-                        useHttps: _useHttps,
-                        controller: _domainController,
-                        focusNode: _domainFocusNode,
-                        onToggle: () => setState(() => _useHttps = !_useHttps),
-                      ),
-                      const SizedBox(height: 21),
-                      AppTextField(
-                        label: 'API 密钥',
-                        controller: _apiKeyController,
-                        focusNode: _apiKeyFocusNode,
-                        hint: '请输入 API 密钥',
-                        obscureText: !_showApiKey,
-                        suffixIcon: IconButton(
-                          tooltip: _showApiKey ? '隐藏 API 密钥' : '显示 API 密钥',
-                          onPressed: () {
-                            setState(() => _showApiKey = !_showApiKey);
-                          },
-                          icon: Icon(
-                            _showApiKey
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: const Color(0xFFA0A8B9),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '服务器地址',
+                          style: TextStyle(
+                            color: AppTheme.textMedium,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        validator: (value) {
-                          if ((value ?? '').trim().isEmpty) {
-                            return '请输入有效的 API 密钥';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: _rememberMe,
-                            activeColor: AppTheme.secondary,
-                            visualDensity: VisualDensity.compact,
-                            onChanged: (value) {
-                              setState(() => _rememberMe = value ?? false);
+                        const SizedBox(height: 8),
+                        _ProtocolDomainField(
+                          useHttps: _useHttps,
+                          controller: _domainController,
+                          focusNode: _domainFocusNode,
+                          onToggle: () =>
+                              setState(() => _useHttps = !_useHttps),
+                        ),
+                        const SizedBox(height: 21),
+                        AppTextField(
+                          label: 'API 密钥',
+                          controller: _apiKeyController,
+                          focusNode: _apiKeyFocusNode,
+                          hint: '请输入 API 密钥',
+                          obscureText: !_showApiKey,
+                          suffixIcon: IconButton(
+                            tooltip: _showApiKey ? '隐藏 API 密钥' : '显示 API 密钥',
+                            onPressed: () {
+                              setState(() => _showApiKey = !_showApiKey);
                             },
-                          ),
-                          const Text(
-                            '记住我',
-                            style: TextStyle(
-                              color: AppTheme.textMedium,
-                              fontSize: 14,
+                            icon: Icon(
+                              _showApiKey
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: const Color(0xFFA0A8B9),
                             ),
                           ),
-                          const Spacer(),
-                          const Icon(
-                            Icons.key,
-                            color: AppTheme.textLight,
-                            size: 18,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      if (_errorMessage != null) ...[
-                        Text(
-                          _errorMessage!,
-                          style: const TextStyle(
-                            color: AppTheme.danger,
-                            fontSize: 13,
-                          ),
+                          validator: (value) {
+                            if ((value ?? '').trim().isEmpty) {
+                              return '请输入有效的 API 密钥';
+                            }
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _rememberMe,
+                              activeColor: AppTheme.secondary,
+                              visualDensity: VisualDensity.compact,
+                              onChanged: (value) {
+                                setState(() => _rememberMe = value ?? false);
+                              },
+                            ),
+                            const Text(
+                              '记住我',
+                              style: TextStyle(
+                                color: AppTheme.textMedium,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Icon(
+                              Icons.key,
+                              color: AppTheme.textLight,
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        if (_errorMessage != null) ...[
+                          Text(
+                            _errorMessage!,
+                            style: const TextStyle(
+                              color: AppTheme.danger,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        GradientButton(
+                          label: _loginSucceeded
+                              ? '登录成功'
+                              : _isSubmitting
+                                  ? '正在连接'
+                                  : '登录',
+                          icon: _loginSucceeded ? Icons.check : null,
+                          isSuccess: _loginSucceeded,
+                          onPressed:
+                              _loginSucceeded || _isSubmitting ? null : _submit,
+                        ),
                       ],
-                      GradientButton(
-                        label: _loginSucceeded
-                            ? '登录成功'
-                            : _isSubmitting
-                                ? '正在连接'
-                                : '登录',
-                        icon: _loginSucceeded ? Icons.check : null,
-                        isSuccess: _loginSucceeded,
-                        onPressed:
-                            _loginSucceeded || _isSubmitting ? null : _submit,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

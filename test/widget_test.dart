@@ -38,8 +38,8 @@ void main() {
     expect(find.text('欢迎回来'), findsNothing);
     expect(find.text('服务器地址'), findsOneWidget);
     expect(find.text('API 密钥'), findsOneWidget);
-    expect(find.text('用户名'), findsNothing);
-    expect(find.text('密码'), findsNothing);
+    expect(find.text('WebGUI 用户名'), findsNothing);
+    expect(find.text('WebGUI 密码'), findsNothing);
     expect(find.text('登录'), findsOneWidget);
   });
 
@@ -67,6 +67,7 @@ void main() {
         tester.widgetList<TextFormField>(find.byType(TextFormField)).toList();
     expect(fields[0].controller?.text, 'tower.local');
     expect(fields[1].controller?.text, 'saved-api-key');
+    expect(fields, hasLength(2));
     expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
     expect(find.text('https://'), findsOneWidget);
   });
