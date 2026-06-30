@@ -84,7 +84,7 @@
             height: 104px;
             padding: 24px 20px 14px;
             display: grid;
-            grid-template-columns: 38px 1fr 38px;
+            grid-template-columns: 38px 1fr 82px;
             align-items: start;
             gap: 10px;
             color: white;
@@ -131,6 +131,16 @@
 
         .icon-button.is-hidden {
             visibility: hidden;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .header-actions a {
+            text-decoration: none;
         }
 
         .phone-content {
@@ -858,9 +868,14 @@
                     <h1 id="pageTitle">服务器主页</h1>
                     <p id="pageSubtitle">SU · 在线 · Unraid OS Pro</p>
                 </div>
-                <button class="icon-button" aria-label="通知" data-dialog="dialog-notifications">
-                    <span class="material-icons">notifications</span>
-                </button>
+                <div class="header-actions">
+                    <a class="icon-button" href="settings.html?from=server" aria-label="打开设置">
+                        <span class="material-icons">settings</span>
+                    </a>
+                    <button class="icon-button" aria-label="通知" data-dialog="dialog-notifications">
+                        <span class="material-icons">notifications</span>
+                    </button>
+                </div>
             </header>
 
             <div class="phone-content">

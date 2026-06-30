@@ -1,41 +1,79 @@
 import 'package:flutter/material.dart';
 
+import 'app_language_scope.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'pages/album_page.dart';
 import 'pages/detail_page.dart';
 import 'pages/login_page.dart';
 import 'pages/main_shell_page.dart';
 import 'pages/music_page.dart';
 import 'pages/register_page.dart';
+import 'pages/settings_page.dart';
+import 'services/language_preferences.dart';
 import 'theme/app_theme.dart';
 
 void main() {
   runApp(const UnflutterRaidApp());
 }
 
-class UnflutterRaidApp extends StatelessWidget {
+class UnflutterRaidApp extends StatefulWidget {
   const UnflutterRaidApp({super.key});
 
   @override
+  State<UnflutterRaidApp> createState() => _UnflutterRaidAppState();
+}
+
+class _UnflutterRaidAppState extends State<UnflutterRaidApp> {
+  AppLanguage _language = AppLanguage.system;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguage();
+  }
+
+  Future<void> _loadLanguage() async {
+    final language = await LanguagePreferences.load();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _language = language);
+  }
+
+  Future<void> _setLanguage(AppLanguage language) async {
+    setState(() => _language = language);
+    await LanguagePreferences.save(language);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Unflutterraid',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      initialRoute: LoginPage.routeName,
-      routes: {
-        LoginPage.routeName: (_) => const LoginPage(),
-        RegisterPage.routeName: (_) => const RegisterPage(),
-        MainShellPage.routeName: (_) => const MainShellPage(),
-        ManagementDetailPage.routeName: (_) => const ManagementDetailPage(),
-        AlbumPage.routeName: (_) => const AlbumPage(),
-        AlbumGroupsPage.routeName: (_) => const AlbumGroupsPage(),
-        AlbumVideosPage.routeName: (_) => const AlbumVideosPage(),
-        AlbumBackupPage.routeName: (_) => const AlbumBackupPage(),
-        MusicPage.routeName: (_) => const MusicPage(),
-        MusicTracksPage.routeName: (_) => const MusicTracksPage(),
-        MusicPlayerPage.routeName: (_) => const MusicPlayerPage(),
-        DetailPage.routeName: (_) => const DetailPage(),
-      },
+    return AppLanguageScope(
+      language: _language,
+      onLanguageChanged: _setLanguage,
+      child: MaterialApp(
+        title: 'Unflutterraid',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        locale: _language.locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        initialRoute: LoginPage.routeName,
+        routes: {
+          LoginPage.routeName: (_) => const LoginPage(),
+          RegisterPage.routeName: (_) => const RegisterPage(),
+          MainShellPage.routeName: (_) => const MainShellPage(),
+          ManagementDetailPage.routeName: (_) => const ManagementDetailPage(),
+          AlbumPage.routeName: (_) => const AlbumPage(),
+          AlbumGroupsPage.routeName: (_) => const AlbumGroupsPage(),
+          AlbumVideosPage.routeName: (_) => const AlbumVideosPage(),
+          AlbumBackupPage.routeName: (_) => const AlbumBackupPage(),
+          MusicPage.routeName: (_) => const MusicPage(),
+          MusicTracksPage.routeName: (_) => const MusicTracksPage(),
+          MusicPlayerPage.routeName: (_) => const MusicPlayerPage(),
+          DetailPage.routeName: (_) => const DetailPage(),
+          SettingsPage.routeName: (_) => const SettingsPage(),
+        },
+      ),
     );
   }
 }

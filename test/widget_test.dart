@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unflutterraid/main.dart';
 import 'package:unflutterraid/services/login_preferences.dart';
 
@@ -10,6 +11,7 @@ void main() {
   const channel = MethodChannel(LoginPreferences.channelName);
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({'app_language': 'zh'});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'load') {
@@ -34,6 +36,7 @@ void main() {
 
   testWidgets('shows the login screen', (tester) async {
     await tester.pumpWidget(const UnflutterRaidApp());
+    await tester.pumpAndSettle();
 
     expect(find.text('欢迎回来'), findsNothing);
     expect(find.text('服务器地址'), findsOneWidget);
@@ -41,6 +44,21 @@ void main() {
     expect(find.text('WebGUI 用户名'), findsNothing);
     expect(find.text('WebGUI 密码'), findsNothing);
     expect(find.text('登录'), findsOneWidget);
+  });
+
+  testWidgets('switches login copy to English from language dropdown',
+      (tester) async {
+    await tester.pumpWidget(const UnflutterRaidApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.language));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Server address'), findsOneWidget);
+    expect(find.text('API key'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
   });
 
   testWidgets('restores remembered login fields', (tester) async {

@@ -1,0 +1,64 @@
+{
+  "@@locale": "zh",
+  "appTitle": "Unflutterraid",
+  "languageSystem": "跟随系统",
+  "languageChinese": "简体中文",
+  "languageEnglish": "English",
+  "languageSettingTitle": "语言",
+  "languageSettingSubtitle": "界面文案显示语言",
+  "loginServerAddress": "服务器地址",
+  "loginServerAddressHint": "请输入 IP 地址或域名",
+  "loginServerAddressError": "请输入有效的 IP 地址或域名",
+  "loginApiKey": "API 密钥",
+  "loginApiKeyHint": "请输入 API 密钥",
+  "loginApiKeyError": "请输入有效的 API 密钥",
+  "loginRememberMe": "记住我",
+  "loginSuccess": "登录成功",
+  "loginConnecting": "正在连接",
+  "loginButton": "登录",
+  "loginFailed": "登录失败：{error}",
+  "@loginFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "showApiKey": "显示 API 密钥",
+  "hideApiKey": "隐藏 API 密钥",
+  "settingsTitle": "设置",
+  "settingsSubtitle": "应用偏好",
+  "settingsIntroEyebrow": "App Settings",
+  "settingsIntroTitle": "简洁的应用设置",
+  "settingsIntroDescription": "语言只是一个小设置项，后续可继续加入主题、通知、显示密度等偏好。",
+  "settingsGeneralSection": "通用",
+  "settingsGeneralTrailing": "基础偏好",
+  "settingsThemeTitle": "主题",
+  "settingsThemeSubtitle": "浅色、深色或跟随系统",
+  "settingsComingSoon": "即将支持",
+  "settingsThemeToast": "主题设置将后续添加",
+  "settingsNotificationsTitle": "通知",
+  "settingsNotificationsSubtitle": "告警提醒与运行状态推送",
+  "settingsNotificationsToast": "通知偏好将后续添加",
+  "settingsConnectionSection": "连接",
+  "settingsConnectionTrailing": "登录相关",
+  "settingsServerConfigTitle": "服务器配置",
+  "settingsServerConfigSubtitle": "默认连接、协议与凭据管理",
+  "settingsPlanned": "规划中",
+  "settingsServerConfigToast": "服务器配置将在后续版本集中管理",
+  "settingsLanguageToast": "语言：{language}",
+  "@settingsLanguageToast": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "navHome": "主页",
+  "navDocker": "Docker",
+  "navVm": "虚拟机",
+  "navShare": "共享",
+  "settingsOpenTooltip": "打开设置",
+  "notificationsTooltip": "通知",
+  "back": "返回"
+}

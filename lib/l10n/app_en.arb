@@ -1,0 +1,64 @@
+{
+  "@@locale": "en",
+  "appTitle": "Unflutterraid",
+  "languageSystem": "System",
+  "languageChinese": "Simplified Chinese",
+  "languageEnglish": "English",
+  "languageSettingTitle": "Language",
+  "languageSettingSubtitle": "Interface language",
+  "loginServerAddress": "Server address",
+  "loginServerAddressHint": "Enter an IP address or domain",
+  "loginServerAddressError": "Enter a valid IP address or domain",
+  "loginApiKey": "API key",
+  "loginApiKeyHint": "Enter API key",
+  "loginApiKeyError": "Enter a valid API key",
+  "loginRememberMe": "Remember me",
+  "loginSuccess": "Signed in",
+  "loginConnecting": "Connecting",
+  "loginButton": "Sign in",
+  "loginFailed": "Sign-in failed: {error}",
+  "@loginFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "showApiKey": "Show API key",
+  "hideApiKey": "Hide API key",
+  "settingsTitle": "Settings",
+  "settingsSubtitle": "App preferences",
+  "settingsIntroEyebrow": "App Settings",
+  "settingsIntroTitle": "Simple app settings",
+  "settingsIntroDescription": "Language is just one compact preference. Theme, notifications, display density, and more can fit here later.",
+  "settingsGeneralSection": "General",
+  "settingsGeneralTrailing": "Basics",
+  "settingsThemeTitle": "Theme",
+  "settingsThemeSubtitle": "Light, dark, or system",
+  "settingsComingSoon": "Coming soon",
+  "settingsThemeToast": "Theme settings will be added later",
+  "settingsNotificationsTitle": "Notifications",
+  "settingsNotificationsSubtitle": "Alerts and server status updates",
+  "settingsNotificationsToast": "Notification preferences will be added later",
+  "settingsConnectionSection": "Connection",
+  "settingsConnectionTrailing": "Sign-in",
+  "settingsServerConfigTitle": "Server configuration",
+  "settingsServerConfigSubtitle": "Default server, protocol, and credentials",
+  "settingsPlanned": "Planned",
+  "settingsServerConfigToast": "Server configuration will be managed here later",
+  "settingsLanguageToast": "Language: {language}",
+  "@settingsLanguageToast": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "navHome": "Home",
+  "navDocker": "Docker",
+  "navVm": "VMs",
+  "navShare": "Shares",
+  "settingsOpenTooltip": "Open settings",
+  "notificationsTooltip": "Notifications",
+  "back": "Back"
+}

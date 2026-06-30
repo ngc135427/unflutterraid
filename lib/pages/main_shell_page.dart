@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/generated/app_localizations.dart';
 import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bottom_nav.dart';
@@ -10,6 +11,7 @@ import '../widgets/server_icon.dart';
 import 'album_page.dart';
 import 'detail_page.dart';
 import 'music_page.dart';
+import 'settings_page.dart';
 
 class MainShellPage extends StatefulWidget {
   const MainShellPage({super.key});
@@ -25,13 +27,6 @@ class _MainShellPageState extends State<MainShellPage> {
   ServerIconVariant _serverIcon = ServerIconVariant.defaultIcon;
   UnraidApiClient? _apiClient;
   Future<UnraidDashboard>? _dashboardFuture;
-
-  static const _navItems = [
-    BottomNavItem(icon: Icons.home, label: '主页'),
-    BottomNavItem(icon: Icons.apps, label: 'Docker'),
-    BottomNavItem(icon: Icons.computer, label: '虚拟机'),
-    BottomNavItem(icon: Icons.folder_shared, label: '共享'),
-  ];
 
   @override
   void dispose() {
@@ -54,6 +49,7 @@ class _MainShellPageState extends State<MainShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return PhoneFrame(
       maxContentWidth: 900,
       child: Column(
@@ -76,11 +72,16 @@ class _MainShellPageState extends State<MainShellPage> {
                   ),
                 ),
                 Positioned(
+                  top: 10,
+                  right: 12,
+                  child: _OpenSettingsButton(l10n: l10n),
+                ),
+                Positioned(
                   left: 0,
                   right: 0,
                   bottom: 0,
                   child: AppBottomNav(
-                    items: _navItems,
+                    items: _navItems(l10n),
                     currentIndex: _currentIndex,
                     onChanged: (value) => setState(() => _currentIndex = value),
                   ),
@@ -91,6 +92,15 @@ class _MainShellPageState extends State<MainShellPage> {
         ],
       ),
     );
+  }
+
+  List<BottomNavItem> _navItems(AppLocalizations l10n) {
+    return [
+      BottomNavItem(icon: Icons.home, label: l10n.navHome),
+      BottomNavItem(icon: Icons.apps, label: l10n.navDocker),
+      BottomNavItem(icon: Icons.computer, label: l10n.navVm),
+      BottomNavItem(icon: Icons.folder_shared, label: l10n.navShare),
+    ];
   }
 
   Widget _buildContent() {
@@ -239,6 +249,28 @@ enum _DashboardModule {
   security,
   cloud,
   logs,
+}
+
+class _OpenSettingsButton extends StatelessWidget {
+  const _OpenSettingsButton({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: l10n.settingsOpenTooltip,
+      onPressed: () => Navigator.of(context).pushNamed(SettingsPage.routeName),
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.white.withValues(alpha: 0.92),
+        foregroundColor: AppTheme.primary,
+        side: const BorderSide(color: AppTheme.softLine),
+        shadowColor: Colors.black.withValues(alpha: 0.12),
+        elevation: 3,
+      ),
+      icon: const Icon(Icons.settings),
+    );
+  }
 }
 
 class _ServerInfoPage extends StatelessWidget {

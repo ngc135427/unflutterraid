@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_theme.dart';
+import '../app_language_scope.dart';
+import '../l10n/generated/app_localizations.dart';
+import '../l10n/language_names.dart';
+import '../services/language_preferences.dart';
 import '../services/login_preferences.dart';
 import '../services/unraid_api_client.dart';
+import '../theme/app_theme.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/fade_slide.dart';
 import '../widgets/gradient_button.dart';
@@ -66,6 +70,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context);
     final client = UnraidApiClient(
       baseUrl: _buildBaseUrl(),
       apiKey: _apiKeyController.text,
@@ -106,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
       setState(() {
-        _errorMessage = '登录失败：$error';
+        _errorMessage = l10n.loginFailed(error.toString());
         _isSubmitting = false;
       });
     }
@@ -147,124 +152,201 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return PhoneFrame(
       maxContentWidth: 520,
-      child: Column(
+      child: Stack(
         children: [
-          _AuthHeader(compact: _hasInputFocus),
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(30, 38, 30, 24),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-              ),
-              child: FadeSlide(
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '服务器地址',
-                          style: TextStyle(
-                            color: AppTheme.textMedium,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _ProtocolDomainField(
-                          useHttps: _useHttps,
-                          controller: _domainController,
-                          focusNode: _domainFocusNode,
-                          onToggle: () =>
-                              setState(() => _useHttps = !_useHttps),
-                        ),
-                        const SizedBox(height: 21),
-                        AppTextField(
-                          label: 'API 密钥',
-                          controller: _apiKeyController,
-                          focusNode: _apiKeyFocusNode,
-                          hint: '请输入 API 密钥',
-                          obscureText: !_showApiKey,
-                          suffixIcon: IconButton(
-                            tooltip: _showApiKey ? '隐藏 API 密钥' : '显示 API 密钥',
-                            onPressed: () {
-                              setState(() => _showApiKey = !_showApiKey);
-                            },
-                            icon: Icon(
-                              _showApiKey
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: const Color(0xFFA0A8B9),
-                            ),
-                          ),
-                          validator: (value) {
-                            if ((value ?? '').trim().isEmpty) {
-                              return '请输入有效的 API 密钥';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 18),
-                        Row(
+          Column(
+            children: [
+              _AuthHeader(compact: _hasInputFocus),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(30, 38, 30, 24),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(25)),
+                  ),
+                  child: FadeSlide(
+                    child: Form(
+                      key: _formKey,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Checkbox(
-                              value: _rememberMe,
-                              activeColor: AppTheme.secondary,
-                              visualDensity: VisualDensity.compact,
-                              onChanged: (value) {
-                                setState(() => _rememberMe = value ?? false);
-                              },
-                            ),
-                            const Text(
-                              '记住我',
-                              style: TextStyle(
+                            Text(
+                              l10n.loginServerAddress,
+                              style: const TextStyle(
                                 color: AppTheme.textMedium,
                                 fontSize: 14,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            const Spacer(),
-                            const Icon(
-                              Icons.key,
-                              color: AppTheme.textLight,
-                              size: 18,
+                            const SizedBox(height: 8),
+                            _ProtocolDomainField(
+                              useHttps: _useHttps,
+                              controller: _domainController,
+                              focusNode: _domainFocusNode,
+                              onToggle: () =>
+                                  setState(() => _useHttps = !_useHttps),
+                            ),
+                            const SizedBox(height: 21),
+                            AppTextField(
+                              label: l10n.loginApiKey,
+                              controller: _apiKeyController,
+                              focusNode: _apiKeyFocusNode,
+                              hint: l10n.loginApiKeyHint,
+                              obscureText: !_showApiKey,
+                              suffixIcon: IconButton(
+                                tooltip: _showApiKey
+                                    ? l10n.hideApiKey
+                                    : l10n.showApiKey,
+                                onPressed: () {
+                                  setState(() => _showApiKey = !_showApiKey);
+                                },
+                                icon: Icon(
+                                  _showApiKey
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: const Color(0xFFA0A8B9),
+                                ),
+                              ),
+                              validator: (value) {
+                                if ((value ?? '').trim().isEmpty) {
+                                  return l10n.loginApiKeyError;
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 18),
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: _rememberMe,
+                                  activeColor: AppTheme.secondary,
+                                  visualDensity: VisualDensity.compact,
+                                  onChanged: (value) {
+                                    setState(
+                                      () => _rememberMe = value ?? false,
+                                    );
+                                  },
+                                ),
+                                Text(
+                                  l10n.loginRememberMe,
+                                  style: const TextStyle(
+                                    color: AppTheme.textMedium,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const Spacer(),
+                                const Icon(
+                                  Icons.key,
+                                  color: AppTheme.textLight,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            if (_errorMessage != null) ...[
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(
+                                  color: AppTheme.danger,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            GradientButton(
+                              label: _loginSucceeded
+                                  ? l10n.loginSuccess
+                                  : _isSubmitting
+                                      ? l10n.loginConnecting
+                                      : l10n.loginButton,
+                              icon: _loginSucceeded ? Icons.check : null,
+                              isSuccess: _loginSucceeded,
+                              onPressed: _loginSucceeded || _isSubmitting
+                                  ? null
+                                  : _submit,
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        if (_errorMessage != null) ...[
-                          Text(
-                            _errorMessage!,
-                            style: const TextStyle(
-                              color: AppTheme.danger,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        GradientButton(
-                          label: _loginSucceeded
-                              ? '登录成功'
-                              : _isSubmitting
-                                  ? '正在连接'
-                                  : '登录',
-                          icon: _loginSucceeded ? Icons.check : null,
-                          isSuccess: _loginSucceeded,
-                          onPressed:
-                              _loginSucceeded || _isSubmitting ? null : _submit,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
+          ),
+          const Positioned(
+            top: 22,
+            right: 22,
+            child: _LoginLanguageDropdown(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LoginLanguageDropdown extends StatelessWidget {
+  const _LoginLanguageDropdown();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scope = AppLanguageScope.of(context);
+
+    return PopupMenuButton<AppLanguage>(
+      tooltip: l10n.languageSettingTitle,
+      initialValue: scope.language,
+      onSelected: scope.onLanguageChanged,
+      position: PopupMenuPosition.under,
+      itemBuilder: (context) => [
+        for (final language in AppLanguage.values)
+          PopupMenuItem(
+            value: language,
+            child: Row(
+              children: [
+                Expanded(child: Text(language.label(l10n))),
+                if (language == scope.language)
+                  const Icon(Icons.check, size: 16, color: AppTheme.primary),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        height: 34,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.language, color: Colors.white, size: 16),
+            const SizedBox(width: 4),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 92),
+              child: Text(
+                scope.language.label(l10n),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(Icons.arrow_drop_down, color: Colors.white, size: 16),
+          ],
+        ),
       ),
     );
   }
@@ -285,17 +367,18 @@ class _ProtocolDomainField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
       validator: (value) {
         if ((value ?? '').trim().isEmpty) {
-          return '请输入有效的 IP 地址或域名';
+          return l10n.loginServerAddressError;
         }
         return null;
       },
       decoration: InputDecoration(
-        hintText: '请输入 IP 地址或域名',
+        hintText: l10n.loginServerAddressHint,
         prefixIconConstraints: const BoxConstraints(
           minWidth: 102,
           minHeight: 24,

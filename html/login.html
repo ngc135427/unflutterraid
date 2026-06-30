@@ -38,6 +38,73 @@
             margin-right: 40px;
             flex-shrink: 0;
         }
+
+        .language-chip {
+            position: absolute;
+            top: 22px;
+            right: 22px;
+            min-width: 68px;
+            height: 32px;
+            padding: 0 10px;
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .language-chip:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.26);
+        }
+
+        .language-menu {
+            position: absolute;
+            top: 60px;
+            right: 22px;
+            z-index: 5;
+            width: 116px;
+            padding: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 12px;
+            display: none;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 12px 24px rgba(38, 50, 68, 0.18);
+        }
+
+        .language-menu.active {
+            display: grid;
+            gap: 2px;
+            animation: fadeIn 0.18s ease-out;
+        }
+
+        .language-option {
+            width: 100%;
+            min-height: 32px;
+            padding: 0 8px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #596579;
+            background: transparent;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .language-option.active {
+            color: #6e8efb;
+            background: rgba(110, 142, 251, 0.10);
+        }
         
         .login-header {
             text-align: center;
@@ -398,6 +465,16 @@
     <div class="container">
         <!-- 登录页面原型 -->
         <div class="login-container">
+            <button class="language-chip" id="loginLanguageToggle" type="button" aria-label="切换语言">
+                <span class="material-icons" style="font-size:16px;">language</span>
+                <span id="loginLanguageLabel">简体中文</span>
+                <span class="material-icons" style="font-size:16px;">arrow_drop_down</span>
+            </button>
+            <div class="language-menu" id="loginLanguageMenu" aria-label="语言选择">
+                <button class="language-option active" type="button" data-language="简体中文">简体中文<span class="material-icons" style="font-size:15px;">check</span></button>
+                <button class="language-option" type="button" data-language="English">English<span class="material-icons" style="font-size:15px;">check</span></button>
+                <button class="language-option" type="button" data-language="跟随系统">跟随系统<span class="material-icons" style="font-size:15px;">check</span></button>
+            </div>
             <div class="login-header">
                 <h1>连接 Unraid</h1>
                 <p>使用 GraphQL API 密钥登录</p>
@@ -454,6 +531,7 @@
                 <h3>交互设计</h3>
                 <ul>
                     <li><strong>表单验证</strong>：实时反馈输入错误，提高用户体验</li>
+                    <li><strong>登录前语言</strong>：右上角展示当前语言，点击后以下拉列表选择</li>
                     <li><strong>按钮状态</strong>：悬停和点击效果增强交互感知</li>
                     <li><strong>动画效果</strong>：表单元素顺序淡入，增加页面层次感</li>
                     <li><strong>输入框焦点</strong>：聚焦时边框变色并添加阴影效果</li>
@@ -484,6 +562,31 @@
             const domainInput = document.getElementById('domain');
             const apiKeyInput = document.getElementById('apiKey');
             const loginBtn = document.getElementById('loginBtn');
+            const loginLanguageToggle = document.getElementById('loginLanguageToggle');
+            const loginLanguageMenu = document.getElementById('loginLanguageMenu');
+            const loginLanguageLabel = document.getElementById('loginLanguageLabel');
+
+            loginLanguageToggle.addEventListener('click', function(event) {
+                event.stopPropagation();
+                loginLanguageMenu.classList.toggle('active');
+            });
+
+            loginLanguageMenu.addEventListener('click', function(event) {
+                event.stopPropagation();
+                const option = event.target.closest('[data-language]');
+                if (!option) {
+                    return;
+                }
+                loginLanguageLabel.textContent = option.dataset.language;
+                document.querySelectorAll('.language-option').forEach(item => {
+                    item.classList.toggle('active', item === option);
+                });
+                loginLanguageMenu.classList.remove('active');
+            });
+
+            document.addEventListener('click', function() {
+                loginLanguageMenu.classList.remove('active');
+            });
             
             // 协议切换功能
             let currentProtocol = 'http://';
