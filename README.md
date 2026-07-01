@@ -349,4 +349,4 @@ dart format lib test
 
 ## License
 
-见 [LICENSE](LICENSE)。
+本项目使用 AGPL-3.0，见 [LICENSE](LICENSE)。
