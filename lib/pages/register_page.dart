@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/generated/app_localizations.dart';
+
 import '../widgets/app_text_field.dart';
 import '../widgets/fade_slide.dart';
 import '../widgets/gradient_button.dart';
@@ -44,6 +46,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return PhoneFrame(
       maxContentWidth: 520,
       child: Column(
@@ -64,48 +67,50 @@ class _RegisterPageState extends State<RegisterPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       AppTextField(
-                        label: '用户名 / 手机号',
+                        label: l10n.registerUsernameLabel,
                         controller: _usernameController,
-                        hint: '请输入用户名或手机号',
+                        hint: l10n.registerUsernameHint,
                         icon: Icons.person,
                         validator: (value) {
                           if ((value ?? '').trim().isEmpty) {
-                            return '请输入有效的用户名或手机号';
+                            return l10n.registerUsernameError;
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 21),
                       AppTextField(
-                        label: '密码',
+                        label: l10n.registerPasswordLabel,
                         controller: _passwordController,
-                        hint: '请输入密码（至少 6 位）',
+                        hint: l10n.registerPasswordHint,
                         obscureText: true,
                         icon: Icons.lock,
                         validator: (value) {
                           if ((value ?? '').length < 6) {
-                            return '密码不能少于 6 位';
+                            return l10n.registerPasswordError;
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 21),
                       AppTextField(
-                        label: '确认密码',
+                        label: l10n.registerConfirmPasswordLabel,
                         controller: _confirmPasswordController,
-                        hint: '请再次输入密码',
+                        hint: l10n.registerConfirmPasswordHint,
                         obscureText: true,
                         icon: Icons.lock,
                         validator: (value) {
                           if (value != _passwordController.text) {
-                            return '两次输入的密码不一致';
+                            return l10n.registerConfirmPasswordError;
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 28),
                       GradientButton(
-                        label: _registered ? '注册成功' : '注册',
+                        label: _registered
+                            ? l10n.registerSuccess
+                            : l10n.registerButton,
                         icon: _registered ? Icons.check : null,
                         isSuccess: _registered,
                         onPressed: _registered ? null : _submit,
@@ -115,10 +120,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: Wrap(
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            const Text('已有账号？'),
+                            Text(l10n.alreadyHaveAccount),
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('返回登录'),
+                              child: Text(l10n.backToLogin),
                             ),
                           ],
                         ),
@@ -140,15 +145,16 @@ class _RegisterHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       height: 180,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              '创建账号',
-              style: TextStyle(
+            Text(
+              l10n.createAccount,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 28,
                 fontWeight: FontWeight.w600,
@@ -156,7 +162,7 @@ class _RegisterHeader extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '请填写以下信息完成注册',
+              l10n.registerSubtitle,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.80),
                 fontSize: 16,

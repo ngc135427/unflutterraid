@@ -60,5 +60,649 @@
   "navShare": "共享",
   "settingsOpenTooltip": "打开设置",
   "notificationsTooltip": "通知",
-  "back": "返回"
+  "back": "返回",
+  "retry": "重试",
+  "cancel": "取消",
+  "confirm": "确认",
+  "close": "关闭",
+  "refresh": "刷新",
+  "unknown": "未知",
+  "edit": "编辑",
+  "all": "全部",
+  "details": "详情",
+  "browse": "浏览",
+  "settings": "设置",
+  "start": "启动",
+  "stop": "停止",
+  "restart": "重启",
+  "status": "状态",
+  "description": "说明",
+  "location": "位置",
+  "overview": "概览",
+  "memory": "内存",
+  "array": "阵列",
+  "notifications": "通知",
+  "motherboard": "主板",
+  "disk": "磁盘",
+  "network": "网络",
+  "plugins": "插件",
+  "permissions": "权限",
+  "connection": "连接",
+  "logs": "日志",
+  "album": "相册",
+  "music": "音乐",
+  "photos": "照片",
+  "videos": "视频",
+  "file": "文件",
+  "project": "项目",
+  "connectServerFirst": "请先连接服务器",
+  "missingConnection": "缺少服务器连接",
+  "missingConnectionOrId": "缺少服务器连接或项目 ID",
+  "missingConnectionArgs": "缺少连接参数",
+  "loadFailed": "加载失败：{error}",
+  "@loadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notReturned": "未返回",
+  "notConnectedTitle": "未连接服务器",
+  "notConnectedMessage": "请返回登录页重新连接。",
+  "loadingServerTitle": "正在读取服务器",
+  "loadingServerMessage": "正在请求 Unraid GraphQL API...",
+  "readFailedTitle": "读取失败",
+  "noDataTitle": "暂无数据",
+  "noDataMessage": "服务器没有返回可显示的数据。",
+  "viewFullInfo": "查看完整信息",
+  "liveMetrics": "实时指标",
+  "arrayAndServices": "阵列与服务",
+  "arrayState": "阵列状态",
+  "arrayCapacity": "阵列容量",
+  "noParityTask": "暂无校验任务",
+  "servicesOnline": "服务在线",
+  "recentNotifications": "最近通知",
+  "extendedManagement": "扩展管理",
+  "interfaceModules": "接口模块",
+  "notificationCount": "{count} 条提醒",
+  "@notificationCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "warningAlertCount": "{warning} 警告 · {alert} 严重",
+  "@warningAlertCount": {
+    "placeholders": {
+      "warning": {
+        "type": "int"
+      },
+      "alert": {
+        "type": "int"
+      }
+    }
+  },
+  "cpuUsage": "CPU 使用",
+  "noWarningAlerts": "暂无警告或严重通知",
+  "noNotificationDetailsTitle": "暂无通知详情",
+  "noNotificationDetailsMessage": "服务器仅返回了通知数量，未返回警告或严重通知列表。",
+  "moduleNoDataMessage": "服务器没有返回{module}相关信息。",
+  "@moduleNoDataMessage": {
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCenter": "通知中心",
+  "moduleDisksSubtitle": "SMART / 分区 / 温度",
+  "moduleNetworkSubtitle": "接口 / 访问地址",
+  "moduleUpsSubtitle": "电量 / 负载 / 策略",
+  "modulePluginsSubtitle": "安装任务 / 模块",
+  "moduleCloudSubtitle": "远程访问 / Cloud",
+  "searchTypeItems": "搜索{type}项目",
+  "@searchTypeItems": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "typeRefreshSubmitted": "{type}刷新已提交",
+  "@typeRefreshSubmitted": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "typeEmptyTitle": "{type}为空",
+  "@typeEmptyTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "typeEmptyMessage": "服务器当前没有返回{type}项目。",
+  "@typeEmptyMessage": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "noMatchesTitle": "没有匹配项",
+  "noMatchesMessage": "换一个关键词试试。",
+  "actionSubmitted": "{title} {action}操作已提交",
+  "@actionSubmitted": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "runningAndStopped": "{running} 运行中 · {stopped} 未运行",
+  "@runningAndStopped": {
+    "placeholders": {
+      "running": {
+        "type": "int"
+      },
+      "stopped": {
+        "type": "int"
+      }
+    }
+  },
+  "arrayUsageLabel": "阵列 {usage}",
+  "@arrayUsageLabel": {
+    "placeholders": {
+      "usage": {
+        "type": "String"
+      }
+    }
+  },
+  "runningCount": "{count} 运行中",
+  "@runningCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unknownProject": "未知项目",
+  "noInfo": "暂无信息",
+  "readingDirectoryTitle": "正在读取目录",
+  "readingDirectoryMessage": "正在通过 GraphQL 读取共享根目录...",
+  "noShareDirectoryTitle": "暂无共享目录",
+  "noShareDirectoryMessage": "GraphQL 没有返回共享根目录数据。",
+  "parentDirectory": "上一级",
+  "shareRootSize": "共享根目录 · {size}",
+  "@shareRootSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "subdirBrowseFuture": "子目录浏览将作为 File Manager 独立功能实现",
+  "previewUnsupported": "暂不支持预览该文件类型",
+  "labelActionSubmitted": "{label} 操作已提交",
+  "@labelActionSubmitted": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "imageLoadFailed": "图片加载失败",
+  "chooseServerIcon": "选择服务器图标",
+  "returnHome": "返回主页",
+  "countItems": "{count} 个",
+  "@countItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countRecords": "{count} 条记录",
+  "@countRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countFiles": "{count} 个文件",
+  "@countFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productDetails": "产品详情",
+  "basicInfo": "基本信息",
+  "detailSampleBody": "这是一个详情页面示例，展示如何按照登录页面的设计风格创建移动端详情页。页面保持相同的紫蓝渐变、圆角设计和柔和动效，确保视觉一致性。",
+  "featureList": "功能列表",
+  "featureResponsive": "支持响应式设计",
+  "featureVisualConsistency": "保持视觉一致性",
+  "featureAnimations": "优雅的动画效果",
+  "featureClearHierarchy": "清晰的信息层次",
+  "detailedDescription": "详细说明",
+  "designPhilosophy": "设计理念",
+  "designPhilosophyText": "延续登录页面的现代简约风格，以紫蓝渐变作为主视觉元素，创建统一且专业的用户体验。",
+  "interactionDesign": "交互设计",
+  "interactionDesignText": "页面元素采用顺序淡入动画，增强层次感和用户体验，按钮包含清晰的点击反馈。",
+  "uiElements": "UI 元素",
+  "uiElementsText": "采用大圆角设计增强现代感和友好度，适当的阴影提供层次感，合理的间距确保阅读舒适。",
+  "confirmAction": "确认操作",
+  "actionConfirmedTitle": "操作已确认",
+  "actionConfirmedBody": "这里可以接入实际业务逻辑。",
+  "gotIt": "知道了",
+  "serverProfile": "服务器资料",
+  "authorization": "授权",
+  "hardwareAndSystem": "硬件与系统",
+  "model": "型号",
+  "system": "系统",
+  "packageVersion": "包版本",
+  "arrayAndStorage": "阵列与存储",
+  "networkAndConnection": "网络与连接",
+  "localUrl": "本地 URL",
+  "remoteUrl": "远程 URL",
+  "dockerNetwork": "Docker 网络",
+  "portConflicts": "端口冲突",
+  "cloudPluginsPermissions": "Cloud / 插件 / 权限",
+  "registerUsernameLabel": "用户名 / 手机号",
+  "registerUsernameHint": "请输入用户名或手机号",
+  "registerUsernameError": "请输入有效的用户名或手机号",
+  "registerPasswordLabel": "密码",
+  "registerPasswordHint": "请输入密码（至少 6 位）",
+  "registerPasswordError": "密码不能少于 6 位",
+  "registerConfirmPasswordLabel": "确认密码",
+  "registerConfirmPasswordHint": "请再次输入密码",
+  "registerConfirmPasswordError": "两次输入的密码不一致",
+  "registerSuccess": "注册成功",
+  "registerButton": "注册",
+  "alreadyHaveAccount": "已有账号？",
+  "backToLogin": "返回登录",
+  "createAccount": "创建账号",
+  "registerSubtitle": "请填写以下信息完成注册",
+  "musicLibrary": "音乐库",
+  "songs": "歌曲",
+  "allSongs": "全部歌曲",
+  "collapse": "收起",
+  "albums": "专辑",
+  "lossless": "无损",
+  "searchSongsAlbums": "搜索歌曲、专辑",
+  "nowPlaying": "正在播放",
+  "today": "今天",
+  "yesterday": "昨天",
+  "unknownDate": "未知日期",
+  "yearMonth": "{year}年{month}月",
+  "@yearMonth": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "month": {
+        "type": "int"
+      }
+    }
+  },
+  "noPhotosFound": "没有找到照片",
+  "noAlbumDirsFound": "没有找到相册目录",
+  "noVideosFound": "没有找到视频",
+  "mediaPermissionRequiredBackup": "需要照片和视频权限才能进行备份",
+  "selectBackupDirectory": "选择备份目录",
+  "selectThisDirectory": "选择此目录",
+  "goUp": "返回上级",
+  "noSubfolders": "此目录下没有子文件夹",
+  "photoBackup": "照片备份",
+  "permissionChecking": "权限检查中...",
+  "permissionCheckingSubtitle": "正在检查照片和视频访问权限",
+  "needMediaPermission": "需要媒体权限",
+  "grantPermission": "授予权限",
+  "mediaPermission": "媒体权限",
+  "mediaPermissionGranted": "照片和视频访问权限已授予",
+  "autoBackup": "自动备份",
+  "autoBackupSubtitle": "将手机照片同步到 Unraid 共享目录",
+  "grantMediaFirst": "请先授予媒体权限",
+  "targetDirectory": "目标目录",
+  "wifiOnlyBackup": "仅 Wi-Fi 备份",
+  "wifiOnlyBackupSubtitle": "避免使用移动网络上传",
+  "chargeWhenBackupVideo": "充电时备份视频",
+  "chargeWhenBackupVideoSubtitle": "减少后台同步对电量的影响",
+  "lastSync": "上次同步",
+  "noSyncRecord": "暂无同步记录",
+  "missingPermissionAccess": "缺少{permissions}访问权限",
+  "@missingPermissionAccess": {
+    "placeholders": {
+      "permissions": {
+        "type": "String"
+      }
+    }
+  },
+  "andJoin": "和",
+  "photoBackupReady": "照片备份已就绪",
+  "needAuthToBackup": "需要授权才能备份",
+  "photosVideosSyncToUnraid": "照片和视频将同步到 Unraid",
+  "grantPhotosVideosToEnable": "请授予照片和视频访问权限以启用备份功能",
+  "searchPhotosVideos": "搜索照片、视频",
+  "allPhotos": "全部照片",
+  "backupEnabledSample": "已开启 / 今天 09:42",
+  "photoCount": "{count} 张",
+  "@photoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "apiUnraidServiceMissing": "未找到 unraid-api 服务，请确认 Unraid Connect/API 插件已启用",
+  "apiShareActionUnsupported": "共享项目不支持该操作",
+  "apiConnectionTimeout": "连接服务器超时",
+  "apiCannotConnect": "无法连接服务器：{error}",
+  "@apiCannotConnect": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "apiHttpError": "服务器返回 HTTP {statusCode}",
+  "@apiHttpError": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "apiInvalidData": "服务器返回了无效数据",
+  "apiGraphqlFailed": "GraphQL 请求失败",
+  "apiMissingDataField": "响应中缺少 data 字段",
+  "apiActionListDirectory": "读取目录",
+  "apiActionScanMedia": "扫描媒体文件",
+  "apiActionReadFile": "读取文件",
+  "apiActionReadThumbnail": "读取缩略图",
+  "apiFileBrowserInvalidJson": "File Browser 返回了无效 JSON：{action}",
+  "@apiFileBrowserInvalidJson": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "apiFileBrowserTimeout": "File Browser {action}超时",
+  "@apiFileBrowserTimeout": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "apiFileBrowserCannotConnect": "无法连接 File Browser：{error}",
+  "@apiFileBrowserCannotConnect": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "apiFileBrowserForbidden": "File Browser 拒绝访问，请检查匿名访问或反向代理认证配置（HTTP {statusCode}）",
+  "@apiFileBrowserForbidden": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "apiFileBrowserNotFound": "File Browser 未找到路径（HTTP 404）",
+  "apiFileBrowserFailed": "File Browser {action}失败：HTTP {statusCode}",
+  "@apiFileBrowserFailed": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "unbound": "未绑定",
+  "installedPlugins": "已安装插件",
+  "countUnit": "{count} 个",
+  "@countUnit": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "apiKeyRolesDescription": "可用角色与权限来自 apiKeyPossibleRoles",
+  "enabled": "已启用",
+  "disabled": "未启用",
+  "oidcProviderCount": "{count} 个 OIDC 提供方",
+  "@oidcProviderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unraidCloudStatus": "Unraid Cloud 状态",
+  "dynamicRemoteAccess": "动态远程访问 {type}",
+  "@dynamicRemoteAccess": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteAccess": "远程访问",
+  "forwardUnknown": "forward 未知",
+  "portLabel": "端口 {port}",
+  "@portLabel": {
+    "placeholders": {
+      "port": {
+        "type": "String"
+      }
+    }
+  },
+  "unnamedContainer": "未命名容器",
+  "dockerContainer": "Docker 容器",
+  "autoStart": "自启动",
+  "updateAvailable": "有更新",
+  "image": "镜像",
+  "ports": "端口",
+  "online": "在线",
+  "offline": "离线",
+  "unnamedVm": "未命名虚拟机",
+  "virtualMachine": "虚拟机",
+  "running": "运行中",
+  "vncAvailable": "VNC 可用",
+  "vmDomainId": "虚拟机域标识",
+  "fromVmDomainState": "来自 vms.domain.state",
+  "unnamedShare": "未命名共享",
+  "cache": "缓存",
+  "shareDirectory": "共享目录",
+  "capacity": "容量",
+  "freeLabel": "free {value}",
+  "@freeLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "allocationStrategy": "分配策略",
+  "defaultValue": "默认",
+  "splitLevel": "split level {value}",
+  "@splitLevel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "none": "无",
+  "shareDirectoryConfig": "共享目录配置",
+  "unknownDisk": "未知磁盘",
+  "sleeping": "休眠",
+  "networkInterface": "网络接口",
+  "noAddress": "无地址",
+  "accessAddress": "访问地址",
+  "batteryLoad": "电量 {battery}% · 负载 {load}%",
+  "@batteryLoad": {
+    "placeholders": {
+      "battery": {
+        "type": "String"
+      },
+      "load": {
+        "type": "String"
+      }
+    }
+  },
+  "plugin": "插件",
+  "unknownVersion": "未知版本",
+  "apiCliModules": "API {api} · CLI {cli}",
+  "@apiCliModules": {
+    "placeholders": {
+      "api": {
+        "type": "String"
+      },
+      "cli": {
+        "type": "String"
+      }
+    }
+  },
+  "yes": "有",
+  "no": "无",
+  "pluginInstallTask": "插件安装任务",
+  "installTask": "安装任务",
+  "log": "日志",
+  "unknownSize": "未知大小",
+  "localAccessAddress": "本地访问地址",
+  "remoteAccessAddress": "远程访问地址",
+  "notification": "通知",
+  "unnamed": "未命名",
+  "directory": "目录",
+  "unknownCpu": "未知 CPU",
+  "coresCount": "{count} 核",
+  "@coresCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "threadsCount": "{count} 线程",
+  "@threadsCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "unknownMotherboard": "未知主板",
+  "unknownSystem": "未知系统",
+  "noPackageVersions": "未返回包版本",
+  "noServicesReturned": "未返回服务",
+  "servicesOnlineSummary": "{online}/{total} 在线 · {names}",
+  "@servicesOnlineSummary": {
+    "placeholders": {
+      "online": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "noNetworksReturned": "未返回网络",
+  "networksCount": "{count} 个网络",
+  "@networksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noPortConflictInfo": "未返回端口冲突信息",
+  "noPortConflicts": "未发现端口冲突",
+  "portConflictCount": "{count} 个端口冲突",
+  "@portConflictCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "container": "容器",
+  "noPortMappings": "未返回端口映射",
+  "totalUsage": "总计 {value}",
+  "@totalUsage": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "usedUsage": "已用 {value}",
+  "@usedUsage": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "usedTotalUsage": "已用 {used} / {total}",
+  "@usedTotalUsage": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "started": "已启动",
+  "stopped": "已停止",
+  "paused": "已暂停",
+  "idle": "空闲",
+  "shutDown": "已关闭",
+  "crashed": "异常",
+  "daysCount": "{count} 天",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursCount": "{count} 小时",
+  "@hoursCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "minutesCount": "{count} 分钟",
+  "@minutesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

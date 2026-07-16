@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+
+import '../l10n/generated/app_localizations.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../services/unraid_api_client.dart';
@@ -45,7 +47,7 @@ class _AlbumPageState extends State<AlbumPage> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is! AlbumPageArgs) {
       setState(() {
-        _error = '缺少连接参数';
+        _error = AppLocalizations.of(context).missingConnectionArgs;
         _loading = false;
       });
       return;
@@ -71,7 +73,7 @@ class _AlbumPageState extends State<AlbumPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = '加载失败：$e';
+        _error = AppLocalizations.of(context).loadFailed(e.toString());
         _loading = false;
       });
     }
@@ -90,15 +92,15 @@ class _AlbumPageState extends State<AlbumPage> {
       final date = file.modifiedDate;
       String title;
       if (date == null) {
-        title = '未知日期';
+        title = '__unknown__';
       } else {
         final d = DateTime(date.year, date.month, date.day);
         if (!d.isBefore(today)) {
-          title = '今天';
+          title = '__today__';
         } else if (!d.isBefore(yesterday)) {
-          title = '昨天';
+          title = '__yesterday__';
         } else {
-          title = '${date.year}年${date.month}月';
+          title = '__ym__${date.year}_${date.month}';
         }
       }
       groups.putIfAbsent(title, () => []);
@@ -109,7 +111,7 @@ class _AlbumPageState extends State<AlbumPage> {
     }
     // Sort sections: 今天 > 昨天 > year-month descending
     final now2 = DateTime.now();
-    final sectionOrder = ['今天', '昨天'];
+    final sectionOrder = ['__today__', '__yesterday__'];
     final entries = groups.entries.toList();
     entries.sort((a, b) {
       final ai = sectionOrder.indexOf(a.key);
@@ -129,7 +131,7 @@ class _AlbumPageState extends State<AlbumPage> {
   }
 
   static DateTime? _parseSectionDate(String title, DateTime fallback) {
-    final match = RegExp(r'(\d{4})年(\d{1,2})月').firstMatch(title);
+    final match = RegExp(r'__ym__(\d+)_(\d+)').firstMatch(title);
     if (match == null) return null;
     return DateTime(
       int.parse(match.group(1)!),
@@ -146,7 +148,7 @@ class _AlbumPageState extends State<AlbumPage> {
   Widget build(BuildContext context) {
     final args = _args;
     return _AlbumScaffold(
-      title: '相册',
+      title: AppLocalizations.of(context).album,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -182,9 +184,9 @@ class _AlbumPageState extends State<AlbumPage> {
                         size: 48, color: AppTheme.textLight),
                     const SizedBox(height: 12),
                     Text(_error!,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppTheme.textMedium, fontSize: 14)),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextButton(
                       onPressed: () {
                         setState(() {
@@ -193,14 +195,14 @@ class _AlbumPageState extends State<AlbumPage> {
                         });
                         _loadMedia();
                       },
-                      child: const Text('重试'),
+                      child: Text(AppLocalizations.of(context).retry),
                     ),
                   ],
                 ),
               ),
             )
           else if (_sections.isEmpty)
-            const Center(
+            Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 60),
                 child: Column(
@@ -208,7 +210,7 @@ class _AlbumPageState extends State<AlbumPage> {
                     Icon(Icons.photo_library_outlined,
                         size: 48, color: AppTheme.textLight),
                     SizedBox(height: 12),
-                    Text('没有找到照片',
+                    Text(AppLocalizations.of(context).noPhotosFound,
                         style: TextStyle(
                             color: AppTheme.textMedium, fontSize: 14)),
                   ],
@@ -250,7 +252,7 @@ class _AlbumGroupsPageState extends State<AlbumGroupsPage> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is! AlbumPageArgs) {
       setState(() {
-        _error = '缺少连接参数';
+        _error = AppLocalizations.of(context).missingConnectionArgs;
         _loading = false;
       });
       return;
@@ -298,7 +300,7 @@ class _AlbumGroupsPageState extends State<AlbumGroupsPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = '加载失败：$e';
+        _error = AppLocalizations.of(context).loadFailed(e.toString());
         _loading = false;
       });
     }
@@ -313,7 +315,7 @@ class _AlbumGroupsPageState extends State<AlbumGroupsPage> {
   Widget build(BuildContext context) {
     final args = _args;
     return _AlbumScaffold(
-      title: '相册',
+      title: AppLocalizations.of(context).album,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -341,9 +343,9 @@ class _AlbumGroupsPageState extends State<AlbumGroupsPage> {
                         size: 48, color: AppTheme.textLight),
                     const SizedBox(height: 12),
                     Text(_error!,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppTheme.textMedium, fontSize: 14)),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextButton(
                       onPressed: () {
                         setState(() {
@@ -352,14 +354,14 @@ class _AlbumGroupsPageState extends State<AlbumGroupsPage> {
                         });
                         _loadGroups();
                       },
-                      child: const Text('重试'),
+                      child: Text(AppLocalizations.of(context).retry),
                     ),
                   ],
                 ),
               ),
             )
           else if (_groups.isEmpty)
-            const Center(
+            Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 60),
                 child: Column(
@@ -367,7 +369,7 @@ class _AlbumGroupsPageState extends State<AlbumGroupsPage> {
                     Icon(Icons.folder_open,
                         size: 48, color: AppTheme.textLight),
                     SizedBox(height: 12),
-                    Text('没有找到相册目录',
+                    Text(AppLocalizations.of(context).noAlbumDirsFound,
                         style: TextStyle(
                             color: AppTheme.textMedium, fontSize: 14)),
                   ],
@@ -422,7 +424,7 @@ class _AlbumVideosPageState extends State<AlbumVideosPage> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is! AlbumPageArgs) {
       setState(() {
-        _error = '缺少连接参数';
+        _error = AppLocalizations.of(context).missingConnectionArgs;
         _loading = false;
       });
       return;
@@ -448,7 +450,7 @@ class _AlbumVideosPageState extends State<AlbumVideosPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = '加载失败：$e';
+        _error = AppLocalizations.of(context).loadFailed(e.toString());
         _loading = false;
       });
     }
@@ -467,22 +469,22 @@ class _AlbumVideosPageState extends State<AlbumVideosPage> {
       final date = file.modifiedDate;
       String title;
       if (date == null) {
-        title = '未知日期';
+        title = '__unknown__';
       } else {
         final d = DateTime(date.year, date.month, date.day);
         if (!d.isBefore(today)) {
-          title = '今天';
+          title = '__today__';
         } else if (!d.isBefore(yesterday)) {
-          title = '昨天';
+          title = '__yesterday__';
         } else {
-          title = '${date.year}年${date.month}月';
+          title = '__ym__${date.year}_${date.month}';
         }
       }
       groups.putIfAbsent(title, () => []);
       groups[title]!.add(_MediaItem(file: file, apiClient: client));
     }
     final now2 = DateTime.now();
-    final sectionOrder = ['今天', '昨天'];
+    final sectionOrder = ['__today__', '__yesterday__'];
     final entries = groups.entries.toList();
     entries.sort((a, b) {
       final ai = sectionOrder.indexOf(a.key);
@@ -501,7 +503,7 @@ class _AlbumVideosPageState extends State<AlbumVideosPage> {
   }
 
   static DateTime? _parseSectionDate(String title, DateTime fallback) {
-    final match = RegExp(r'(\d{4})年(\d{1,2})月').firstMatch(title);
+    final match = RegExp(r'__ym__(\d+)_(\d+)').firstMatch(title);
     if (match == null) return null;
     return DateTime(
       int.parse(match.group(1)!),
@@ -518,7 +520,7 @@ class _AlbumVideosPageState extends State<AlbumVideosPage> {
   Widget build(BuildContext context) {
     final args = _args;
     return _AlbumScaffold(
-      title: '视频',
+      title: AppLocalizations.of(context).videos,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -546,9 +548,9 @@ class _AlbumVideosPageState extends State<AlbumVideosPage> {
                         size: 48, color: AppTheme.textLight),
                     const SizedBox(height: 12),
                     Text(_error!,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppTheme.textMedium, fontSize: 14)),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextButton(
                       onPressed: () {
                         setState(() {
@@ -557,14 +559,14 @@ class _AlbumVideosPageState extends State<AlbumVideosPage> {
                         });
                         _loadVideos();
                       },
-                      child: const Text('重试'),
+                      child: Text(AppLocalizations.of(context).retry),
                     ),
                   ],
                 ),
               ),
             )
           else if (_sections.isEmpty)
-            const Center(
+            Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 60),
                 child: Column(
@@ -572,7 +574,7 @@ class _AlbumVideosPageState extends State<AlbumVideosPage> {
                     Icon(Icons.videocam_off,
                         size: 48, color: AppTheme.textLight),
                     SizedBox(height: 12),
-                    Text('没有找到视频',
+                    Text(AppLocalizations.of(context).noVideosFound,
                         style: TextStyle(
                             color: AppTheme.textMedium, fontSize: 14)),
                   ],
@@ -657,7 +659,9 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
     if (!_photosGranted || !_videosGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('需要照片和视频权限才能进行备份')),
+          SnackBar(
+              content: Text(
+                  AppLocalizations.of(context).mediaPermissionRequiredBackup)),
         );
       }
     }
@@ -669,7 +673,8 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
     final client = _apiClient;
     if (client == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先连接服务器')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).connectServerFirst)),
       );
       return;
     }
@@ -711,7 +716,7 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _browseError = '加载失败：$e';
+        _browseError = AppLocalizations.of(context).loadFailed(e.toString());
         _browseLoading = false;
       });
     }
@@ -774,16 +779,16 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
                   bottom: 0,
                   child: TextButton.icon(
                     onPressed: _closeDirBrowser,
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    label: const Text(
-                      '取消',
+                    icon: Icon(Icons.close, color: Colors.white),
+                    label: Text(
+                      AppLocalizations.of(context).cancel,
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
                 ),
-                const Center(
+                Center(
                   child: Text(
-                    '选择备份目录',
+                    AppLocalizations.of(context).selectBackupDirectory,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -820,27 +825,28 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton.icon(
                             onPressed:
                                 _browseLoading ? null : _selectCurrentDir,
-                            icon: const Icon(Icons.check, size: 18),
-                            label: Text('选择此目录'),
+                            icon: Icon(Icons.check, size: 18),
+                            label: Text(AppLocalizations.of(context)
+                                .selectThisDirectory),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(height: 1),
+                  Divider(height: 1),
                   // Navigation: go up
                   if (_browsePath != '/mnt/user' && _browsePath.isNotEmpty)
                     ListTile(
-                      leading: const Icon(Icons.arrow_upward,
-                          color: AppTheme.primary),
-                      title: const Text(
-                        '返回上级',
+                      leading:
+                          Icon(Icons.arrow_upward, color: AppTheme.primary),
+                      title: Text(
+                        AppLocalizations.of(context).goUp,
                         style: TextStyle(
                           color: AppTheme.primary,
                           fontWeight: FontWeight.w500,
@@ -861,22 +867,23 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
                                         size: 40, color: AppTheme.textLight),
                                     const SizedBox(height: 8),
                                     Text(_browseError!,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             color: AppTheme.textMedium,
                                             fontSize: 13)),
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: 12),
                                     TextButton(
                                       onPressed: () =>
                                           _loadBrowseDir(_browsePath),
-                                      child: const Text('重试'),
+                                      child: Text(
+                                          AppLocalizations.of(context).retry),
                                     ),
                                   ],
                                 ),
                               )
                             : _browseEntries.isEmpty
-                                ? const Center(
+                                ? Center(
                                     child: Text(
-                                      '此目录下没有子文件夹',
+                                      AppLocalizations.of(context).noSubfolders,
                                       style: TextStyle(
                                           color: AppTheme.textMedium,
                                           fontSize: 14),
@@ -931,7 +938,7 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
 
   Widget _buildSettings() {
     return _AlbumScaffold(
-      title: '照片备份',
+      title: AppLocalizations.of(context).photoBackup,
       showSearchOnScroll: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -940,38 +947,40 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
             photosGranted: _photosGranted,
             videosGranted: _videosGranted,
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
 
           // Permission section
           if (_checkingPermissions)
-            const _BackupSettingRow(
+            _BackupSettingRow(
               icon: Icons.shield,
-              title: '权限检查中...',
-              subtitle: '正在检查照片和视频访问权限',
+              title: AppLocalizations.of(context).permissionChecking,
+              subtitle: AppLocalizations.of(context).permissionCheckingSubtitle,
             )
           else if (!_permissionsOk)
             _BackupActionRow(
               icon: Icons.shield,
-              title: '需要媒体权限',
+              title: AppLocalizations.of(context).needMediaPermission,
               subtitle: _permissionDeniedSubtitle(),
-              actionLabel: '授予权限',
+              actionLabel: AppLocalizations.of(context).grantPermission,
               onAction: _requestPermissions,
             )
           else
             _BackupSettingRow(
               icon: Icons.shield,
-              title: '媒体权限',
-              subtitle: '照片和视频访问权限已授予',
+              title: AppLocalizations.of(context).mediaPermission,
+              subtitle: AppLocalizations.of(context).mediaPermissionGranted,
               iconColor: Colors.green,
             ),
 
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           // Auto backup toggle
           _BackupSettingRow(
             icon: Icons.sync,
-            title: '自动备份',
-            subtitle: _permissionsOk ? '将手机照片同步到 Unraid 共享目录' : '请先授予媒体权限',
+            title: AppLocalizations.of(context).autoBackup,
+            subtitle: _permissionsOk
+                ? AppLocalizations.of(context).autoBackupSubtitle
+                : AppLocalizations.of(context).grantMediaFirst,
             enabled: _autoBackup && _permissionsOk,
             onToggle: _permissionsOk
                 ? (value) => setState(() => _autoBackup = value)
@@ -981,7 +990,7 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
           // Target directory - click to browse
           _BackupSettingRow(
             icon: Icons.folder_shared,
-            title: '目标目录',
+            title: AppLocalizations.of(context).targetDirectory,
             subtitle: _targetDir,
             onTap: _openDirBrowser,
           ),
@@ -989,8 +998,8 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
           // WiFi only
           _BackupSettingRow(
             icon: Icons.wifi,
-            title: '仅 Wi-Fi 备份',
-            subtitle: '避免使用移动网络上传',
+            title: AppLocalizations.of(context).wifiOnlyBackup,
+            subtitle: AppLocalizations.of(context).wifiOnlyBackupSubtitle,
             enabled: _wifiOnly,
             onToggle: (value) => setState(() => _wifiOnly = value),
           ),
@@ -998,16 +1007,17 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
           // Charge video
           _BackupSettingRow(
             icon: Icons.battery_charging_full,
-            title: '充电时备份视频',
-            subtitle: '减少后台同步对电量的影响',
+            title: AppLocalizations.of(context).chargeWhenBackupVideo,
+            subtitle:
+                AppLocalizations.of(context).chargeWhenBackupVideoSubtitle,
             enabled: _chargeVideo,
             onToggle: (value) => setState(() => _chargeVideo = value),
           ),
 
-          const _BackupSettingRow(
+          _BackupSettingRow(
             icon: Icons.history,
-            title: '上次同步',
-            subtitle: '暂无同步记录',
+            title: AppLocalizations.of(context).lastSync,
+            subtitle: AppLocalizations.of(context).noSyncRecord,
           ),
         ],
       ),
@@ -1016,9 +1026,10 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
 
   String _permissionDeniedSubtitle() {
     final missing = <String>[];
-    if (!_photosGranted) missing.add('照片');
-    if (!_videosGranted) missing.add('视频');
-    return '缺少${missing.join('和')}访问权限';
+    final l10n = AppLocalizations.of(context);
+    if (!_photosGranted) missing.add(l10n.photos);
+    if (!_videosGranted) missing.add(l10n.videos);
+    return l10n.missingPermissionAccess(missing.join(l10n.andJoin));
   }
 }
 
@@ -1052,7 +1063,7 @@ class _BackupHeaderCard extends StatelessWidget {
             color: (allGranted ? AppTheme.primary : AppTheme.textLight)
                 .withValues(alpha: 0.2),
             blurRadius: 12,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -1064,18 +1075,22 @@ class _BackupHeaderCard extends StatelessWidget {
             color: Colors.white,
             size: 28,
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Text(
-            allGranted ? '照片备份已就绪' : '需要授权才能备份',
-            style: const TextStyle(
+            allGranted
+                ? AppLocalizations.of(context).photoBackupReady
+                : AppLocalizations.of(context).needAuthToBackup,
+            style: TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 5),
+          SizedBox(height: 5),
           Text(
-            allGranted ? '照片和视频将同步到 Unraid' : '请授予照片和视频访问权限以启用备份功能',
+            allGranted
+                ? AppLocalizations.of(context).photosVideosSyncToUnraid
+                : AppLocalizations.of(context).grantPhotosVideosToEnable,
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
@@ -1145,9 +1160,9 @@ class _AlbumScaffoldState extends State<_AlbumScaffold> {
                   bottom: 0,
                   child: TextButton.icon(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    label: const Text(
-                      '返回',
+                    icon: Icon(Icons.arrow_back, color: Colors.white),
+                    label: Text(
+                      AppLocalizations.of(context).back,
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -1205,18 +1220,18 @@ class _AlbumHeaderSearch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(19),
       ),
       child: Row(
         children: [
-          const Icon(Icons.search, color: AppTheme.primary, size: 18),
-          const SizedBox(width: 7),
+          Icon(Icons.search, color: AppTheme.primary, size: 18),
+          SizedBox(width: 7),
           Expanded(
             child: Text(
-              '搜索照片、视频',
+              AppLocalizations.of(context).searchPhotosVideos,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -1247,7 +1262,7 @@ class _AlbumNavStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: AppTheme.background,
         borderRadius: BorderRadius.circular(12),
@@ -1255,14 +1270,14 @@ class _AlbumNavStats extends StatelessWidget {
           BoxShadow(
             color: AppTheme.primary.withValues(alpha: 0.05),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         children: [
           _AlbumNavItem(
-            label: '全部照片',
+            label: AppLocalizations.of(context).allPhotos,
             value: '$photoCount',
             selected: selected == _AlbumNavTarget.photos,
             onTap: selected == _AlbumNavTarget.photos
@@ -1273,7 +1288,7 @@ class _AlbumNavStats extends StatelessWidget {
                     ),
           ),
           _AlbumNavItem(
-            label: '相册',
+            label: AppLocalizations.of(context).album,
             value: '${_albumCount}',
             selected: selected == _AlbumNavTarget.groups,
             onTap: selected == _AlbumNavTarget.groups
@@ -1284,7 +1299,7 @@ class _AlbumNavStats extends StatelessWidget {
                     ),
           ),
           _AlbumNavItem(
-            label: '视频',
+            label: AppLocalizations.of(context).videos,
             value: '$videoCount',
             selected: selected == _AlbumNavTarget.videos,
             onTap: selected == _AlbumNavTarget.videos
@@ -1379,7 +1394,7 @@ class _BackupEntry extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppTheme.softLine),
           ),
-          child: const Row(
+          child: Row(
             children: [
               Icon(Icons.cloud_done, color: AppTheme.primary),
               SizedBox(width: 10),
@@ -1388,7 +1403,7 @@ class _BackupEntry extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '照片备份',
+                      AppLocalizations.of(context).photoBackup,
                       style: TextStyle(
                         color: AppTheme.textDark,
                         fontSize: 15,
@@ -1397,7 +1412,7 @@ class _BackupEntry extends StatelessWidget {
                     ),
                     SizedBox(height: 3),
                     Text(
-                      '已开启 / 今天 09:42',
+                      AppLocalizations.of(context).backupEnabledSample,
                       style: TextStyle(
                         color: AppTheme.textMedium,
                         fontSize: 13,
@@ -1449,7 +1464,7 @@ class _TimelineSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            section.title,
+            _localizedSectionTitle(context, section.title),
             style: const TextStyle(
               color: AppTheme.textDark,
               fontSize: 17,
@@ -1656,15 +1671,15 @@ class _AlbumGroupTile extends StatelessWidget {
                   group.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppTheme.textDark,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: 3),
                 Text(
-                  '${group.count} 张',
+                  AppLocalizations.of(context).photoCount(group.count),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -1824,16 +1839,29 @@ class _BackupActionRow extends StatelessWidget {
             onPressed: onAction,
             style: FilledButton.styleFrom(
               backgroundColor: AppTheme.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: Size.zero,
             ),
             child: Text(
               actionLabel,
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(fontSize: 13),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+String _localizedSectionTitle(BuildContext context, String title) {
+  final l10n = AppLocalizations.of(context);
+  if (title == '__unknown__') return l10n.unknownDate;
+  if (title == '__today__') return l10n.today;
+  if (title == '__yesterday__') return l10n.yesterday;
+  final match = RegExp(r'__ym__(\d+)_(\d+)').firstMatch(title);
+  if (match != null) {
+    return l10n.yearMonth(
+        int.parse(match.group(1)!), int.parse(match.group(2)!));
+  }
+  return title;
 }

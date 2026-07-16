@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/generated/app_localizations.dart';
+
 import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fade_slide.dart';
@@ -13,6 +15,7 @@ class DetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is UnraidDashboard) {
       return _DashboardDetailPage(dashboard: args);
@@ -31,9 +34,9 @@ class DetailPage extends StatelessWidget {
                   top: 28,
                   child: TextButton.icon(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    label: const Text(
-                      '返回',
+                    icon: Icon(Icons.arrow_back, color: Colors.white),
+                    label: Text(
+                      l10n.back,
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -42,17 +45,17 @@ class DetailPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        '产品详情',
+                      Text(
+                        l10n.productDetails,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      SizedBox(height: 5),
                       Text(
-                        '查看完整信息',
+                        l10n.viewFullInfo,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.80),
                           fontSize: 14,
@@ -72,67 +75,67 @@ class DetailPage extends StatelessWidget {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
               ),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(30, 30, 30, 30),
+                padding: EdgeInsets.fromLTRB(30, 30, 30, 30),
                 child: FadeSlide(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _DetailSection(
+                      _DetailSection(
                         icon: Icons.info,
-                        title: '基本信息',
+                        title: l10n.basicInfo,
                         child: Text(
-                          '这是一个详情页面示例，展示如何按照登录页面的设计风格创建移动端详情页。页面保持相同的紫蓝渐变、圆角设计和柔和动效，确保视觉一致性。',
+                          l10n.detailSampleBody,
                           style: _bodyStyle,
                         ),
                       ),
-                      const _DetailSection(
+                      _DetailSection(
                         icon: Icons.list,
-                        title: '功能列表',
+                        title: l10n.featureList,
                         child: Column(
                           children: [
-                            _FeatureRow(label: '支持响应式设计'),
-                            _FeatureRow(label: '保持视觉一致性'),
-                            _FeatureRow(label: '优雅的动画效果'),
-                            _FeatureRow(label: '清晰的信息层次'),
+                            _FeatureRow(label: l10n.featureResponsive),
+                            _FeatureRow(label: l10n.featureVisualConsistency),
+                            _FeatureRow(label: l10n.featureAnimations),
+                            _FeatureRow(label: l10n.featureClearHierarchy),
                           ],
                         ),
                       ),
-                      const _DetailSection(
+                      _DetailSection(
                         icon: Icons.description,
-                        title: '详细说明',
+                        title: l10n.detailedDescription,
                         child: Column(
                           children: [
                             _InfoCard(
-                              title: '设计理念',
-                              text: '延续登录页面的现代简约风格，以紫蓝渐变作为主视觉元素，创建统一且专业的用户体验。',
+                              title: l10n.designPhilosophy,
+                              text: l10n.designPhilosophyText,
                             ),
                             SizedBox(height: 12),
                             _InfoCard(
-                              title: '交互设计',
-                              text: '页面元素采用顺序淡入动画，增强层次感和用户体验，按钮包含清晰的点击反馈。',
+                              title: l10n.interactionDesign,
+                              text: l10n.interactionDesignText,
                             ),
                           ],
                         ),
                       ),
-                      const _DetailSection(
+                      _DetailSection(
                         icon: Icons.style,
-                        title: 'UI 元素',
+                        title: l10n.uiElements,
                         child: Text(
-                          '采用大圆角设计增强现代感和友好度，适当的阴影提供层次感，合理的间距确保阅读舒适。',
+                          l10n.uiElementsText,
                           style: _bodyStyle,
                         ),
                       ),
                       GradientButton(
-                        label: '确认操作',
+                        label: l10n.confirmAction,
                         onPressed: () => showDialog<void>(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text('操作已确认'),
-                            content: const Text('这里可以接入实际业务逻辑。'),
+                            title: Text(l10n.actionConfirmedTitle),
+                            content: Text(l10n.actionConfirmedBody),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('知道了'),
+                                child: Text(l10n.gotIt),
                               ),
                             ],
                           ),
@@ -151,12 +154,13 @@ class DetailPage extends StatelessWidget {
 }
 
 class _DashboardDetailPage extends StatelessWidget {
-  const _DashboardDetailPage({required this.dashboard});
+  _DashboardDetailPage({required this.dashboard});
 
   final UnraidDashboard dashboard;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return PhoneFrame(
       maxContentWidth: 900,
       child: Column(
@@ -170,9 +174,9 @@ class _DashboardDetailPage extends StatelessWidget {
                   top: 28,
                   child: TextButton.icon(
                     onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    label: const Text(
-                      '返回',
+                    icon: Icon(Icons.arrow_back, color: Colors.white),
+                    label: Text(
+                      l10n.back,
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -213,41 +217,43 @@ class _DashboardDetailPage extends StatelessWidget {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
               ),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(30, 30, 30, 30),
+                padding: EdgeInsets.fromLTRB(30, 30, 30, 30),
                 child: FadeSlide(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _DetailSection(
                         icon: Icons.badge,
-                        title: '服务器资料',
+                        title: l10n.serverProfile,
                         child: Column(
                           children: [
                             _DataRow(label: 'GUID', value: dashboard.guid),
                             _DataRow(
                                 label: 'Owner', value: dashboard.ownerName),
                             _DataRow(
-                              label: '授权',
+                              label: l10n.authorization,
                               value: dashboard.registration,
                             ),
-                            _DataRow(label: '状态', value: dashboard.status),
+                            _DataRow(
+                                label: l10n.status, value: dashboard.status),
                           ],
                         ),
                       ),
                       _DetailSection(
                         icon: Icons.developer_board,
-                        title: '硬件与系统',
+                        title: l10n.hardwareAndSystem,
                         child: Column(
                           children: [
-                            _DataRow(label: '型号', value: dashboard.model),
+                            _DataRow(label: l10n.model, value: dashboard.model),
                             _DataRow(label: 'CPU', value: dashboard.cpuSummary),
                             _DataRow(
-                              label: '主板',
+                              label: l10n.motherboard,
                               value: dashboard.baseboardSummary,
                             ),
-                            _DataRow(label: '系统', value: dashboard.osSummary),
                             _DataRow(
-                              label: '包版本',
+                                label: l10n.system, value: dashboard.osSummary),
+                            _DataRow(
+                              label: l10n.packageVersion,
                               value: dashboard.packagesSummary,
                             ),
                           ],
@@ -255,48 +261,52 @@ class _DashboardDetailPage extends StatelessWidget {
                       ),
                       _DetailSection(
                         icon: Icons.storage,
-                        title: '阵列与存储',
+                        title: l10n.arrayAndStorage,
                         child: Column(
                           children: [
                             _DataRow(
-                              label: '阵列',
+                              label: l10n.array,
                               value:
                                   '${dashboard.arrayState} · ${dashboard.arrayUsage}',
                             ),
                             _DataRow(
                               label: 'Parity',
                               value: dashboard.paritySummary.isEmpty
-                                  ? '暂无校验任务'
+                                  ? l10n.noParityTask
                                   : dashboard.paritySummary,
                             ),
                             _DataRow(
-                              label: '磁盘',
-                              value: '${dashboard.diskItems.length} 个',
+                              label: l10n.disk,
+                              value:
+                                  l10n.countItems(dashboard.diskItems.length),
                             ),
                             _DataRow(
-                              label: '共享',
-                              value: '${dashboard.shareItems.length} 个',
+                              label: l10n.navShare,
+                              value:
+                                  l10n.countItems(dashboard.shareItems.length),
                             ),
                           ],
                         ),
                       ),
                       _DetailSection(
                         icon: Icons.language,
-                        title: '网络与连接',
+                        title: l10n.networkAndConnection,
                         child: Column(
                           children: [
                             _DataRow(label: 'LAN', value: dashboard.lanIp),
                             _DataRow(label: 'WAN', value: dashboard.wanIp),
                             _DataRow(
-                                label: '本地 URL', value: dashboard.localUrl),
+                                label: l10n.localUrl,
+                                value: dashboard.localUrl),
                             _DataRow(
-                                label: '远程 URL', value: dashboard.remoteUrl),
+                                label: l10n.remoteUrl,
+                                value: dashboard.remoteUrl),
                             _DataRow(
-                              label: 'Docker 网络',
+                              label: l10n.dockerNetwork,
                               value: dashboard.dockerNetworkSummary,
                             ),
                             _DataRow(
-                              label: '端口冲突',
+                              label: l10n.portConflicts,
                               value: dashboard.dockerConflictSummary,
                             ),
                           ],
@@ -304,7 +314,7 @@ class _DashboardDetailPage extends StatelessWidget {
                       ),
                       _DetailSection(
                         icon: Icons.cloud_done,
-                        title: 'Cloud / 插件 / 权限',
+                        title: l10n.cloudPluginsPermissions,
                         child: Column(
                           children: [
                             _DataRow(
@@ -315,24 +325,25 @@ class _DashboardDetailPage extends StatelessWidget {
                                   .join(' · '),
                             ),
                             _DataRow(
-                              label: '插件',
-                              value: '${dashboard.pluginItems.length} 条记录',
+                              label: l10n.plugins,
+                              value: l10n
+                                  .countRecords(dashboard.pluginItems.length),
                             ),
                             _DataRow(
-                              label: '权限',
+                              label: l10n.permissions,
                               value: dashboard.securityItems
                                   .map((item) => '${item.title} ${item.value}')
                                   .join(' · '),
                             ),
                             _DataRow(
-                              label: '日志',
-                              value: '${dashboard.logItems.length} 个文件',
+                              label: l10n.logs,
+                              value: l10n.countFiles(dashboard.logItems.length),
                             ),
                           ],
                         ),
                       ),
                       GradientButton(
-                        label: '返回主页',
+                        label: l10n.returnHome,
                         icon: Icons.home,
                         onPressed: () => Navigator.of(context).maybePop(),
                       ),
@@ -349,7 +360,7 @@ class _DashboardDetailPage extends StatelessWidget {
 }
 
 class _DataRow extends StatelessWidget {
-  const _DataRow({
+  _DataRow({
     required this.label,
     required this.value,
   });
@@ -361,7 +372,7 @@ class _DataRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: AppTheme.softLine)),
       ),
       child: Row(
@@ -371,12 +382,12 @@ class _DataRow extends StatelessWidget {
             width: 74,
             child: Text(
               label,
-              style: const TextStyle(color: AppTheme.textLight, fontSize: 13),
+              style: TextStyle(color: AppTheme.textLight, fontSize: 13),
             ),
           ),
           Expanded(
             child: Text(
-              value.isEmpty ? '未知' : value,
+              value.isEmpty ? AppLocalizations.of(context).unknown : value,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -400,7 +411,7 @@ const _bodyStyle = TextStyle(
 );
 
 class _DetailSection extends StatelessWidget {
-  const _DetailSection({
+  _DetailSection({
     required this.icon,
     required this.title,
     required this.child,
@@ -468,7 +479,7 @@ class _FeatureRow extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard({
+  _InfoCard({
     required this.title,
     required this.text,
   });

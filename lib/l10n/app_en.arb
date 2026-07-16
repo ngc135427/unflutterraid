@@ -60,5 +60,649 @@
   "navShare": "Shares",
   "settingsOpenTooltip": "Open settings",
   "notificationsTooltip": "Notifications",
-  "back": "Back"
+  "back": "Back",
+  "retry": "Retry",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "close": "Close",
+  "refresh": "Refresh",
+  "unknown": "Unknown",
+  "edit": "Edit",
+  "all": "All",
+  "details": "Details",
+  "browse": "Browse",
+  "settings": "Settings",
+  "start": "Start",
+  "stop": "Stop",
+  "restart": "Restart",
+  "status": "Status",
+  "description": "Description",
+  "location": "Location",
+  "overview": "Overview",
+  "memory": "Memory",
+  "array": "Array",
+  "notifications": "Notifications",
+  "motherboard": "Motherboard",
+  "disk": "Disks",
+  "network": "Network",
+  "plugins": "Plugins",
+  "permissions": "Permissions",
+  "connection": "Connection",
+  "logs": "Logs",
+  "album": "Album",
+  "music": "Music",
+  "photos": "Photos",
+  "videos": "Videos",
+  "file": "File",
+  "project": "Item",
+  "connectServerFirst": "Connect to a server first",
+  "missingConnection": "Missing server connection",
+  "missingConnectionOrId": "Missing server connection or item ID",
+  "missingConnectionArgs": "Missing connection parameters",
+  "loadFailed": "Load failed: {error}",
+  "@loadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notReturned": "Not returned",
+  "notConnectedTitle": "Not connected",
+  "notConnectedMessage": "Return to sign-in and connect again.",
+  "loadingServerTitle": "Loading server",
+  "loadingServerMessage": "Requesting Unraid GraphQL API...",
+  "readFailedTitle": "Load failed",
+  "noDataTitle": "No data",
+  "noDataMessage": "The server returned nothing to display.",
+  "viewFullInfo": "View full info",
+  "liveMetrics": "Live metrics",
+  "arrayAndServices": "Array and services",
+  "arrayState": "Array state",
+  "arrayCapacity": "Array capacity",
+  "noParityTask": "No parity check running",
+  "servicesOnline": "Services online",
+  "recentNotifications": "Recent notifications",
+  "extendedManagement": "Extended management",
+  "interfaceModules": "API modules",
+  "notificationCount": "{count} alerts",
+  "@notificationCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "warningAlertCount": "{warning} warnings · {alert} critical",
+  "@warningAlertCount": {
+    "placeholders": {
+      "warning": {
+        "type": "int"
+      },
+      "alert": {
+        "type": "int"
+      }
+    }
+  },
+  "cpuUsage": "CPU usage",
+  "noWarningAlerts": "No warning or critical notifications",
+  "noNotificationDetailsTitle": "No notification details",
+  "noNotificationDetailsMessage": "Only notification counts were returned, not warning or critical items.",
+  "moduleNoDataMessage": "The server returned no {module} data.",
+  "@moduleNoDataMessage": {
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCenter": "Notification center",
+  "moduleDisksSubtitle": "SMART / partitions / temperature",
+  "moduleNetworkSubtitle": "Interfaces / access URLs",
+  "moduleUpsSubtitle": "Charge / load / policy",
+  "modulePluginsSubtitle": "Install tasks / modules",
+  "moduleCloudSubtitle": "Remote access / Cloud",
+  "searchTypeItems": "Search {type} items",
+  "@searchTypeItems": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "typeRefreshSubmitted": "{type} refresh submitted",
+  "@typeRefreshSubmitted": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "typeEmptyTitle": "No {type}",
+  "@typeEmptyTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "typeEmptyMessage": "The server returned no {type} items.",
+  "@typeEmptyMessage": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "noMatchesTitle": "No matches",
+  "noMatchesMessage": "Try a different keyword.",
+  "actionSubmitted": "{title} {action} submitted",
+  "@actionSubmitted": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "runningAndStopped": "{running} running · {stopped} stopped",
+  "@runningAndStopped": {
+    "placeholders": {
+      "running": {
+        "type": "int"
+      },
+      "stopped": {
+        "type": "int"
+      }
+    }
+  },
+  "arrayUsageLabel": "Array {usage}",
+  "@arrayUsageLabel": {
+    "placeholders": {
+      "usage": {
+        "type": "String"
+      }
+    }
+  },
+  "runningCount": "{count} running",
+  "@runningCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unknownProject": "Unknown item",
+  "noInfo": "No information",
+  "readingDirectoryTitle": "Reading directory",
+  "readingDirectoryMessage": "Reading share roots via GraphQL...",
+  "noShareDirectoryTitle": "No share directories",
+  "noShareDirectoryMessage": "GraphQL returned no share root data.",
+  "parentDirectory": "Up",
+  "shareRootSize": "Share root · {size}",
+  "@shareRootSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "subdirBrowseFuture": "Subfolder browsing will ship as a File Manager feature",
+  "previewUnsupported": "This file type cannot be previewed yet",
+  "labelActionSubmitted": "{label} submitted",
+  "@labelActionSubmitted": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "imageLoadFailed": "Failed to load image",
+  "chooseServerIcon": "Choose server icon",
+  "returnHome": "Back to home",
+  "countItems": "{count}",
+  "@countItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countRecords": "{count} records",
+  "@countRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countFiles": "{count} files",
+  "@countFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productDetails": "Product details",
+  "basicInfo": "Basic info",
+  "detailSampleBody": "This is a sample details page that follows the login page design language with the same purple-blue gradient, rounded corners, and soft motion.",
+  "featureList": "Features",
+  "featureResponsive": "Responsive layout",
+  "featureVisualConsistency": "Visual consistency",
+  "featureAnimations": "Polished animations",
+  "featureClearHierarchy": "Clear information hierarchy",
+  "detailedDescription": "Details",
+  "designPhilosophy": "Design philosophy",
+  "designPhilosophyText": "Continue the modern minimal login style, using a purple-blue gradient as the primary visual element for a unified professional experience.",
+  "interactionDesign": "Interaction design",
+  "interactionDesignText": "Page elements fade in sequentially for hierarchy and feedback, with clear button press states.",
+  "uiElements": "UI elements",
+  "uiElementsText": "Large corner radii, soft shadows, and balanced spacing keep the layout modern and readable.",
+  "confirmAction": "Confirm",
+  "actionConfirmedTitle": "Action confirmed",
+  "actionConfirmedBody": "Wire real business logic here.",
+  "gotIt": "Got it",
+  "serverProfile": "Server profile",
+  "authorization": "License",
+  "hardwareAndSystem": "Hardware and system",
+  "model": "Model",
+  "system": "System",
+  "packageVersion": "Packages",
+  "arrayAndStorage": "Array and storage",
+  "networkAndConnection": "Network and connection",
+  "localUrl": "Local URL",
+  "remoteUrl": "Remote URL",
+  "dockerNetwork": "Docker networks",
+  "portConflicts": "Port conflicts",
+  "cloudPluginsPermissions": "Cloud / plugins / permissions",
+  "registerUsernameLabel": "Username / phone",
+  "registerUsernameHint": "Enter username or phone number",
+  "registerUsernameError": "Enter a valid username or phone number",
+  "registerPasswordLabel": "Password",
+  "registerPasswordHint": "Enter password (at least 6 characters)",
+  "registerPasswordError": "Password must be at least 6 characters",
+  "registerConfirmPasswordLabel": "Confirm password",
+  "registerConfirmPasswordHint": "Enter password again",
+  "registerConfirmPasswordError": "Passwords do not match",
+  "registerSuccess": "Registered",
+  "registerButton": "Register",
+  "alreadyHaveAccount": "Already have an account?",
+  "backToLogin": "Back to sign-in",
+  "createAccount": "Create account",
+  "registerSubtitle": "Fill in the form to register",
+  "musicLibrary": "Library",
+  "songs": "Songs",
+  "allSongs": "All songs",
+  "collapse": "Close",
+  "albums": "Albums",
+  "lossless": "Lossless",
+  "searchSongsAlbums": "Search songs and albums",
+  "nowPlaying": "Now playing",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "unknownDate": "Unknown date",
+  "yearMonth": "{year}/{month}",
+  "@yearMonth": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "month": {
+        "type": "int"
+      }
+    }
+  },
+  "noPhotosFound": "No photos found",
+  "noAlbumDirsFound": "No album folders found",
+  "noVideosFound": "No videos found",
+  "mediaPermissionRequiredBackup": "Photo and video permission is required for backup",
+  "selectBackupDirectory": "Choose backup folder",
+  "selectThisDirectory": "Use this folder",
+  "goUp": "Up",
+  "noSubfolders": "No subfolders in this directory",
+  "photoBackup": "Photo backup",
+  "permissionChecking": "Checking permissions...",
+  "permissionCheckingSubtitle": "Checking photo and video access",
+  "needMediaPermission": "Media permission required",
+  "grantPermission": "Grant permission",
+  "mediaPermission": "Media permission",
+  "mediaPermissionGranted": "Photo and video access granted",
+  "autoBackup": "Auto backup",
+  "autoBackupSubtitle": "Sync phone photos to an Unraid share",
+  "grantMediaFirst": "Grant media permission first",
+  "targetDirectory": "Target folder",
+  "wifiOnlyBackup": "Wi-Fi only",
+  "wifiOnlyBackupSubtitle": "Avoid mobile data uploads",
+  "chargeWhenBackupVideo": "Backup videos while charging",
+  "chargeWhenBackupVideoSubtitle": "Reduce battery impact for background sync",
+  "lastSync": "Last sync",
+  "noSyncRecord": "No sync history yet",
+  "missingPermissionAccess": "Missing access to {permissions}",
+  "@missingPermissionAccess": {
+    "placeholders": {
+      "permissions": {
+        "type": "String"
+      }
+    }
+  },
+  "andJoin": " and ",
+  "photoBackupReady": "Photo backup is ready",
+  "needAuthToBackup": "Authorization required for backup",
+  "photosVideosSyncToUnraid": "Photos and videos will sync to Unraid",
+  "grantPhotosVideosToEnable": "Grant photo and video access to enable backup",
+  "searchPhotosVideos": "Search photos and videos",
+  "allPhotos": "All photos",
+  "backupEnabledSample": "On / today 09:42",
+  "photoCount": "{count} photos",
+  "@photoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "apiUnraidServiceMissing": "unraid-api service not found. Enable the Unraid Connect/API plugin.",
+  "apiShareActionUnsupported": "This action is not supported for shares",
+  "apiConnectionTimeout": "Connection timed out",
+  "apiCannotConnect": "Cannot connect to server: {error}",
+  "@apiCannotConnect": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "apiHttpError": "Server returned HTTP {statusCode}",
+  "@apiHttpError": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "apiInvalidData": "Server returned invalid data",
+  "apiGraphqlFailed": "GraphQL request failed",
+  "apiMissingDataField": "Response is missing the data field",
+  "apiActionListDirectory": "list directory",
+  "apiActionScanMedia": "scan media files",
+  "apiActionReadFile": "read file",
+  "apiActionReadThumbnail": "read thumbnail",
+  "apiFileBrowserInvalidJson": "File Browser returned invalid JSON: {action}",
+  "@apiFileBrowserInvalidJson": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "apiFileBrowserTimeout": "File Browser {action} timed out",
+  "@apiFileBrowserTimeout": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "apiFileBrowserCannotConnect": "Cannot connect to File Browser: {error}",
+  "@apiFileBrowserCannotConnect": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "apiFileBrowserForbidden": "File Browser denied access. Check anonymous access or reverse-proxy auth (HTTP {statusCode})",
+  "@apiFileBrowserForbidden": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "apiFileBrowserNotFound": "File Browser path not found (HTTP 404)",
+  "apiFileBrowserFailed": "File Browser {action} failed: HTTP {statusCode}",
+  "@apiFileBrowserFailed": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "unbound": "Unbound",
+  "installedPlugins": "Installed plugins",
+  "countUnit": "{count}",
+  "@countUnit": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "apiKeyRolesDescription": "Roles and permissions from apiKeyPossibleRoles",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "oidcProviderCount": "{count} OIDC providers",
+  "@oidcProviderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unraidCloudStatus": "Unraid Cloud status",
+  "dynamicRemoteAccess": "Dynamic remote access {type}",
+  "@dynamicRemoteAccess": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteAccess": "Remote access",
+  "forwardUnknown": "forward unknown",
+  "portLabel": "port {port}",
+  "@portLabel": {
+    "placeholders": {
+      "port": {
+        "type": "String"
+      }
+    }
+  },
+  "unnamedContainer": "Unnamed container",
+  "dockerContainer": "Docker container",
+  "autoStart": "Auto-start",
+  "updateAvailable": "Update available",
+  "image": "Image",
+  "ports": "Ports",
+  "online": "Online",
+  "offline": "Offline",
+  "unnamedVm": "Unnamed VM",
+  "virtualMachine": "Virtual machine",
+  "running": "Running",
+  "vncAvailable": "VNC available",
+  "vmDomainId": "VM domain ID",
+  "fromVmDomainState": "From vms.domain.state",
+  "unnamedShare": "Unnamed share",
+  "cache": "Cache",
+  "shareDirectory": "Share directory",
+  "capacity": "Capacity",
+  "freeLabel": "free {value}",
+  "@freeLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "allocationStrategy": "Allocation",
+  "defaultValue": "Default",
+  "splitLevel": "split level {value}",
+  "@splitLevel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "none": "None",
+  "shareDirectoryConfig": "Share configuration",
+  "unknownDisk": "Unknown disk",
+  "sleeping": "Spun down",
+  "networkInterface": "Network interface",
+  "noAddress": "No address",
+  "accessAddress": "Access URL",
+  "batteryLoad": "Battery {battery}% · load {load}%",
+  "@batteryLoad": {
+    "placeholders": {
+      "battery": {
+        "type": "String"
+      },
+      "load": {
+        "type": "String"
+      }
+    }
+  },
+  "plugin": "Plugin",
+  "unknownVersion": "Unknown version",
+  "apiCliModules": "API {api} · CLI {cli}",
+  "@apiCliModules": {
+    "placeholders": {
+      "api": {
+        "type": "String"
+      },
+      "cli": {
+        "type": "String"
+      }
+    }
+  },
+  "yes": "yes",
+  "no": "no",
+  "pluginInstallTask": "Plugin install task",
+  "installTask": "Install task",
+  "log": "Log",
+  "unknownSize": "Unknown size",
+  "localAccessAddress": "Local access URL",
+  "remoteAccessAddress": "Remote access URL",
+  "notification": "Notification",
+  "unnamed": "Unnamed",
+  "directory": "Folder",
+  "unknownCpu": "Unknown CPU",
+  "coresCount": "{count} cores",
+  "@coresCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "threadsCount": "{count} threads",
+  "@threadsCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "unknownMotherboard": "Unknown motherboard",
+  "unknownSystem": "Unknown system",
+  "noPackageVersions": "No package versions returned",
+  "noServicesReturned": "No services returned",
+  "servicesOnlineSummary": "{online}/{total} online · {names}",
+  "@servicesOnlineSummary": {
+    "placeholders": {
+      "online": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "noNetworksReturned": "No networks returned",
+  "networksCount": "{count} networks",
+  "@networksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noPortConflictInfo": "No port conflict info returned",
+  "noPortConflicts": "No port conflicts found",
+  "portConflictCount": "{count} port conflicts",
+  "@portConflictCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "container": "container",
+  "noPortMappings": "No port mappings returned",
+  "totalUsage": "Total {value}",
+  "@totalUsage": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "usedUsage": "Used {value}",
+  "@usedUsage": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "usedTotalUsage": "Used {used} / {total}",
+  "@usedTotalUsage": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "started": "Started",
+  "stopped": "Stopped",
+  "paused": "Paused",
+  "idle": "Idle",
+  "shutDown": "Shut down",
+  "crashed": "Crashed",
+  "daysCount": "{count} days",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursCount": "{count} hours",
+  "@hoursCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "minutesCount": "{count} minutes",
+  "@minutesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

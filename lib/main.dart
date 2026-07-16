@@ -9,6 +9,7 @@ import 'pages/main_shell_page.dart';
 import 'pages/music_page.dart';
 import 'pages/register_page.dart';
 import 'pages/settings_page.dart';
+import 'services/display_copy.dart';
 import 'services/language_preferences.dart';
 import 'theme/app_theme.dart';
 
@@ -57,6 +58,10 @@ class _UnflutterRaidAppState extends State<UnflutterRaidApp> {
         locale: _language.locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) {
+          DisplayCopy.fromL10n(AppLocalizations.of(context)).activate();
+          return child ?? const SizedBox.shrink();
+        },
         initialRoute: LoginPage.routeName,
         routes: {
           LoginPage.routeName: (_) => const LoginPage(),

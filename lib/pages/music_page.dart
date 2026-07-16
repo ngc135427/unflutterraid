@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/generated/app_localizations.dart';
+
 import '../theme/app_theme.dart';
 import '../widgets/fade_slide.dart';
 import '../widgets/phone_frame.dart';
@@ -19,7 +21,7 @@ class MusicPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MusicScaffold(
-      title: '音乐',
+      title: AppLocalizations.of(context).music,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -28,22 +30,22 @@ class MusicPage extends StatelessWidget {
               MusicTracksPage.routeName,
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           _NowPlayingCard(
             onTap: () => Navigator.of(context).pushNamed(
               MusicPlayerPage.routeName,
             ),
           ),
-          const SizedBox(height: 22),
-          const Text(
-            '音乐库',
-            style: TextStyle(
+          SizedBox(height: 22),
+          Text(
+            AppLocalizations.of(context).musicLibrary,
+            style: const TextStyle(
               color: AppTheme.textDark,
               fontSize: 17,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           for (final track in _tracks) _TrackTile(track: track),
         ],
       ),
@@ -59,15 +61,15 @@ class MusicTracksPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MusicScaffold(
-      title: '歌曲',
+      title: AppLocalizations.of(context).songs,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _TrackSearchBox(),
-          const SizedBox(height: 18),
-          const Text(
-            '全部歌曲',
-            style: TextStyle(
+          SizedBox(height: 18),
+          Text(
+            AppLocalizations.of(context).allSongs,
+            style: const TextStyle(
               color: AppTheme.textDark,
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -103,9 +105,9 @@ class MusicPlayerPage extends StatelessWidget {
                     onPressed: () => Navigator.of(context).maybePop(),
                     icon: const Icon(Icons.keyboard_arrow_down,
                         color: Colors.white),
-                    label: const Text(
-                      '收起',
-                      style: TextStyle(color: Colors.white),
+                    label: Text(
+                      AppLocalizations.of(context).collapse,
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ),
@@ -208,9 +210,9 @@ class _MusicScaffold extends StatelessWidget {
                   child: TextButton.icon(
                     onPressed: () => Navigator.of(context).maybePop(),
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    label: const Text(
-                      '返回',
-                      style: TextStyle(color: Colors.white),
+                    label: Text(
+                      AppLocalizations.of(context).back,
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ),
@@ -284,9 +286,13 @@ class _MusicSummary extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _MusicStat(label: '歌曲', value: '286', onTap: onSongsTap),
-          const _MusicStat(label: '专辑', value: '42'),
-          const _MusicStat(label: '无损', value: '96'),
+          _MusicStat(
+            label: AppLocalizations.of(context).songs,
+            value: '286',
+            onTap: onSongsTap,
+          ),
+          _MusicStat(label: AppLocalizations.of(context).albums, value: '42'),
+          _MusicStat(label: AppLocalizations.of(context).lossless, value: '96'),
         ],
       ),
     );
@@ -352,16 +358,16 @@ class _TrackSearchBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.softLine),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.search, color: AppTheme.primary, size: 20),
+          const Icon(Icons.search, color: AppTheme.primary, size: 20),
           SizedBox(width: 9),
           Expanded(
             child: Text(
-              '搜索歌曲、专辑',
+              AppLocalizations.of(context).searchSongsAlbums,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: AppTheme.textLight, fontSize: 14),
+              style: const TextStyle(color: AppTheme.textLight, fontSize: 14),
             ),
           ),
         ],
@@ -477,17 +483,18 @@ class _NowPlayingCard extends StatelessWidget {
               ),
             ],
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.play_circle_fill, color: Colors.white, size: 42),
+              const Icon(Icons.play_circle_fill, color: Colors.white, size: 42),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '正在播放',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      AppLocalizations.of(context).nowPlaying,
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                     SizedBox(height: 4),
                     Text(

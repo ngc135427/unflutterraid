@@ -106,10 +106,11 @@ class _MainShellPageState extends State<MainShellPage> {
   Widget _buildContent() {
     final dashboardFuture = _dashboardFuture;
     if (_apiClient == null || dashboardFuture == null) {
-      return const _StateMessage(
+      final l10n = AppLocalizations.of(context);
+      return _StateMessage(
         icon: Icons.link_off,
-        title: '未连接服务器',
-        message: '请返回登录页重新连接。',
+        title: l10n.notConnectedTitle,
+        message: l10n.notConnectedMessage,
       );
     }
 
@@ -117,29 +118,32 @@ class _MainShellPageState extends State<MainShellPage> {
       future: dashboardFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const _StateMessage(
+          final l10n = AppLocalizations.of(context);
+          return _StateMessage(
             icon: Icons.cloud_sync,
-            title: '正在读取服务器',
-            message: '正在请求 Unraid GraphQL API...',
+            title: l10n.loadingServerTitle,
+            message: l10n.loadingServerMessage,
           );
         }
 
         if (snapshot.hasError) {
+          final l10n = AppLocalizations.of(context);
           return _StateMessage(
             icon: Icons.error_outline,
-            title: '读取失败',
+            title: l10n.readFailedTitle,
             message: snapshot.error.toString(),
-            actionLabel: '重试',
+            actionLabel: l10n.retry,
             onAction: _refreshDashboard,
           );
         }
 
         final dashboard = snapshot.data;
         if (dashboard == null) {
-          return const _StateMessage(
+          final l10n = AppLocalizations.of(context);
+          return _StateMessage(
             icon: Icons.inbox_outlined,
-            title: '暂无数据',
-            message: '服务器没有返回可显示的数据。',
+            title: l10n.noDataTitle,
+            message: l10n.noDataMessage,
           );
         }
 
@@ -153,7 +157,7 @@ class _MainShellPageState extends State<MainShellPage> {
       case 1:
         return _ManagementPage(
           key: const ValueKey('docker'),
-          type: 'Docker',
+          type: 'docker',
           dashboard: dashboard,
           items: dashboard.dockerItems
               .map((item) => ManagementData.fromApi(item, Icons.layers))
@@ -163,7 +167,7 @@ class _MainShellPageState extends State<MainShellPage> {
       case 2:
         return _ManagementPage(
           key: const ValueKey('vm'),
-          type: '虚拟机',
+          type: 'vm',
           dashboard: dashboard,
           items: dashboard.vmItems
               .map((item) => ManagementData.fromApi(item, Icons.computer))
@@ -173,7 +177,7 @@ class _MainShellPageState extends State<MainShellPage> {
       case 3:
         return _ManagementPage(
           key: const ValueKey('share'),
-          type: '共享',
+          type: 'share',
           dashboard: dashboard,
           items: dashboard.shareItems
               .map((item) => ManagementData.fromApi(item, Icons.folder_shared))
@@ -308,42 +312,48 @@ class _ServerInfoPage extends StatelessWidget {
             _HomeStatsGrid(dashboard: dashboard),
             const SizedBox(height: 18),
             GradientButton(
-              label: '查看完整信息',
+              label: AppLocalizations.of(context).viewFullInfo,
               icon: Icons.info_outline,
               onPressed: onOpenDetails,
             ),
             const SizedBox(height: 22),
             _SectionHeader(
-              title: '实时指标',
+              title: AppLocalizations.of(context).liveMetrics,
               trailing: 'metrics',
             ),
             const SizedBox(height: 10),
             _MetricPanel(dashboard: dashboard),
             const SizedBox(height: 22),
             _SectionHeader(
-              title: '阵列与服务',
+              title: AppLocalizations.of(context).arrayAndServices,
               trailing: 'array / services',
             ),
             const SizedBox(height: 10),
             _InfoCard(
               children: [
-                _InfoPair(label: '阵列状态', value: dashboard.arrayState),
-                _InfoPair(label: '阵列容量', value: dashboard.arrayUsage),
+                _InfoPair(
+                    label: AppLocalizations.of(context).arrayState,
+                    value: dashboard.arrayState),
+                _InfoPair(
+                    label: AppLocalizations.of(context).arrayCapacity,
+                    value: dashboard.arrayUsage),
                 _InfoPair(
                   label: 'Parity',
                   value: dashboard.paritySummary.isEmpty
-                      ? '暂无校验任务'
+                      ? AppLocalizations.of(context).noParityTask
                       : dashboard.paritySummary,
                 ),
-                _InfoPair(label: '服务在线', value: dashboard.servicesSummary),
+                _InfoPair(
+                    label: AppLocalizations.of(context).servicesOnline,
+                    value: dashboard.servicesSummary),
               ],
             ),
             const SizedBox(height: 22),
             _SectionHeader(
-              title: '最近通知',
+              title: AppLocalizations.of(context).recentNotifications,
               trailingButton: TextButton(
                 onPressed: () => onOpenModule(_DashboardModule.notifications),
-                child: const Text('全部'),
+                child: Text(AppLocalizations.of(context).all),
               ),
             ),
             const SizedBox(height: 10),
@@ -354,8 +364,8 @@ class _ServerInfoPage extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             _SectionHeader(
-              title: '扩展管理',
-              trailing: '接口模块',
+              title: AppLocalizations.of(context).extendedManagement,
+              trailing: AppLocalizations.of(context).interfaceModules,
             ),
             const SizedBox(height: 10),
             _QuickModuleGrid(onOpenModule: onOpenModule),
@@ -433,7 +443,8 @@ class _ServerHeroCard extends StatelessWidget {
                         _StatusChip(label: dashboard.version),
                         if (dashboard.notificationTotal > 0)
                           _StatusChip(
-                            label: '${dashboard.notificationTotal} 条提醒',
+                            label: AppLocalizations.of(context)
+                                .notificationCount(dashboard.notificationTotal),
                             severity: dashboard.notificationAlert > 0
                                 ? InfoSeverity.danger
                                 : InfoSeverity.warning,
@@ -453,7 +464,7 @@ class _ServerHeroCard extends StatelessWidget {
               Expanded(
                 child: _CompactActionButton(
                   icon: Icons.palette,
-                  label: '编辑',
+                  label: AppLocalizations.of(context).edit,
                   onPressed: onEditIcon,
                 ),
               ),
@@ -489,24 +500,24 @@ class _HomeStatsGrid extends StatelessWidget {
         ),
         _StatCard(
           icon: Icons.memory,
-          label: '内存',
+          label: AppLocalizations.of(context).memory,
           value: dashboard.memoryUsage.split('/').first.trim(),
           subtitle: dashboard.memoryUsage,
           progress: dashboard.memoryPercent,
         ),
         _StatCard(
           icon: Icons.dns,
-          label: '阵列',
+          label: AppLocalizations.of(context).array,
           value: dashboard.arrayUsage.split('/').first.trim(),
           subtitle: dashboard.arrayUsage,
           progress: dashboard.arrayPercent,
         ),
         _StatCard(
           icon: Icons.campaign,
-          label: '通知',
+          label: AppLocalizations.of(context).notifications,
           value: dashboard.notificationTotal.toString(),
-          subtitle:
-              '${dashboard.notificationWarning} 警告 · ${dashboard.notificationAlert} 严重',
+          subtitle: AppLocalizations.of(context).warningAlertCount(
+              dashboard.notificationWarning, dashboard.notificationAlert),
           progress: dashboard.notificationTotal == 0
               ? 0
               : (dashboard.notificationWarning + dashboard.notificationAlert) /
@@ -567,7 +578,7 @@ class _StatCard extends StatelessWidget {
             ],
           ),
           Text(
-            value.isEmpty ? '未知' : value,
+            value.isEmpty ? AppLocalizations.of(context).unknown : value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -650,28 +661,28 @@ class _MetricPanel extends StatelessWidget {
         children: [
           _MetricLine(
             icon: Icons.speed,
-            label: 'CPU 使用',
+            label: AppLocalizations.of(context).cpuUsage,
             value: '${(dashboard.cpuPercent * 100).toStringAsFixed(1)}%',
             progress: dashboard.cpuPercent,
           ),
           const SizedBox(height: 10),
           _MetricLine(
             icon: Icons.storage,
-            label: '内存',
+            label: AppLocalizations.of(context).memory,
             value: dashboard.memoryUsage,
             progress: dashboard.memoryPercent,
           ),
           const SizedBox(height: 10),
           _MetricLine(
             icon: Icons.dns,
-            label: '阵列',
+            label: AppLocalizations.of(context).array,
             value: dashboard.arrayUsage,
             progress: dashboard.arrayPercent,
           ),
           const SizedBox(height: 10),
           _InfoLine(
             icon: Icons.developer_board,
-            label: '主板',
+            label: AppLocalizations.of(context).motherboard,
             value: dashboard.baseboardSummary,
           ),
         ],
@@ -701,9 +712,9 @@ class _NotificationPreviewList extends StatelessWidget {
             _IconBadge(
                 icon: Icons.check_circle, severity: InfoSeverity.success),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
-                '暂无警告或严重通知',
+                AppLocalizations.of(context).noWarningAlerts,
                 style: TextStyle(color: AppTheme.textMedium, fontSize: 13),
               ),
             ),
@@ -785,7 +796,7 @@ class _QuickModuleCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _moduleTitle(module),
+                      _moduleTitle(module, AppLocalizations.of(context)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -796,7 +807,7 @@ class _QuickModuleCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      _moduleSubtitle(module),
+                      _moduleSubtitle(module, AppLocalizations.of(context)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -851,7 +862,7 @@ class _DashboardModuleSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _moduleTitle(module),
+                          _moduleTitle(module, AppLocalizations.of(context)),
                           style: const TextStyle(
                             color: AppTheme.textDark,
                             fontSize: 18,
@@ -860,7 +871,7 @@ class _DashboardModuleSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _moduleSubtitle(module),
+                          _moduleSubtitle(module, AppLocalizations.of(context)),
                           style: const TextStyle(
                             color: AppTheme.textLight,
                             fontSize: 12,
@@ -876,8 +887,10 @@ class _DashboardModuleSheet extends StatelessWidget {
                 if (dashboard.notifications.isEmpty)
                   _StateMessage(
                     icon: _moduleIcon(module),
-                    title: '暂无通知详情',
-                    message: '服务器仅返回了通知数量，未返回警告或严重通知列表。',
+                    title:
+                        AppLocalizations.of(context).noNotificationDetailsTitle,
+                    message: AppLocalizations.of(context)
+                        .noNotificationDetailsMessage,
                   )
                 else
                   for (final notification in dashboard.notifications)
@@ -888,8 +901,9 @@ class _DashboardModuleSheet extends StatelessWidget {
               else if (items.isEmpty)
                 _StateMessage(
                   icon: _moduleIcon(module),
-                  title: '暂无数据',
-                  message: '服务器没有返回${_moduleTitle(module)}相关信息。',
+                  title: AppLocalizations.of(context).noDataTitle,
+                  message: AppLocalizations.of(context).moduleNoDataMessage(
+                      _moduleTitle(module, AppLocalizations.of(context))),
                 )
               else
                 for (final item in items)
@@ -973,7 +987,7 @@ class _InfoPair extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              value.isEmpty ? '未知' : value,
+              value.isEmpty ? AppLocalizations.of(context).unknown : value,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.right,
@@ -1047,7 +1061,7 @@ class _StatusChip extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
-        label.isEmpty ? '未知' : label,
+        label.isEmpty ? AppLocalizations.of(context).unknown : label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
@@ -1227,28 +1241,28 @@ List<UnraidInfoItem> _moduleItems(
   };
 }
 
-String _moduleTitle(_DashboardModule module) {
+String _moduleTitle(_DashboardModule module, AppLocalizations l10n) {
   return switch (module) {
-    _DashboardModule.notifications => '通知中心',
-    _DashboardModule.disks => '磁盘',
-    _DashboardModule.network => '网络',
+    _DashboardModule.notifications => l10n.notificationCenter,
+    _DashboardModule.disks => l10n.disk,
+    _DashboardModule.network => l10n.network,
     _DashboardModule.ups => 'UPS',
-    _DashboardModule.plugins => '插件',
-    _DashboardModule.security => '权限',
-    _DashboardModule.cloud => '连接',
-    _DashboardModule.logs => '日志',
+    _DashboardModule.plugins => l10n.plugins,
+    _DashboardModule.security => l10n.permissions,
+    _DashboardModule.cloud => l10n.connection,
+    _DashboardModule.logs => l10n.logs,
   };
 }
 
-String _moduleSubtitle(_DashboardModule module) {
+String _moduleSubtitle(_DashboardModule module, AppLocalizations l10n) {
   return switch (module) {
     _DashboardModule.notifications => 'overview',
-    _DashboardModule.disks => 'SMART / 分区 / 温度',
-    _DashboardModule.network => '接口 / 访问地址',
-    _DashboardModule.ups => '电量 / 负载 / 策略',
-    _DashboardModule.plugins => '安装任务 / 模块',
+    _DashboardModule.disks => l10n.moduleDisksSubtitle,
+    _DashboardModule.network => l10n.moduleNetworkSubtitle,
+    _DashboardModule.ups => l10n.moduleUpsSubtitle,
+    _DashboardModule.plugins => l10n.modulePluginsSubtitle,
     _DashboardModule.security => 'API Key / OIDC',
-    _DashboardModule.cloud => '远程访问 / Cloud',
+    _DashboardModule.cloud => l10n.moduleCloudSubtitle,
     _DashboardModule.logs => 'logFiles',
   };
 }
@@ -1297,16 +1311,24 @@ InfoSeverity _severityFromStatus(String value) {
   final lower = value.toLowerCase();
   if (lower.contains('在线') ||
       lower.contains('运行') ||
-      lower.contains('started') ||
-      lower.contains('online')) {
+      lower.contains('online') ||
+      lower.contains('running') ||
+      lower.contains('started')) {
     return InfoSeverity.success;
   }
   if (lower.contains('警告') ||
       lower.contains('停止') ||
+      lower.contains('warning') ||
+      lower.contains('stopped') ||
       lower.contains('paused')) {
     return InfoSeverity.warning;
   }
-  if (lower.contains('错误') || lower.contains('离线') || lower.contains('异常')) {
+  if (lower.contains('错误') ||
+      lower.contains('离线') ||
+      lower.contains('异常') ||
+      lower.contains('error') ||
+      lower.contains('offline') ||
+      lower.contains('crash')) {
     return InfoSeverity.danger;
   }
   return InfoSeverity.normal;
@@ -1443,14 +1465,16 @@ class _HomeAppShortcuts extends StatelessWidget {
     return Row(
       children: [
         _HomeAppShortcut(
-          label: '相册',
+          label: AppLocalizations.of(context).album,
           icon: Icons.photo_library,
           colors: const [AppTheme.primary, AppTheme.secondary],
           onTap: () {
             final client = apiClient;
             if (client == null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('请先连接服务器')),
+                SnackBar(
+                    content:
+                        Text(AppLocalizations.of(context).connectServerFirst)),
               );
               return;
             }
@@ -1465,7 +1489,7 @@ class _HomeAppShortcuts extends StatelessWidget {
         ),
         const SizedBox(width: 20),
         _HomeAppShortcut(
-          label: '音乐',
+          label: AppLocalizations.of(context).music,
           icon: Icons.music_note,
           colors: const [Color(0xFF3498DB), Color(0xFF52C41A)],
           onTap: () => Navigator.of(context).pushNamed(MusicPage.routeName),
@@ -1607,6 +1631,12 @@ class _ManagementPageState extends State<_ManagementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final typeLabel = switch (widget.type) {
+      'docker' => l10n.navDocker,
+      'vm' => l10n.navVm,
+      _ => l10n.navShare,
+    };
     final query = _searchController.text.trim().toLowerCase();
     final filteredItems = widget.items.where((item) {
       if (query.isEmpty) {
@@ -1635,7 +1665,7 @@ class _ManagementPageState extends State<_ManagementPage> {
                     controller: _searchController,
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
-                      hintText: '搜索${widget.type}项目',
+                      hintText: l10n.searchTypeItems(typeLabel),
                       prefixIcon: const Icon(Icons.search),
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 12),
@@ -1645,8 +1675,9 @@ class _ManagementPageState extends State<_ManagementPage> {
                 const SizedBox(width: 8),
                 _CompactActionButton(
                   icon: Icons.sync,
-                  label: '刷新',
-                  onPressed: () => _showMessage('${widget.type}刷新已提交'),
+                  label: AppLocalizations.of(context).refresh,
+                  onPressed: () =>
+                      _showMessage(l10n.typeRefreshSubmitted(typeLabel)),
                 ),
               ],
             ),
@@ -1663,14 +1694,14 @@ class _ManagementPageState extends State<_ManagementPage> {
             if (widget.items.isEmpty)
               _StateMessage(
                 icon: Icons.inbox_outlined,
-                title: '${widget.type}为空',
-                message: '服务器当前没有返回${widget.type}项目。',
+                title: l10n.typeEmptyTitle(typeLabel),
+                message: l10n.typeEmptyMessage(typeLabel),
               ),
             if (widget.items.isNotEmpty && filteredItems.isEmpty)
               _StateMessage(
                 icon: Icons.search_off,
-                title: '没有匹配项',
-                message: '换一个关键词试试。',
+                title: AppLocalizations.of(context).noMatchesTitle,
+                message: AppLocalizations.of(context).noMatchesMessage,
               ),
           ],
         ),
@@ -1695,7 +1726,7 @@ class _ManagementPageState extends State<_ManagementPage> {
   ) async {
     final client = widget.apiClient;
     if (client == null || item.id.isEmpty) {
-      _showMessage('缺少服务器连接或项目 ID');
+      _showMessage(AppLocalizations.of(context).missingConnectionOrId);
       return;
     }
 
@@ -1709,7 +1740,8 @@ class _ManagementPageState extends State<_ManagementPage> {
       if (!mounted) {
         return;
       }
-      _showMessage('${item.title} ${_actionLabel(action)}操作已提交');
+      _showMessage(AppLocalizations.of(context)
+          .actionSubmitted(item.title, _actionLabel(context, action)));
     } on UnraidApiException catch (error) {
       if (!mounted) {
         return;
@@ -1752,25 +1784,31 @@ class _ManagementStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final typeLabel = switch (type) {
+      'docker' => l10n.navDocker,
+      'vm' => l10n.navVm,
+      _ => l10n.navShare,
+    };
     final items = switch (type) {
-      'Docker' => dashboard.dockerItems,
-      '虚拟机' => dashboard.vmItems,
+      'docker' => dashboard.dockerItems,
+      'vm' => dashboard.vmItems,
       _ => dashboard.shareItems,
     };
     final running = items.where((item) => _isRunningStatus(item.status)).length;
     final secondary = switch (type) {
-      'Docker' => dashboard.dockerNetworkSummary,
-      '虚拟机' => '$running 运行中 · ${items.length - running} 未运行',
-      _ => '阵列 ${dashboard.arrayUsage}',
+      'docker' => dashboard.dockerNetworkSummary,
+      'vm' => l10n.runningAndStopped(running, items.length - running),
+      _ => l10n.arrayUsageLabel(dashboard.arrayUsage),
     };
     final icon = switch (type) {
-      'Docker' => Icons.layers,
-      '虚拟机' => Icons.computer,
+      'docker' => Icons.layers,
+      'vm' => Icons.computer,
       _ => Icons.folder_shared,
     };
     final secondIcon = switch (type) {
-      'Docker' => Icons.hub,
-      '虚拟机' => Icons.memory,
+      'docker' => Icons.hub,
+      'vm' => Icons.memory,
       _ => Icons.move_down,
     };
     return GridView.count(
@@ -1783,9 +1821,9 @@ class _ManagementStats extends StatelessWidget {
       children: [
         _StatCard(
           icon: icon,
-          label: type,
+          label: typeLabel,
           value: items.length.toString(),
-          subtitle: '$running 运行中',
+          subtitle: l10n.runningCount(running),
           progress: items.isEmpty ? 0 : running / items.length,
           severity: running == 0 && items.isNotEmpty
               ? InfoSeverity.warning
@@ -1793,8 +1831,8 @@ class _ManagementStats extends StatelessWidget {
         ),
         _StatCard(
           icon: secondIcon,
-          label: type == '共享' ? 'Mover' : '概览',
-          value: type == '共享' ? '02:00' : running.toString(),
+          label: type == 'share' ? 'Mover' : l10n.overview,
+          value: type == 'share' ? '02:00' : running.toString(),
           subtitle: secondary,
           progress: dashboard.arrayPercent,
         ),
@@ -1907,7 +1945,7 @@ class _ManagementCard extends StatelessWidget {
                       Expanded(
                         child: _CompactActionButton(
                           icon: Icons.folder_open,
-                          label: '浏览',
+                          label: AppLocalizations.of(context).browse,
                           onPressed: onTap,
                         ),
                       ),
@@ -1915,7 +1953,7 @@ class _ManagementCard extends StatelessWidget {
                       Expanded(
                         child: _CompactActionButton(
                           icon: Icons.tune,
-                          label: '设置',
+                          label: AppLocalizations.of(context).settings,
                           onPressed: onTap,
                         ),
                       ),
@@ -1927,7 +1965,9 @@ class _ManagementCard extends StatelessWidget {
                       Expanded(
                         child: _CompactActionButton(
                           icon: running ? Icons.restart_alt : Icons.play_arrow,
-                          label: running ? '重启' : '启动',
+                          label: running
+                              ? AppLocalizations.of(context).restart
+                              : AppLocalizations.of(context).start,
                           onPressed: isSubmitting
                               ? null
                               : () => onAction!(
@@ -1941,7 +1981,7 @@ class _ManagementCard extends StatelessWidget {
                       Expanded(
                         child: _CompactActionButton(
                           icon: Icons.stop,
-                          label: '停止',
+                          label: AppLocalizations.of(context).stop,
                           color: AppTheme.danger,
                           onPressed: isSubmitting
                               ? null
@@ -1952,7 +1992,7 @@ class _ManagementCard extends StatelessWidget {
                       Expanded(
                         child: _CompactActionButton(
                           icon: Icons.visibility,
-                          label: '详情',
+                          label: AppLocalizations.of(context).details,
                           onPressed: onTap,
                         ),
                       ),
@@ -1968,18 +2008,20 @@ class _ManagementCard extends StatelessWidget {
 }
 
 bool _isRunningStatus(String value) {
+  final lower = value.toLowerCase();
   return value.contains('运行') ||
       value.contains('在线') ||
-      value.toLowerCase().contains('running') ||
-      value.toLowerCase().contains('online') ||
-      value.toLowerCase().contains('started');
+      lower.contains('running') ||
+      lower.contains('online') ||
+      lower.contains('started');
 }
 
-String _actionLabel(ManagementAction action) {
+String _actionLabel(BuildContext context, ManagementAction action) {
+  final l10n = AppLocalizations.of(context);
   return switch (action) {
-    ManagementAction.start => '启动',
-    ManagementAction.stop => '停止',
-    ManagementAction.restart => '重启',
+    ManagementAction.start => l10n.start,
+    ManagementAction.stop => l10n.stop,
+    ManagementAction.restart => l10n.restart,
   };
 }
 
@@ -2003,13 +2045,13 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
     final detailArgs = args is ManagementDetailArgs
         ? args
         : ManagementDetailArgs(
-            type: '项目',
+            type: 'share',
             data: ManagementData(
               id: '',
               icon: Icons.info,
-              title: '未知项目',
-              status: '未知',
-              description: '暂无信息',
+              title: AppLocalizations.of(context).unknownProject,
+              status: AppLocalizations.of(context).unknown,
+              description: AppLocalizations.of(context).noInfo,
               type: ManagementItemType.share,
               progress: 0,
               tags: const [],
@@ -2040,7 +2082,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                 TextButton.icon(
                   onPressed: () => Navigator.of(context).maybePop(),
                   icon: const Icon(Icons.arrow_back),
-                  label: const Text('返回'),
+                  label: Text(AppLocalizations.of(context).back),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -2091,17 +2133,17 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                   children: [
                     _DetailInfoRow(
                       icon: Icons.info_outline,
-                      label: '状态',
+                      label: AppLocalizations.of(context).status,
                       value: detailArgs.data.status,
                     ),
                     _DetailInfoRow(
                       icon: Icons.description_outlined,
-                      label: '说明',
+                      label: AppLocalizations.of(context).description,
                       value: detailArgs.data.description,
                     ),
                     _DetailInfoRow(
                       icon: Icons.storage,
-                      label: '位置',
+                      label: AppLocalizations.of(context).location,
                       value: detailArgs.data.type == ManagementItemType.share
                           ? '/mnt/user/${detailArgs.data.title}'
                           : detailArgs.data.title,
@@ -2132,40 +2174,40 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                   children: [
                     _ManagementActionButton(
                       icon: Icons.play_arrow,
-                      label: '启动',
+                      label: AppLocalizations.of(context).start,
                       color: AppTheme.success,
                       onPressed: _isSubmitting
                           ? null
                           : () => _runAction(
                                 detailArgs,
                                 ManagementAction.start,
-                                '启动',
+                                AppLocalizations.of(context).start,
                               ),
                     ),
                     const SizedBox(height: 10),
                     _ManagementActionButton(
                       icon: Icons.stop,
-                      label: '停止',
+                      label: AppLocalizations.of(context).stop,
                       color: AppTheme.danger,
                       onPressed: _isSubmitting
                           ? null
                           : () => _runAction(
                                 detailArgs,
                                 ManagementAction.stop,
-                                '停止',
+                                AppLocalizations.of(context).stop,
                               ),
                     ),
                     const SizedBox(height: 10),
                     _ManagementActionButton(
                       icon: Icons.refresh,
-                      label: '重启',
+                      label: AppLocalizations.of(context).restart,
                       color: const Color(0xFF3498DB),
                       onPressed: _isSubmitting
                           ? null
                           : () => _runAction(
                                 detailArgs,
                                 ManagementAction.restart,
-                                '重启',
+                                AppLocalizations.of(context).restart,
                               ),
                     ),
                   ],
@@ -2197,11 +2239,11 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                   TextButton.icon(
                     onPressed: () => Navigator.of(context).maybePop(),
                     icon: const Icon(Icons.arrow_back),
-                    label: const Text('返回'),
+                    label: Text(AppLocalizations.of(context).back),
                   ),
                   const Spacer(),
                   IconButton(
-                    tooltip: '刷新',
+                    tooltip: AppLocalizations.of(context).refresh,
                     onPressed: () => _openSharePath(currentPath),
                     icon: const Icon(Icons.refresh),
                   ),
@@ -2266,29 +2308,32 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                 future: _shareFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState != ConnectionState.done) {
-                    return const _StateMessage(
+                    return _StateMessage(
                       icon: Icons.folder_open,
-                      title: '正在读取目录',
-                      message: '正在通过 GraphQL 读取共享根目录...',
+                      title: AppLocalizations.of(context).readingDirectoryTitle,
+                      message:
+                          AppLocalizations.of(context).readingDirectoryMessage,
                     );
                   }
 
                   if (snapshot.hasError) {
+                    final l10n = AppLocalizations.of(context);
                     return _StateMessage(
                       icon: Icons.error_outline,
-                      title: '读取失败',
+                      title: l10n.readFailedTitle,
                       message: snapshot.error.toString(),
-                      actionLabel: '重试',
+                      actionLabel: l10n.retry,
                       onAction: () => _openSharePath(currentPath),
                     );
                   }
 
                   final entries = snapshot.data ?? const <UnraidFileEntry>[];
                   if (entries.isEmpty) {
-                    return const _StateMessage(
+                    return _StateMessage(
                       icon: Icons.inbox_outlined,
-                      title: '暂无共享目录',
-                      message: 'GraphQL 没有返回共享根目录数据。',
+                      title: AppLocalizations.of(context).noShareDirectoryTitle,
+                      message:
+                          AppLocalizations.of(context).noShareDirectoryMessage,
                     );
                   }
 
@@ -2298,7 +2343,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                       if (_canGoUp(args))
                         _FileEntryTile(
                           icon: Icons.drive_folder_upload,
-                          title: '上一级',
+                          title: AppLocalizations.of(context).parentDirectory,
                           subtitle: _parentPath(currentPath),
                           onTap: () => _openSharePath(_parentPath(currentPath)),
                         ),
@@ -2311,15 +2356,18 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                                   : Icons.insert_drive_file,
                           title: entry.name,
                           subtitle: entry.isDirectory
-                              ? '共享根目录 · ${entry.size}'
+                              ? AppLocalizations.of(context)
+                                  .shareRootSize(entry.size)
                               : _fileSubtitle(entry),
                           onTap: () {
                             if (entry.isDirectory) {
-                              _showMessage('子目录浏览将作为 File Manager 独立功能实现');
+                              _showMessage(AppLocalizations.of(context)
+                                  .subdirBrowseFuture);
                             } else if (entry.isImage) {
                               _previewImage(args, entry);
                             } else {
-                              _showMessage('暂不支持预览该文件类型');
+                              _showMessage(AppLocalizations.of(context)
+                                  .previewUnsupported);
                             }
                           },
                         ),
@@ -2341,7 +2389,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
   ) async {
     final client = args.apiClient;
     if (client == null || args.data.id.isEmpty) {
-      _showMessage('缺少服务器连接或项目 ID');
+      _showMessage(AppLocalizations.of(context).missingConnectionOrId);
       return;
     }
 
@@ -2355,7 +2403,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
       if (!mounted) {
         return;
       }
-      _showMessage('$label 操作已提交');
+      _showMessage(AppLocalizations.of(context).labelActionSubmitted(label));
     } on UnraidApiException catch (error) {
       if (!mounted) {
         return;
@@ -2381,7 +2429,8 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
     final root = _shareRoot(args);
     _sharePath = root;
     _shareFuture = args.apiClient?.fileManager.listDirectory(root) ??
-        Future<List<UnraidFileEntry>>.error('缺少服务器连接');
+        Future<List<UnraidFileEntry>>.error(
+            AppLocalizations.of(context).missingConnection);
   }
 
   void _openSharePath(String path) {
@@ -2389,7 +2438,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
     final detailArgs = args is ManagementDetailArgs ? args : null;
     final client = detailArgs?.apiClient;
     if (client == null) {
-      _showMessage('缺少服务器连接');
+      _showMessage(AppLocalizations.of(context).missingConnection);
       return;
     }
     setState(() {
@@ -2423,7 +2472,9 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
       if (entry.size.isNotEmpty) entry.size,
       if (entry.modified.isNotEmpty) entry.modified,
     ];
-    return parts.isEmpty ? '文件' : parts.join(' · ');
+    return parts.isEmpty
+        ? AppLocalizations.of(context).file
+        : parts.join(' · ');
   }
 
   Future<void> _previewImage(
@@ -2432,7 +2483,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
   ) async {
     final client = args.apiClient;
     if (client == null) {
-      _showMessage('缺少服务器连接');
+      _showMessage(AppLocalizations.of(context).missingConnection);
       return;
     }
     await showDialog<void>(
@@ -2649,7 +2700,7 @@ class _ImagePreview extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: '关闭',
+                  tooltip: AppLocalizations.of(context).close,
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close),
                 ),
@@ -2671,7 +2722,8 @@ class _ImagePreview extends StatelessWidget {
                   return Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(
-                      snapshot.error?.toString() ?? '图片加载失败',
+                      snapshot.error?.toString() ??
+                          AppLocalizations.of(context).imageLoadFailed,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: AppTheme.danger,
@@ -2773,7 +2825,7 @@ class _IconPickerDialogState extends State<_IconPickerDialog> {
   Widget build(BuildContext context) {
     final variants = ServerIconVariant.values;
     return AlertDialog(
-      title: const Text('选择服务器图标'),
+      title: Text(AppLocalizations.of(context).chooseServerIcon),
       content: Wrap(
         spacing: 12,
         runSpacing: 12,
@@ -2801,11 +2853,11 @@ class _IconPickerDialogState extends State<_IconPickerDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(AppLocalizations.of(context).cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_selected),
-          child: const Text('确认'),
+          child: Text(AppLocalizations.of(context).confirm),
         ),
       ],
     );

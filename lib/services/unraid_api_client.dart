@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import 'display_copy.dart';
+
 class UnraidApiException implements Exception {
   const UnraidApiException(this.message);
 
@@ -50,9 +52,7 @@ class UnraidApiClient {
       return serviceMap['name']?.toString() == 'unraid-api';
     });
     if (!hasUnraidApi) {
-      throw const UnraidApiException(
-        '未找到 unraid-api 服务，请确认 Unraid Connect/API 插件已启用',
-      );
+      throw UnraidApiException(DisplayCopy.current.apiUnraidServiceMissing);
     }
     await _request(_loginCheckQuery);
   }
@@ -74,7 +74,8 @@ class UnraidApiClient {
     final mutation = switch (type) {
       ManagementItemType.docker => _dockerActionMutation(action),
       ManagementItemType.vm => _vmActionMutation(action),
-      ManagementItemType.share => throw const UnraidApiException('共享项目不支持该操作'),
+      ManagementItemType.share =>
+        throw UnraidApiException(DisplayCopy.current.apiShareActionUnsupported),
     };
 
     await _request(
@@ -124,21 +125,23 @@ class UnraidApiClient {
           )
           .timeout(const Duration(seconds: 12));
     } on TimeoutException {
-      throw const UnraidApiException('连接服务器超时');
+      throw UnraidApiException(DisplayCopy.current.apiConnectionTimeout);
     } on Object catch (error) {
-      throw UnraidApiException('无法连接服务器：$error');
+      throw UnraidApiException(
+        DisplayCopy.current.apiCannotConnect(error.toString()),
+      );
     }
 
     final decoded = _decodeGraphqlResponse(response.body);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final message = _firstGraphqlErrorMessage(decoded);
       throw UnraidApiException(
-        message ?? '服务器返回 HTTP ${response.statusCode}',
+        message ?? DisplayCopy.current.apiHttpError(response.statusCode),
       );
     }
 
     if (decoded is! Map<String, dynamic>) {
-      throw const UnraidApiException('服务器返回了无效数据');
+      throw UnraidApiException(DisplayCopy.current.apiInvalidData);
     }
 
     final data = decoded['data'];
@@ -146,12 +149,13 @@ class UnraidApiClient {
     if (errors is List && errors.isNotEmpty) {
       final message = _firstGraphqlErrorMessage(decoded);
       if (!allowPartialData || data is! Map<String, dynamic>) {
-        throw UnraidApiException(message ?? 'GraphQL 请求失败');
+        throw UnraidApiException(
+            message ?? DisplayCopy.current.apiGraphqlFailed);
       }
     }
 
     if (data is! Map<String, dynamic>) {
-      throw const UnraidApiException('响应中缺少 data 字段');
+      throw UnraidApiException(DisplayCopy.current.apiMissingDataField);
     }
     return data;
   }
@@ -191,7 +195,7 @@ class UnraidFileManager {
   Future<List<UnraidFileEntry>> listDirectory(String path) async {
     final decoded = await _requestJson(
       _fileBrowserUri('/api/resources', path),
-      actionLabel: '读取目录',
+      actionLabel: DisplayCopy.current.apiActionListDirectory,
     );
     final entries = _parseFileBrowserDirectory(decoded, path)
       ..sort(_compareFileEntries);
@@ -204,7 +208,7 @@ class UnraidFileManager {
   }) async {
     final decoded = await _requestJson(
       _fileBrowserUri('/api/resources/recursive', rootPath),
-      actionLabel: '扫描媒体文件',
+      actionLabel: DisplayCopy.current.apiActionScanMedia,
     );
     final entries = <UnraidFileEntry>[];
     _collectFileBrowserEntries(decoded, rootPath, entries);
@@ -220,7 +224,7 @@ class UnraidFileManager {
   Future<Uint8List> readFileBytes(String path) async {
     return _requestBytes(
       _fileBrowserUri('/api/raw', path),
-      actionLabel: '读取文件',
+      actionLabel: DisplayCopy.current.apiActionReadFile,
     );
   }
 
@@ -232,7 +236,7 @@ class UnraidFileManager {
       _fileBrowserUri('/api/preview/$size', path, queryParameters: {
         'inline': 'true',
       }),
-      actionLabel: '读取缩略图',
+      actionLabel: DisplayCopy.current.apiActionReadThumbnail,
     );
   }
 
@@ -241,7 +245,8 @@ class UnraidFileManager {
     try {
       return jsonDecode(response.body);
     } on FormatException {
-      throw UnraidApiException('File Browser 返回了无效 JSON：$actionLabel');
+      throw UnraidApiException(
+          DisplayCopy.current.apiFileBrowserInvalidJson(actionLabel));
     }
   }
 
@@ -259,22 +264,26 @@ class UnraidFileManager {
       response = await _client._httpClient.get(uri,
           headers: {'accept': '*/*'}).timeout(const Duration(seconds: 20));
     } on TimeoutException {
-      throw UnraidApiException('File Browser $actionLabel超时');
+      throw UnraidApiException(
+          DisplayCopy.current.apiFileBrowserTimeout(actionLabel));
     } on Object catch (error) {
-      throw UnraidApiException('无法连接 File Browser：$error');
+      throw UnraidApiException(
+        DisplayCopy.current.apiFileBrowserCannotConnect(error.toString()),
+      );
     }
 
     if (response.statusCode == 401 || response.statusCode == 403) {
       throw UnraidApiException(
-        'File Browser 拒绝访问，请检查匿名访问或反向代理认证配置（HTTP ${response.statusCode}）',
+        DisplayCopy.current.apiFileBrowserForbidden(response.statusCode),
       );
     }
     if (response.statusCode == 404) {
-      throw UnraidApiException('File Browser 未找到路径（HTTP 404）');
+      throw UnraidApiException(DisplayCopy.current.apiFileBrowserNotFound);
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw UnraidApiException(
-        'File Browser $actionLabel失败：HTTP ${response.statusCode}',
+        DisplayCopy.current
+            .apiFileBrowserFailed(actionLabel, response.statusCode),
       );
     }
     return response;
@@ -444,16 +453,16 @@ class UnraidDashboard {
         cpu['brand'],
         'Media server',
       ]),
-      guid: _firstText([server['guid'], '未知']),
+      guid: _firstText([server['guid'], DisplayCopy.current.unknown]),
       ownerName: _firstText([
         owner['username'],
         _asMap(server['owner'])['username'],
-        '未绑定',
+        DisplayCopy.current.unbound,
       ]),
       registration: _firstText([
         registration['type'],
         registration['state'],
-        '未知',
+        DisplayCopy.current.unknown,
       ]),
       model: _firstText([
         baseboard['model'],
@@ -464,13 +473,15 @@ class UnraidDashboard {
       version: _firstText([
         vars['version'],
         os['release'],
-        '未知',
+        DisplayCopy.current.unknown,
       ]),
       status: _formatStatus(server['status']),
-      lanIp: _firstText([server['lanip'], '未知']),
-      wanIp: _firstText([server['wanip'], '未知']),
-      localUrl: _firstText([server['localurl'], '未返回']),
-      remoteUrl: _firstText([server['remoteurl'], '未返回']),
+      lanIp: _firstText([server['lanip'], DisplayCopy.current.unknown]),
+      wanIp: _firstText([server['wanip'], DisplayCopy.current.unknown]),
+      localUrl:
+          _firstText([server['localurl'], DisplayCopy.current.notReturned]),
+      remoteUrl:
+          _firstText([server['remoteurl'], DisplayCopy.current.notReturned]),
       uptime: _formatUptime(os['uptime']),
       cpuSummary: _formatCpuSummary(cpu),
       cpuPercent: _percent(cpuMetrics['percentTotal'], 100),
@@ -501,8 +512,8 @@ class UnraidDashboard {
         ...plugins.map(UnraidInfoItem.fromPlugin),
         if (installedPlugins.isNotEmpty)
           UnraidInfoItem(
-            title: '已安装插件',
-            value: '${installedPlugins.length} 个',
+            title: DisplayCopy.current.installedPlugins,
+            value: DisplayCopy.current.countUnit(installedPlugins.length),
             description: installedPlugins.take(3).join(' · '),
             severity: InfoSeverity.normal,
           ),
@@ -512,14 +523,17 @@ class UnraidDashboard {
       securityItems: [
         UnraidInfoItem(
           title: 'API Keys',
-          value: '${apiKeys.length} 个',
-          description: '可用角色与权限来自 apiKeyPossibleRoles',
+          value: DisplayCopy.current.countUnit(apiKeys.length),
+          description: DisplayCopy.current.apiKeyRolesDescription,
           severity: InfoSeverity.normal,
         ),
         UnraidInfoItem(
           title: 'SSO',
-          value: json['isSSOEnabled'] == true ? '已启用' : '未启用',
-          description: '${oidcProviders.length} 个 OIDC 提供方',
+          value: json['isSSOEnabled'] == true
+              ? DisplayCopy.current.enabled
+              : DisplayCopy.current.disabled,
+          description:
+              DisplayCopy.current.oidcProviderCount(oidcProviders.length),
           severity: json['isSSOEnabled'] == true
               ? InfoSeverity.success
               : InfoSeverity.warning,
@@ -532,7 +546,7 @@ class UnraidDashboard {
           description: _firstText([
             _asMap(cloud['cloud'])['ip'],
             _asMap(cloud['cloud'])['error'],
-            'Unraid Cloud 状态',
+            DisplayCopy.current.unraidCloudStatus,
           ]),
           severity: _severityForStatus(_asMap(cloud['cloud'])['status']),
         ),
@@ -541,21 +555,25 @@ class UnraidDashboard {
           value: _formatStatus(_asMap(cloud['relay'])['status']),
           description: _firstText([
             _asMap(cloud['relay'])['error'],
-            '动态远程访问 ${_firstText([
-                  _asMap(connect['dynamicRemoteAccess'])['runningType'],
-                  remoteAccess['accessType'],
-                  '未知'
-                ])}',
+            DisplayCopy.current.dynamicRemoteAccess(_firstText([
+              _asMap(connect['dynamicRemoteAccess'])['runningType'],
+              remoteAccess['accessType'],
+              DisplayCopy.current.unknown,
+            ])),
           ]),
           severity: _severityForStatus(_asMap(cloud['relay'])['status']),
         ),
         UnraidInfoItem(
-          title: '远程访问',
-          value: _firstText([remoteAccess['accessType'], '未知']),
+          title: DisplayCopy.current.remoteAccess,
+          value: _firstText(
+              [remoteAccess['accessType'], DisplayCopy.current.unknown]),
           description: '${_firstText([
                 remoteAccess['forwardType'],
-                'forward 未知'
-              ])} · 端口 ${_firstText([remoteAccess['port'], '未知'])}',
+                DisplayCopy.current.forwardUnknown,
+              ])} · ${DisplayCopy.current.portLabel(_firstText([
+                remoteAccess['port'],
+                DisplayCopy.current.unknown
+              ]))}',
           severity: InfoSeverity.normal,
         ),
       ],
@@ -608,30 +626,31 @@ class UnraidManagementItem {
     return UnraidManagementItem(
       id: json['id']?.toString() ?? '',
       title: _cleanDockerName(name?.toString()) ??
-          _firstText([json['image'], '未命名容器']),
+          _firstText([json['image'], DisplayCopy.current.unnamedContainer]),
       status: _formatStatus(json['state'] ?? json['status']),
       description: _firstText([
         json['status'],
         json['image'],
         labels['net.unraid.docker.webui'],
-        'Docker 容器',
+        DisplayCopy.current.dockerContainer,
       ]),
       type: ManagementItemType.docker,
       tags: [
         if (networkMode.isNotEmpty) networkMode,
-        if (json['autoStart'] == true) '自启动',
-        if (json['isUpdateAvailable'] == true || updateStatus.isNotEmpty) '有更新',
+        if (json['autoStart'] == true) DisplayCopy.current.autoStart,
+        if (json['isUpdateAvailable'] == true || updateStatus.isNotEmpty)
+          DisplayCopy.current.updateAvailable,
         if (json['tailscaleEnabled'] == true) 'Tailscale',
       ],
       details: [
         UnraidInfoItem(
-          title: '镜像',
-          value: _firstText([json['image'], '未知']),
+          title: DisplayCopy.current.image,
+          value: _firstText([json['image'], DisplayCopy.current.unknown]),
           description: _firstText([json['imageId'], 'Docker image']),
           severity: InfoSeverity.normal,
         ),
         UnraidInfoItem(
-          title: '端口',
+          title: DisplayCopy.current.ports,
           value: _formatContainerPorts(ports),
           description: _formatContainerPortDescription(ports),
           severity: InfoSeverity.normal,
@@ -639,7 +658,9 @@ class UnraidManagementItem {
         if (json['tailscaleEnabled'] == true)
           UnraidInfoItem(
             title: 'Tailscale',
-            value: tailscale['online'] == true ? '在线' : '离线',
+            value: tailscale['online'] == true
+                ? DisplayCopy.current.online
+                : DisplayCopy.current.offline,
             description: _firstText([
               tailscale['dnsName'],
               tailscale['hostname'],
@@ -659,25 +680,27 @@ class UnraidManagementItem {
     final state = domain['state'] ?? json['state'];
     return UnraidManagementItem(
       id: _firstText([domain['id'], json['id']]),
-      title: _firstText([domain['name'], json['name'], '未命名虚拟机']),
+      title: _firstText(
+          [domain['name'], json['name'], DisplayCopy.current.unnamedVm]),
       status: _formatStatus(state),
-      description: '虚拟机',
+      description: DisplayCopy.current.virtualMachine,
       type: ManagementItemType.vm,
       tags: [
         if (_firstText([domain['uuid']]).isNotEmpty) 'UUID',
-        if (_formatStatus(state) == '运行中') 'VNC 可用',
+        if (_formatStatus(state) == DisplayCopy.current.running)
+          DisplayCopy.current.vncAvailable,
       ],
       details: [
         UnraidInfoItem(
           title: 'UUID',
-          value: _firstText([domain['uuid'], '未知']),
-          description: '虚拟机域标识',
+          value: _firstText([domain['uuid'], DisplayCopy.current.unknown]),
+          description: DisplayCopy.current.vmDomainId,
           severity: InfoSeverity.normal,
         ),
         UnraidInfoItem(
-          title: '状态',
+          title: DisplayCopy.current.status,
           value: _formatStatus(state),
-          description: '来自 vms.domain.state',
+          description: DisplayCopy.current.fromVmDomainState,
           severity: _severityForStatus(state),
         ),
       ],
@@ -690,12 +713,15 @@ class UnraidManagementItem {
     final total = _asDouble(json['size']);
     return UnraidManagementItem(
       id: _firstText([json['id'], json['name'], json['nameOrig']]),
-      title: _firstText([json['name'], json['nameOrig'], '未命名共享']),
-      status: json['cache'] == true ? '缓存' : '阵列',
+      title: _firstText(
+          [json['name'], json['nameOrig'], DisplayCopy.current.unnamedShare]),
+      status: json['cache'] == true
+          ? DisplayCopy.current.cache
+          : DisplayCopy.current.array,
       description: _firstText([
         json['comment'],
         _formatShareSize(json['used'], json['size']),
-        '共享目录',
+        DisplayCopy.current.shareDirectory,
       ]),
       type: ManagementItemType.share,
       progress: _percent(used, total),
@@ -710,23 +736,25 @@ class UnraidManagementItem {
       ],
       details: [
         UnraidInfoItem(
-          title: '容量',
+          title: DisplayCopy.current.capacity,
           value: _formatShareSize(json['used'], json['size']),
-          description: 'free ${_formatKilobytes(json['free']) ?? '未知'}',
+          description: DisplayCopy.current.freeLabel(
+              _formatKilobytes(json['free']) ?? DisplayCopy.current.unknown),
           severity: _percent(used, total) > 0.85
               ? InfoSeverity.warning
               : InfoSeverity.normal,
         ),
         UnraidInfoItem(
-          title: '分配策略',
-          value: _firstText([json['allocator'], '未知']),
-          description: 'split level ${_firstText([json['splitLevel'], '默认'])}',
+          title: DisplayCopy.current.allocationStrategy,
+          value: _firstText([json['allocator'], DisplayCopy.current.unknown]),
+          description: DisplayCopy.current.splitLevel(_firstText(
+              [json['splitLevel'], DisplayCopy.current.defaultValue])),
           severity: InfoSeverity.normal,
         ),
         UnraidInfoItem(
-          title: '说明',
-          value: _firstText([json['comment'], '无']),
-          description: '共享目录配置',
+          title: DisplayCopy.current.description,
+          value: _firstText([json['comment'], DisplayCopy.current.none]),
+          description: DisplayCopy.current.shareDirectoryConfig,
           severity: InfoSeverity.normal,
         ),
       ],
@@ -753,13 +781,15 @@ class UnraidInfoItem {
     final json = _asMap(value);
     final temp = _firstText([json['temperature']]);
     return UnraidInfoItem(
-      title: _firstText([json['name'], json['device'], '未知磁盘']),
-      value: _firstText([json['smartStatus'], json['type'], '未知']),
+      title: _firstText(
+          [json['name'], json['device'], DisplayCopy.current.unknownDisk]),
+      value: _firstText(
+          [json['smartStatus'], json['type'], DisplayCopy.current.unknown]),
       description: [
         if (_firstText([json['vendor']]).isNotEmpty) json['vendor'],
         if (_formatBytes(json['size']) != null) _formatBytes(json['size']),
         if (temp.isNotEmpty) '$temp°C',
-        if (json['isSpinning'] == false) '休眠',
+        if (json['isSpinning'] == false) DisplayCopy.current.sleeping,
       ].join(' · '),
       severity: _severityForSmart(json['smartStatus'], json['temperature']),
     );
@@ -768,10 +798,16 @@ class UnraidInfoItem {
   factory UnraidInfoItem.fromNetworkInterface(Object? value) {
     final json = _asMap(value);
     return UnraidInfoItem(
-      title: _firstText([json['name'], json['iface'], '网络接口']),
-      value: _firstText([json['status'], json['operstate'], '未知']),
+      title: _firstText(
+          [json['name'], json['iface'], DisplayCopy.current.networkInterface]),
+      value: _firstText(
+          [json['status'], json['operstate'], DisplayCopy.current.unknown]),
       description: [
-        _firstText([json['ipAddress'], json['macAddress'], '无地址']),
+        _firstText([
+          json['ipAddress'],
+          json['macAddress'],
+          DisplayCopy.current.noAddress
+        ]),
         if (_firstText([json['speed']]).isNotEmpty) '${json['speed']} Mbps',
         if (_firstText([json['type']]).isNotEmpty) json['type'],
       ].join(' · '),
@@ -782,8 +818,10 @@ class UnraidInfoItem {
   factory UnraidInfoItem.fromAccessUrl(Object? value) {
     final json = _asMap(value);
     return UnraidInfoItem(
-      title: _firstText([json['name'], json['type'], '访问地址']),
-      value: _firstText([json['ipv4'], json['ipv6'], '未返回']),
+      title: _firstText(
+          [json['name'], json['type'], DisplayCopy.current.accessAddress]),
+      value: _firstText(
+          [json['ipv4'], json['ipv6'], DisplayCopy.current.notReturned]),
       description: _firstText([json['type'], 'network.accessUrls']),
       severity: InfoSeverity.normal,
     );
@@ -796,10 +834,10 @@ class UnraidInfoItem {
     return UnraidInfoItem(
       title: _firstText([json['name'], json['model'], 'UPS']),
       value: _formatStatus(json['status']),
-      description: '电量 ${_firstText([
-            battery['chargeLevel'],
-            '未知'
-          ])}% · 负载 ${_firstText([power['loadPercentage'], '未知'])}%',
+      description: DisplayCopy.current.batteryLoad(
+        _firstText([battery['chargeLevel'], DisplayCopy.current.unknown]),
+        _firstText([power['loadPercentage'], DisplayCopy.current.unknown]),
+      ),
       severity: _severityForStatus(json['status']),
     );
   }
@@ -807,10 +845,16 @@ class UnraidInfoItem {
   factory UnraidInfoItem.fromPlugin(Object? value) {
     final json = _asMap(value);
     return UnraidInfoItem(
-      title: _firstText([json['name'], '插件']),
-      value: _firstText([json['version'], '未知版本']),
-      description:
-          'API ${json['hasApiModule'] == true ? '有' : '无'} · CLI ${json['hasCliModule'] == true ? '有' : '无'}',
+      title: _firstText([json['name'], DisplayCopy.current.plugin]),
+      value: _firstText([json['version'], DisplayCopy.current.unknownVersion]),
+      description: DisplayCopy.current.apiCliModules(
+        json['hasApiModule'] == true
+            ? DisplayCopy.current.yes
+            : DisplayCopy.current.no,
+        json['hasCliModule'] == true
+            ? DisplayCopy.current.yes
+            : DisplayCopy.current.no,
+      ),
       severity: json['hasApiModule'] == true
           ? InfoSeverity.success
           : InfoSeverity.normal,
@@ -820,9 +864,14 @@ class UnraidInfoItem {
   factory UnraidInfoItem.fromPluginOperation(Object? value) {
     final json = _asMap(value);
     return UnraidInfoItem(
-      title: _firstText([json['name'], json['url'], '插件安装任务']),
+      title: _firstText(
+          [json['name'], json['url'], DisplayCopy.current.pluginInstallTask]),
       value: _formatStatus(json['status']),
-      description: _firstText([json['updatedAt'], json['createdAt'], '安装任务']),
+      description: _firstText([
+        json['updatedAt'],
+        json['createdAt'],
+        DisplayCopy.current.installTask
+      ]),
       severity: _severityForStatus(json['status']),
     );
   }
@@ -830,8 +879,8 @@ class UnraidInfoItem {
   factory UnraidInfoItem.fromLogFile(Object? value) {
     final json = _asMap(value);
     return UnraidInfoItem(
-      title: _firstText([json['name'], json['path'], '日志']),
-      value: _formatBytes(json['size']) ?? '未知大小',
+      title: _firstText([json['name'], json['path'], DisplayCopy.current.log]),
+      value: _formatBytes(json['size']) ?? DisplayCopy.current.unknownSize,
       description: _firstText([json['modifiedAt'], json['path'], 'logFiles']),
       severity: InfoSeverity.normal,
     );
@@ -847,15 +896,17 @@ List<UnraidInfoItem> _serverNetworkItems(Map<String, dynamic> server) {
     if (lanIp.isNotEmpty || localUrl.isNotEmpty)
       UnraidInfoItem(
         title: 'LAN',
-        value: _firstText([lanIp, '未返回']),
-        description: _firstText([localUrl, '本地访问地址']),
+        value: _firstText([lanIp, DisplayCopy.current.notReturned]),
+        description:
+            _firstText([localUrl, DisplayCopy.current.localAccessAddress]),
         severity: InfoSeverity.normal,
       ),
     if (wanIp.isNotEmpty || remoteUrl.isNotEmpty)
       UnraidInfoItem(
         title: 'WAN',
-        value: _firstText([wanIp, '未返回']),
-        description: _firstText([remoteUrl, '远程访问地址']),
+        value: _firstText([wanIp, DisplayCopy.current.notReturned]),
+        description:
+            _firstText([remoteUrl, DisplayCopy.current.remoteAccessAddress]),
         severity: InfoSeverity.normal,
       ),
   ];
@@ -879,7 +930,8 @@ class UnraidNotification {
   factory UnraidNotification.fromJson(Object? value) {
     final json = _asMap(value);
     return UnraidNotification(
-      title: _firstText([json['title'], json['subject'], '通知']),
+      title: _firstText(
+          [json['title'], json['subject'], DisplayCopy.current.notification]),
       subject: _firstText([json['subject'], json['type'], '']),
       description: _firstText([json['description'], json['link'], '']),
       importance: _firstText([json['importance'], json['type'], 'info']),
@@ -935,7 +987,7 @@ class UnraidFileEntry {
     final name = _firstText([
       json['name'],
       _lastPathSegment(_firstText([json['path'], json['url']])),
-      '未命名',
+      DisplayCopy.current.unnamed,
     ]);
     final type = _firstText([json['type']]).toLowerCase();
     final isDirectory = json['isDir'] == true ||
@@ -957,7 +1009,9 @@ class UnraidFileEntry {
       name: name,
       path: path,
       isDirectory: isDirectory,
-      size: isDirectory ? '目录' : _formatBytes(json['size']) ?? '',
+      size: isDirectory
+          ? DisplayCopy.current.directory
+          : _formatBytes(json['size']) ?? '',
       modified: modified,
     );
   }
@@ -1383,12 +1437,16 @@ double _percent(Object? used, Object? total) {
 }
 
 String _formatCpuSummary(Map<String, dynamic> cpu) {
-  final brand = _firstText([cpu['brand'], cpu['manufacturer'], '未知 CPU']);
+  final brand = _firstText([
+    cpu['brand'],
+    cpu['manufacturer'],
+    DisplayCopy.current.unknownCpu,
+  ]);
   final cores = _firstText([cpu['cores']]);
   final threads = _firstText([cpu['threads']]);
   final specs = [
-    if (cores.isNotEmpty) '$cores 核',
-    if (threads.isNotEmpty) '$threads 线程',
+    if (cores.isNotEmpty) DisplayCopy.current.coresCount(cores),
+    if (threads.isNotEmpty) DisplayCopy.current.threadsCount(threads),
   ];
   if (specs.isEmpty) {
     return brand;
@@ -1402,7 +1460,7 @@ String _formatBaseboardSummary(Map<String, dynamic> baseboard) {
       baseboard['manufacturer'],
       baseboard['model'],
     ].where((value) => _firstText([value]).isNotEmpty).join(' '),
-    '未知主板',
+    DisplayCopy.current.unknownMotherboard,
   ]);
 }
 
@@ -1414,7 +1472,7 @@ String _formatOsSummary(Map<String, dynamic> os) {
       os['kernel'],
       os['arch'],
     ].where((value) => _firstText([value]).isNotEmpty).join(' · '),
-    '未知系统',
+    DisplayCopy.current.unknownSystem,
   ]);
 }
 
@@ -1424,7 +1482,7 @@ String _formatPackagesSummary(Map<String, dynamic> packages) {
       .map((key) => '$key ${packages[key]}')
       .toList();
   if (names.isEmpty) {
-    return '未返回包版本';
+    return DisplayCopy.current.noPackageVersions;
   }
   return names.take(3).join(' · ');
 }
@@ -1440,7 +1498,9 @@ String _formatParitySummary(Map<String, dynamic> parity) {
     if (speed.isNotEmpty) speed,
     if (errors.isNotEmpty) '$errors errors',
   ];
-  return parts.where((part) => part.isNotEmpty && part != '未知').join(' · ');
+  return parts
+      .where((part) => part.isNotEmpty && part != DisplayCopy.current.unknown)
+      .join(' · ');
 }
 
 String _formatServicesSummary(List<Object?> services) {
@@ -1452,35 +1512,36 @@ String _formatServicesSummary(List<Object?> services) {
       .take(3)
       .toList();
   if (services.isEmpty) {
-    return '未返回服务';
+    return DisplayCopy.current.noServicesReturned;
   }
-  return '$online/${services.length} 在线 · ${names.join(' · ')}';
+  return DisplayCopy.current
+      .servicesOnlineSummary(online, services.length, names.join(' · '));
 }
 
 String _formatDockerNetworkSummary(List<Object?> networks) {
   if (networks.isEmpty) {
-    return '未返回网络';
+    return DisplayCopy.current.noNetworksReturned;
   }
   final names = networks
       .map((value) => _firstText([_asMap(value)['name']]))
       .where((value) => value.isNotEmpty)
       .take(3)
       .join(' · ');
-  return '${networks.length} 个网络${names.isEmpty ? '' : ' · $names'}';
+  return '${DisplayCopy.current.networksCount(networks.length)}${names.isEmpty ? '' : ' · $names'}';
 }
 
 String _formatDockerConflictSummary(Object? conflictsValue) {
   if (conflictsValue == null) {
-    return '未返回端口冲突信息';
+    return DisplayCopy.current.noPortConflictInfo;
   }
   final conflicts = _asMap(conflictsValue);
   final containerPorts = _asList(conflicts['containerPorts']);
   final lanPorts = _asList(conflicts['lanPorts']);
   final total = containerPorts.length + lanPorts.length;
   if (total == 0) {
-    return '未发现端口冲突';
+    return DisplayCopy.current.noPortConflicts;
   }
-  return '$total 个端口冲突';
+  return DisplayCopy.current.portConflictCount(total);
 }
 
 String _formatContainerPorts(List<Object?> ports) {
@@ -1513,10 +1574,10 @@ String _formatContainerPortDescription(List<Object?> ports) {
     final binding = publicPort.isEmpty
         ? privatePort
         : '$publicPort -> ${privatePort.isEmpty ? '?' : privatePort}';
-    return '${ip.isEmpty ? '容器' : ip} · $binding/$type';
+    return '${ip.isEmpty ? DisplayCopy.current.container : ip} · $binding/$type';
   }).where((value) => value.isNotEmpty);
   final description = mapped.take(3).join(' · ');
-  return description.isEmpty ? '未返回端口映射' : description;
+  return description.isEmpty ? DisplayCopy.current.noPortMappings : description;
 }
 
 InfoSeverity _severityForStatus(Object? value) {
@@ -1567,13 +1628,13 @@ String _formatBytesUsage(Object? used, Object? total) {
   final usedText = _formatBytes(used);
   final totalText = _formatBytes(total);
   if (usedText == null && totalText == null) {
-    return '未知';
+    return DisplayCopy.current.unknown;
   }
   if (usedText == null) {
-    return '总计 $totalText';
+    return DisplayCopy.current.totalUsage(totalText!);
   }
   if (totalText == null) {
-    return '已用 $usedText';
+    return DisplayCopy.current.usedUsage(usedText);
   }
   return '$usedText / $totalText';
 }
@@ -1582,13 +1643,13 @@ String _formatKilobytesUsage(Object? used, Object? total) {
   final usedText = _formatKilobytes(used);
   final totalText = _formatKilobytes(total);
   if (usedText == null && totalText == null) {
-    return '未知';
+    return DisplayCopy.current.unknown;
   }
   if (usedText == null) {
-    return '总计 $totalText';
+    return DisplayCopy.current.totalUsage(totalText!);
   }
   if (totalText == null) {
-    return '已用 $usedText';
+    return DisplayCopy.current.usedUsage(usedText);
   }
   return '$usedText / $totalText';
 }
@@ -1612,18 +1673,18 @@ String? _cleanDockerName(String? value) {
 String _formatStatus(Object? value) {
   final raw = value?.toString().trim();
   return switch (raw) {
-    'RUNNING' => '运行中',
-    'ONLINE' => '在线',
-    'OFFLINE' => '离线',
-    'STARTED' => '已启动',
-    'STOPPED' => '已停止',
-    'PAUSED' => '已暂停',
-    'EXITED' => '已停止',
-    'IDLE' => '空闲',
-    'SHUTDOWN' || 'SHUTOFF' => '已关闭',
-    'CRASHED' => '异常',
-    'PMSUSPENDED' => '休眠',
-    null || '' => '未知',
+    'RUNNING' => DisplayCopy.current.running,
+    'ONLINE' => DisplayCopy.current.online,
+    'OFFLINE' => DisplayCopy.current.offline,
+    'STARTED' => DisplayCopy.current.started,
+    'STOPPED' => DisplayCopy.current.stopped,
+    'PAUSED' => DisplayCopy.current.paused,
+    'EXITED' => DisplayCopy.current.stopped,
+    'IDLE' => DisplayCopy.current.idle,
+    'SHUTDOWN' || 'SHUTOFF' => DisplayCopy.current.shutDown,
+    'CRASHED' => DisplayCopy.current.crashed,
+    'PMSUSPENDED' => DisplayCopy.current.sleeping,
+    null || '' => DisplayCopy.current.unknown,
     _ => raw,
   };
 }
@@ -1632,15 +1693,15 @@ String _formatShareSize(Object? used, Object? total) {
   final usedText = _formatKilobytes(used);
   final totalText = _formatKilobytes(total);
   if (usedText == null && totalText == null) {
-    return '共享目录';
+    return DisplayCopy.current.shareDirectory;
   }
   if (usedText == null) {
-    return '总计 $totalText';
+    return DisplayCopy.current.totalUsage(totalText!);
   }
   if (totalText == null) {
-    return '已用 $usedText';
+    return DisplayCopy.current.usedUsage(usedText);
   }
-  return '已用 $usedText / $totalText';
+  return DisplayCopy.current.usedTotalUsage(usedText, totalText);
 }
 
 String? _formatKilobytes(Object? value) {
@@ -1666,7 +1727,7 @@ String _formatByteAmount(double bytes) {
 String _formatUptime(Object? value) {
   final raw = value?.toString();
   if (raw == null || raw.isEmpty) {
-    return '未知';
+    return DisplayCopy.current.unknown;
   }
   final bootTime = DateTime.tryParse(raw);
   if (bootTime == null) {
@@ -1674,12 +1735,12 @@ String _formatUptime(Object? value) {
   }
   final elapsed = DateTime.now().difference(bootTime);
   if (elapsed.inDays > 0) {
-    return '${elapsed.inDays} 天';
+    return DisplayCopy.current.daysCount(elapsed.inDays);
   }
   if (elapsed.inHours > 0) {
-    return '${elapsed.inHours} 小时';
+    return DisplayCopy.current.hoursCount(elapsed.inHours);
   }
-  return '${elapsed.inMinutes} 分钟';
+  return DisplayCopy.current.minutesCount(elapsed.inMinutes);
 }
 
 List<UnraidFileEntry> _parseFileBrowserDirectory(
