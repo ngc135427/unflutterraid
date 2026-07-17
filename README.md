@@ -51,6 +51,7 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 
 - 默认跟随系统语言；可在登录页下拉与设置页切换简体中文 / English / 跟随系统。
 - 主题支持浅色 / 深色 / 跟随系统，设置页切换并持久化。
+- 设置 → 服务器配置：查看当前连接、修改地址/协议/API Key 后保存并重连，或断开返回登录页。
 - UI 文案走 `AppLocalizations`；服务层错误与映射文案走 `DisplayCopy`（由 `MaterialApp.builder` 按当前 locale 激活）。
 
 ## 技术栈
@@ -76,6 +77,7 @@ lib/
     login_page.dart                 登录、连接配置、登录前语言切换
     main_shell_page.dart            主页、导航、共享目录浏览/重命名/删除
     settings_page.dart              语言、主题等应用设置
+    server_config_page.dart         服务器地址 / API Key、重连与断开
     album_page.dart                 相册、视频、备份设置
     music_page.dart                 音乐库（File Browser 音频扫描）
     detail_page.dart                服务器详情展示

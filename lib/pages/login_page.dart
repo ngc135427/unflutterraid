@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_language_scope.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../l10n/language_names.dart';
+import '../services/connection_url.dart';
 import '../services/language_preferences.dart';
 import '../services/login_preferences.dart';
 import '../services/unraid_api_client.dart';
@@ -143,11 +144,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   String _buildBaseUrl() {
-    final input = _domainController.text.trim();
-    if (input.startsWith('http://') || input.startsWith('https://')) {
-      return input;
-    }
-    return '${_useHttps ? 'https' : 'http'}://$input';
+    return ConnectionUrl.buildBaseUrl(
+      domain: _domainController.text,
+      useHttps: _useHttps,
+    );
   }
 
   @override

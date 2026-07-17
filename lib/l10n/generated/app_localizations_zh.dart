@@ -121,13 +121,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsServerConfigTitle => '服务器配置';
 
   @override
-  String get settingsServerConfigSubtitle => '默认连接、协议与凭据管理';
+  String get settingsServerConfigSubtitle => '地址、协议与 API Key';
 
   @override
   String get settingsPlanned => '规划中';
 
   @override
   String get settingsServerConfigToast => '服务器配置将在后续版本集中管理';
+
+  @override
+  String get settingsNotConnected => '未连接';
+
+  @override
+  String get settingsConnected => '已连接';
+
+  @override
+  String get serverConfigTitle => '服务器连接';
+
+  @override
+  String get serverConfigSaveReconnect => '保存并重连';
+
+  @override
+  String get serverConfigDisconnect => '断开连接';
+
+  @override
+  String get serverConfigClearSaved => '清除已保存凭据';
+
+  @override
+  String get serverConfigReconnecting => '正在验证连接…';
+
+  @override
+  String get serverConfigReconnectSuccess => '已使用新连接';
+
+  @override
+  String get serverConfigDisconnected => '已断开连接';
+
+  @override
+  String get serverConfigCleared => '已清除保存的登录信息';
+
+  @override
+  String get serverConfigNoSessionHint => '当前未连接。可编辑已保存凭据并连接，或先从登录页进入。';
 
   @override
   String settingsLanguageToast(String language) {

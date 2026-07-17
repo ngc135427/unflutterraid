@@ -4,10 +4,19 @@ import '../app_language_scope.dart';
 import '../app_theme_scope.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../l10n/language_names.dart';
+import '../services/connection_url.dart';
 import '../services/language_preferences.dart';
 import '../services/theme_preferences.dart';
+import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/phone_frame.dart';
+import 'server_config_page.dart';
+
+class SettingsPageArgs {
+  const SettingsPageArgs({this.apiClient});
+
+  final UnraidApiClient? apiClient;
+}
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -19,6 +28,15 @@ class SettingsPage extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final languageScope = AppLanguageScope.of(context);
     final themeScope = AppThemeScope.of(context);
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final pageArgs = args is SettingsPageArgs ? args : null;
+    final client = pageArgs?.apiClient;
+    final connectionValue = client == null
+        ? l10n.settingsNotConnected
+        : ConnectionUrl.parse(client.baseUrl).domain;
+    final connectionSubtitle = client == null
+        ? l10n.settingsServerConfigSubtitle
+        : '${client.baseUrl} · ${ConnectionUrl.maskApiKey(client.apiKey)}';
 
     return PhoneFrame(
       maxContentWidth: 520,
@@ -79,12 +97,20 @@ class SettingsPage extends StatelessWidget {
                         _SettingRow(
                           icon: Icons.dns,
                           title: l10n.settingsServerConfigTitle,
-                          subtitle: l10n.settingsServerConfigSubtitle,
-                          value: l10n.settingsPlanned,
-                          onTap: () => _showMessage(
-                            context,
-                            l10n.settingsServerConfigToast,
-                          ),
+                          subtitle: connectionSubtitle,
+                          value: connectionValue.isEmpty
+                              ? l10n.settingsNotConnected
+                              : (client == null
+                                  ? l10n.settingsNotConnected
+                                  : l10n.settingsConnected),
+                          onTap: () {
+                            Navigator.of(context).pushNamed(
+                              ServerConfigPage.routeName,
+                              arguments: ServerConfigPageArgs(
+                                apiClient: client,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

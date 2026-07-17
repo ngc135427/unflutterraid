@@ -317,7 +317,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsServerConfigSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'默认连接、协议与凭据管理'**
+  /// **'地址、协议与 API Key'**
   String get settingsServerConfigSubtitle;
 
   /// No description provided for @settingsPlanned.
@@ -331,6 +331,72 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'服务器配置将在后续版本集中管理'**
   String get settingsServerConfigToast;
+
+  /// No description provided for @settingsNotConnected.
+  ///
+  /// In zh, this message translates to:
+  /// **'未连接'**
+  String get settingsNotConnected;
+
+  /// No description provided for @settingsConnected.
+  ///
+  /// In zh, this message translates to:
+  /// **'已连接'**
+  String get settingsConnected;
+
+  /// No description provided for @serverConfigTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器连接'**
+  String get serverConfigTitle;
+
+  /// No description provided for @serverConfigSaveReconnect.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存并重连'**
+  String get serverConfigSaveReconnect;
+
+  /// No description provided for @serverConfigDisconnect.
+  ///
+  /// In zh, this message translates to:
+  /// **'断开连接'**
+  String get serverConfigDisconnect;
+
+  /// No description provided for @serverConfigClearSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除已保存凭据'**
+  String get serverConfigClearSaved;
+
+  /// No description provided for @serverConfigReconnecting.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在验证连接…'**
+  String get serverConfigReconnecting;
+
+  /// No description provided for @serverConfigReconnectSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'已使用新连接'**
+  String get serverConfigReconnectSuccess;
+
+  /// No description provided for @serverConfigDisconnected.
+  ///
+  /// In zh, this message translates to:
+  /// **'已断开连接'**
+  String get serverConfigDisconnected;
+
+  /// No description provided for @serverConfigCleared.
+  ///
+  /// In zh, this message translates to:
+  /// **'已清除保存的登录信息'**
+  String get serverConfigCleared;
+
+  /// No description provided for @serverConfigNoSessionHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前未连接。可编辑已保存凭据并连接，或先从登录页进入。'**
+  String get serverConfigNoSessionHint;
 
   /// No description provided for @settingsLanguageToast.
   ///

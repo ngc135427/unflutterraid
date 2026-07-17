@@ -124,8 +124,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsServerConfigTitle => 'Server configuration';
 
   @override
-  String get settingsServerConfigSubtitle =>
-      'Default server, protocol, and credentials';
+  String get settingsServerConfigSubtitle => 'Address, protocol, and API key';
 
   @override
   String get settingsPlanned => 'Planned';
@@ -133,6 +132,40 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsServerConfigToast =>
       'Server configuration will be managed here later';
+
+  @override
+  String get settingsNotConnected => 'Not connected';
+
+  @override
+  String get settingsConnected => 'Connected';
+
+  @override
+  String get serverConfigTitle => 'Server connection';
+
+  @override
+  String get serverConfigSaveReconnect => 'Save & reconnect';
+
+  @override
+  String get serverConfigDisconnect => 'Disconnect';
+
+  @override
+  String get serverConfigClearSaved => 'Clear saved credentials';
+
+  @override
+  String get serverConfigReconnecting => 'Checking connection…';
+
+  @override
+  String get serverConfigReconnectSuccess => 'Connected with new settings';
+
+  @override
+  String get serverConfigDisconnected => 'Disconnected';
+
+  @override
+  String get serverConfigCleared => 'Saved login credentials cleared';
+
+  @override
+  String get serverConfigNoSessionHint =>
+      'Not connected. Edit saved credentials to connect, or sign in from the login screen.';
 
   @override
   String settingsLanguageToast(String language) {

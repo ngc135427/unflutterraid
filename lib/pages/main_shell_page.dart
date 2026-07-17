@@ -76,7 +76,10 @@ class _MainShellPageState extends State<MainShellPage> {
                 Positioned(
                   top: 10,
                   right: 12,
-                  child: _OpenSettingsButton(l10n: l10n),
+                  child: _OpenSettingsButton(
+                    l10n: l10n,
+                    apiClient: _apiClient,
+                  ),
                 ),
                 Positioned(
                   left: 0,
@@ -258,15 +261,22 @@ enum _DashboardModule {
 }
 
 class _OpenSettingsButton extends StatelessWidget {
-  const _OpenSettingsButton({required this.l10n});
+  const _OpenSettingsButton({
+    required this.l10n,
+    this.apiClient,
+  });
 
   final AppLocalizations l10n;
+  final UnraidApiClient? apiClient;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: l10n.settingsOpenTooltip,
-      onPressed: () => Navigator.of(context).pushNamed(SettingsPage.routeName),
+      onPressed: () => Navigator.of(context).pushNamed(
+        SettingsPage.routeName,
+        arguments: SettingsPageArgs(apiClient: apiClient),
+      ),
       style: IconButton.styleFrom(
         backgroundColor: Colors.white.withValues(alpha: 0.92),
         foregroundColor: AppTheme.primary,
