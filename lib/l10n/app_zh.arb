@@ -158,6 +158,37 @@
   "parityStartConfirmMessage": "将启动非纠正模式奇偶校验，可能影响磁盘性能。",
   "parityCancelConfirmTitle": "取消奇偶校验？",
   "parityCancelConfirmMessage": "将取消进行中的奇偶校验任务。",
+  "dockerLogsTitle": "容器日志",
+  "dockerLogsEmpty": "没有日志行",
+  "copyLogs": "复制日志",
+  "logsCopied": "日志已复制到剪贴板",
+  "dockerLogsConsoleNote": "交互式终端未接入 GraphQL；请使用 WebUI 或 SSH。",
+  "dockerConsoleNote": "控制台：优先打开容器 WebUI；完整 shell 请使用 Unraid WebGUI / SSH。",
+  "openWebUi": "打开 WebUI",
+  "webUiUrlHint": "WebUI：{url}",
+  "@webUiUrlHint": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  },
+  "batchCopy": "复制",
+  "copyToTitle": "复制到…",
+  "copyHere": "复制到此目录",
+  "serverProfilesTitle": "服务器档案",
+  "serverProfilesSettingsSubtitle": "管理多台 Unraid 连接",
+  "serverProfilesEmpty": "还没有已保存的服务器。登录并勾选「记住我」后会自动加入档案。",
+  "serverProfileAddTitle": "添加服务器",
+  "serverProfileEditTitle": "编辑服务器",
+  "serverProfileNameLabel": "显示名称",
+  "serverProfileConnect": "连接",
+  "serverProfileIncomplete": "请填写地址与 API Key",
+  "serverProfileDeleteTitle": "删除服务器档案？",
+  "serverProfileDeleteMessage": "将删除「{name}」的本地凭据。",
+  "@serverProfileDeleteMessage": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "settingsServerConfigTitle": "服务器配置",
   "settingsServerConfigSubtitle": "地址、协议与 API Key",
   "settingsPlanned": "规划中",

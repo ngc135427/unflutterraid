@@ -327,6 +327,77 @@ class AppLocalizationsEn extends AppLocalizations {
       'Cancels the running parity check job.';
 
   @override
+  String get dockerLogsTitle => 'Container logs';
+
+  @override
+  String get dockerLogsEmpty => 'No log lines';
+
+  @override
+  String get copyLogs => 'Copy logs';
+
+  @override
+  String get logsCopied => 'Logs copied to clipboard';
+
+  @override
+  String get dockerLogsConsoleNote =>
+      'Interactive shell is not available via GraphQL; use WebUI or SSH.';
+
+  @override
+  String get dockerConsoleNote =>
+      'Console: open the container WebUI when available; full shell needs Unraid WebGUI / SSH.';
+
+  @override
+  String get openWebUi => 'Open WebUI';
+
+  @override
+  String webUiUrlHint(String url) {
+    return 'WebUI: $url';
+  }
+
+  @override
+  String get batchCopy => 'Copy';
+
+  @override
+  String get copyToTitle => 'Copy to…';
+
+  @override
+  String get copyHere => 'Copy here';
+
+  @override
+  String get serverProfilesTitle => 'Server profiles';
+
+  @override
+  String get serverProfilesSettingsSubtitle =>
+      'Manage multiple Unraid connections';
+
+  @override
+  String get serverProfilesEmpty =>
+      'No saved servers yet. Sign in with Remember me to add a profile automatically.';
+
+  @override
+  String get serverProfileAddTitle => 'Add server';
+
+  @override
+  String get serverProfileEditTitle => 'Edit server';
+
+  @override
+  String get serverProfileNameLabel => 'Display name';
+
+  @override
+  String get serverProfileConnect => 'Connect';
+
+  @override
+  String get serverProfileIncomplete => 'Enter address and API key';
+
+  @override
+  String get serverProfileDeleteTitle => 'Delete server profile?';
+
+  @override
+  String serverProfileDeleteMessage(String name) {
+    return 'Removes local credentials for “$name”.';
+  }
+
+  @override
   String get settingsServerConfigTitle => 'Server configuration';
 
   @override

@@ -6,6 +6,7 @@ import '../l10n/language_names.dart';
 import '../services/connection_url.dart';
 import '../services/language_preferences.dart';
 import '../services/login_preferences.dart';
+import '../services/server_profiles.dart';
 import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_text_field.dart';
@@ -13,6 +14,7 @@ import '../widgets/fade_slide.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/phone_frame.dart';
 import 'main_shell_page.dart';
+import 'server_profiles_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -135,11 +137,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _saveRememberedLogin() async {
-    await LoginPreferences.save(
-      rememberMe: _rememberMe,
+    await ServerProfilesStore.saveFromLogin(
       domain: _domainController.text.trim(),
       apiKey: _apiKeyController.text.trim(),
       useHttps: _useHttps,
+      rememberMe: _rememberMe,
     );
   }
 
@@ -279,6 +281,20 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ],
+          ),
+          Positioned(
+            top: 22,
+            left: 16,
+            child: TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushNamed(ServerProfilesPage.routeName);
+              },
+              icon: const Icon(Icons.dns, color: Colors.white, size: 18),
+              label: Text(
+                l10n.serverProfilesTitle,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
           ),
           const Positioned(
             top: 22,

@@ -319,6 +319,74 @@ class AppLocalizationsZh extends AppLocalizations {
   String get parityCancelConfirmMessage => '将取消进行中的奇偶校验任务。';
 
   @override
+  String get dockerLogsTitle => '容器日志';
+
+  @override
+  String get dockerLogsEmpty => '没有日志行';
+
+  @override
+  String get copyLogs => '复制日志';
+
+  @override
+  String get logsCopied => '日志已复制到剪贴板';
+
+  @override
+  String get dockerLogsConsoleNote => '交互式终端未接入 GraphQL；请使用 WebUI 或 SSH。';
+
+  @override
+  String get dockerConsoleNote =>
+      '控制台：优先打开容器 WebUI；完整 shell 请使用 Unraid WebGUI / SSH。';
+
+  @override
+  String get openWebUi => '打开 WebUI';
+
+  @override
+  String webUiUrlHint(String url) {
+    return 'WebUI：$url';
+  }
+
+  @override
+  String get batchCopy => '复制';
+
+  @override
+  String get copyToTitle => '复制到…';
+
+  @override
+  String get copyHere => '复制到此目录';
+
+  @override
+  String get serverProfilesTitle => '服务器档案';
+
+  @override
+  String get serverProfilesSettingsSubtitle => '管理多台 Unraid 连接';
+
+  @override
+  String get serverProfilesEmpty => '还没有已保存的服务器。登录并勾选「记住我」后会自动加入档案。';
+
+  @override
+  String get serverProfileAddTitle => '添加服务器';
+
+  @override
+  String get serverProfileEditTitle => '编辑服务器';
+
+  @override
+  String get serverProfileNameLabel => '显示名称';
+
+  @override
+  String get serverProfileConnect => '连接';
+
+  @override
+  String get serverProfileIncomplete => '请填写地址与 API Key';
+
+  @override
+  String get serverProfileDeleteTitle => '删除服务器档案？';
+
+  @override
+  String serverProfileDeleteMessage(String name) {
+    return '将删除「$name」的本地凭据。';
+  }
+
+  @override
   String get settingsServerConfigTitle => '服务器配置';
 
   @override

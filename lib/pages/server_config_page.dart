@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../services/connection_url.dart';
 import '../services/login_preferences.dart';
+import '../services/server_profiles.dart';
 import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_text_field.dart';
@@ -109,11 +110,11 @@ class _ServerConfigPageState extends State<ServerConfigPage> {
 
     try {
       await client.checkConnection();
-      await LoginPreferences.save(
-        rememberMe: _rememberMe,
+      await ServerProfilesStore.saveFromLogin(
         domain: _domainController.text.trim(),
         apiKey: _apiKeyController.text.trim(),
         useHttps: _useHttps,
+        rememberMe: _rememberMe,
       );
       if (!mounted) {
         client.close();

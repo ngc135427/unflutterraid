@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../services/dashboard_refresh_preferences.dart';
@@ -15,6 +16,7 @@ import '../widgets/phone_frame.dart';
 import '../widgets/server_icon.dart';
 import 'album_page.dart';
 import 'detail_page.dart';
+import 'docker_logs_page.dart';
 import 'music_page.dart';
 import 'settings_page.dart';
 
@@ -2731,6 +2733,28 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                                 AppLocalizations.of(context).restart,
                               ),
                     ),
+                    if (detailArgs.data.type == ManagementItemType.docker) ...[
+                      const SizedBox(height: 10),
+                      _ManagementActionButton(
+                        icon: Icons.article_outlined,
+                        label: AppLocalizations.of(context).dockerLogsTitle,
+                        color: AppTheme.textDark,
+                        onPressed: detailArgs.apiClient == null ||
+                                detailArgs.data.id.isEmpty
+                            ? null
+                            : () {
+                                Navigator.of(context).pushNamed(
+                                  DockerLogsPage.routeName,
+                                  arguments: DockerLogsPageArgs(
+                                    apiClient: detailArgs.apiClient!,
+                                    containerId: detailArgs.data.id,
+                                    containerName: detailArgs.data.title,
+                                  ),
+                                );
+                              },
+                      ),
+                      ..._dockerWebUiButtons(context, detailArgs),
+                    ],
                   ],
                 ),
               ],
@@ -2739,6 +2763,61 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
         ),
       ),
     );
+  }
+
+  List<Widget> _dockerWebUiButtons(
+    BuildContext context,
+    ManagementDetailArgs args,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final webUi = args.data.details
+        .where((item) => item.title == 'WebUI')
+        .map((item) => item.value)
+        .where((value) => value.trim().isNotEmpty)
+        .cast<String>();
+    final url = webUi.isEmpty ? '' : webUi.first;
+    if (url.isEmpty) {
+      return [
+        const SizedBox(height: 10),
+        Text(
+          l10n.dockerConsoleNote,
+          style: const TextStyle(color: AppTheme.textMedium, fontSize: 12),
+        ),
+      ];
+    }
+    return [
+      const SizedBox(height: 10),
+      _ManagementActionButton(
+        icon: Icons.open_in_browser,
+        label: l10n.openWebUi,
+        color: const Color(0xFF0E7490),
+        onPressed: () => unawaited(_openWebUi(context, url)),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        l10n.dockerConsoleNote,
+        style: const TextStyle(color: AppTheme.textMedium, fontSize: 12),
+      ),
+    ];
+  }
+
+  Future<void> _openWebUi(BuildContext context, String url) async {
+    final l10n = AppLocalizations.of(context);
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.webUiUrlHint(url))),
+        );
+      }
+      return;
+    }
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.webUiUrlHint(url))),
+      );
+    }
   }
 
   Widget _buildShareBrowser(ManagementDetailArgs args) {
@@ -2794,6 +2873,13 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                           ? null
                           : () => unawaited(_batchMove(args)),
                       icon: const Icon(Icons.drive_file_move_outline),
+                    ),
+                    IconButton(
+                      tooltip: l10n.batchCopy,
+                      onPressed: _batchBusy || _selectedPaths.isEmpty
+                          ? null
+                          : () => unawaited(_batchCopy(args)),
+                      icon: const Icon(Icons.copy_all_outlined),
                     ),
                     IconButton(
                       tooltip: l10n.batchDelete,
@@ -3211,6 +3297,17 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
   }
 
   Future<void> _batchMove(ManagementDetailArgs args) async {
+    await _batchTransfer(args, copy: false);
+  }
+
+  Future<void> _batchCopy(ManagementDetailArgs args) async {
+    await _batchTransfer(args, copy: true);
+  }
+
+  Future<void> _batchTransfer(
+    ManagementDetailArgs args, {
+    required bool copy,
+  }) async {
     final client = args.apiClient;
     final l10n = AppLocalizations.of(context);
     if (client == null) {
@@ -3227,6 +3324,8 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
       builder: (context) => _MoveDestinationDialog(
         apiClient: client,
         initialPath: _shareRoot(args),
+        title: copy ? l10n.copyToTitle : l10n.moveToTitle,
+        confirmLabel: copy ? l10n.copyHere : l10n.moveHere,
       ),
     );
     if (destination == null || !mounted) {
@@ -3239,7 +3338,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
     var failed = 0;
     for (final path in paths) {
       final parent = _parentPath(path);
-      if (parent == destination) {
+      if (!copy && parent == destination) {
         skipped += 1;
         continue;
       }
@@ -3248,7 +3347,11 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
         continue;
       }
       try {
-        await client.fileManager.move(path, destination);
+        if (copy) {
+          await client.fileManager.copy(path, destination);
+        } else {
+          await client.fileManager.move(path, destination);
+        }
         success += 1;
       } catch (_) {
         failed += 1;
@@ -3714,10 +3817,14 @@ class _MoveDestinationDialog extends StatefulWidget {
   const _MoveDestinationDialog({
     required this.apiClient,
     required this.initialPath,
+    this.title,
+    this.confirmLabel,
   });
 
   final UnraidApiClient apiClient;
   final String initialPath;
+  final String? title;
+  final String? confirmLabel;
 
   @override
   State<_MoveDestinationDialog> createState() => _MoveDestinationDialogState();
@@ -3778,7 +3885,7 @@ class _MoveDestinationDialogState extends State<_MoveDestinationDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(l10n.selectMoveDestination),
+      title: Text(widget.title ?? l10n.selectMoveDestination),
       content: SizedBox(
         width: 420,
         height: 420,
@@ -3849,7 +3956,7 @@ class _MoveDestinationDialogState extends State<_MoveDestinationDialog> {
         ),
         FilledButton(
           onPressed: _loading ? null : () => Navigator.of(context).pop(_path),
-          child: Text(l10n.moveHere),
+          child: Text(widget.confirmLabel ?? l10n.moveHere),
         ),
       ],
     );

@@ -36,6 +36,38 @@ void main() {
       expect(variables['input'], {'desiredState': 'STARTED'});
     });
 
+    test('fetchDockerLogs queries docker.logs', () async {
+      Map<String, dynamic>? body;
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(
+            jsonEncode({
+              'data': {
+                'docker': {
+                  'logs': {
+                    'containerId': 'abc',
+                    'lines': [
+                      {'timestamp': 't1', 'message': 'hello'},
+                    ],
+                  },
+                },
+              },
+            }),
+            200,
+          );
+        }),
+      );
+
+      final lines = await client.fetchDockerLogs('abc');
+      expect(body!['query'], contains('logs'));
+      expect(body!['variables']['id'], 'abc');
+      expect(lines, hasLength(1));
+      expect(lines.first.message, 'hello');
+    });
+
     test('runParityCheckAction posts parityCheck.start', () async {
       Map<String, dynamic>? body;
       final client = UnraidApiClient(
@@ -278,6 +310,27 @@ void main() {
       await client.fileManager.createDirectory(
         parentDirectory: '/mnt/user/photos',
         folderName: 'new-folder',
+      );
+    });
+
+    test('copy sends PATCH with action copy', () async {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'PATCH');
+          expect(request.url.path, '/api/resources/photos/a.jpg');
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['action'], 'copy');
+          expect(body['destination'], '/archive/a.jpg');
+          expect(body['overwrite'], false);
+          return http.Response('{}', 200);
+        }),
+      );
+
+      await client.fileManager.copy(
+        '/mnt/user/photos/a.jpg',
+        '/mnt/user/archive',
       );
     });
 

@@ -158,6 +158,37 @@
   "parityStartConfirmMessage": "Starts a non-correcting parity check. Disk performance may drop while it runs.",
   "parityCancelConfirmTitle": "Cancel parity check?",
   "parityCancelConfirmMessage": "Cancels the running parity check job.",
+  "dockerLogsTitle": "Container logs",
+  "dockerLogsEmpty": "No log lines",
+  "copyLogs": "Copy logs",
+  "logsCopied": "Logs copied to clipboard",
+  "dockerLogsConsoleNote": "Interactive shell is not available via GraphQL; use WebUI or SSH.",
+  "dockerConsoleNote": "Console: open the container WebUI when available; full shell needs Unraid WebGUI / SSH.",
+  "openWebUi": "Open WebUI",
+  "webUiUrlHint": "WebUI: {url}",
+  "@webUiUrlHint": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  },
+  "batchCopy": "Copy",
+  "copyToTitle": "Copy to…",
+  "copyHere": "Copy here",
+  "serverProfilesTitle": "Server profiles",
+  "serverProfilesSettingsSubtitle": "Manage multiple Unraid connections",
+  "serverProfilesEmpty": "No saved servers yet. Sign in with Remember me to add a profile automatically.",
+  "serverProfileAddTitle": "Add server",
+  "serverProfileEditTitle": "Edit server",
+  "serverProfileNameLabel": "Display name",
+  "serverProfileConnect": "Connect",
+  "serverProfileIncomplete": "Enter address and API key",
+  "serverProfileDeleteTitle": "Delete server profile?",
+  "serverProfileDeleteMessage": "Removes local credentials for “{name}”.",
+  "@serverProfileDeleteMessage": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "settingsServerConfigTitle": "Server configuration",
   "settingsServerConfigSubtitle": "Address, protocol, and API key",
   "settingsPlanned": "Planned",

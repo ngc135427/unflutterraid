@@ -656,6 +656,132 @@ abstract class AppLocalizations {
   /// **'将取消进行中的奇偶校验任务。'**
   String get parityCancelConfirmMessage;
 
+  /// No description provided for @dockerLogsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'容器日志'**
+  String get dockerLogsTitle;
+
+  /// No description provided for @dockerLogsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有日志行'**
+  String get dockerLogsEmpty;
+
+  /// No description provided for @copyLogs.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制日志'**
+  String get copyLogs;
+
+  /// No description provided for @logsCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'日志已复制到剪贴板'**
+  String get logsCopied;
+
+  /// No description provided for @dockerLogsConsoleNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'交互式终端未接入 GraphQL；请使用 WebUI 或 SSH。'**
+  String get dockerLogsConsoleNote;
+
+  /// No description provided for @dockerConsoleNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'控制台：优先打开容器 WebUI；完整 shell 请使用 Unraid WebGUI / SSH。'**
+  String get dockerConsoleNote;
+
+  /// No description provided for @openWebUi.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开 WebUI'**
+  String get openWebUi;
+
+  /// No description provided for @webUiUrlHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'WebUI：{url}'**
+  String webUiUrlHint(String url);
+
+  /// No description provided for @batchCopy.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制'**
+  String get batchCopy;
+
+  /// No description provided for @copyToTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制到…'**
+  String get copyToTitle;
+
+  /// No description provided for @copyHere.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制到此目录'**
+  String get copyHere;
+
+  /// No description provided for @serverProfilesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器档案'**
+  String get serverProfilesTitle;
+
+  /// No description provided for @serverProfilesSettingsSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理多台 Unraid 连接'**
+  String get serverProfilesSettingsSubtitle;
+
+  /// No description provided for @serverProfilesEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有已保存的服务器。登录并勾选「记住我」后会自动加入档案。'**
+  String get serverProfilesEmpty;
+
+  /// No description provided for @serverProfileAddTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加服务器'**
+  String get serverProfileAddTitle;
+
+  /// No description provided for @serverProfileEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑服务器'**
+  String get serverProfileEditTitle;
+
+  /// No description provided for @serverProfileNameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示名称'**
+  String get serverProfileNameLabel;
+
+  /// No description provided for @serverProfileConnect.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接'**
+  String get serverProfileConnect;
+
+  /// No description provided for @serverProfileIncomplete.
+  ///
+  /// In zh, this message translates to:
+  /// **'请填写地址与 API Key'**
+  String get serverProfileIncomplete;
+
+  /// No description provided for @serverProfileDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除服务器档案？'**
+  String get serverProfileDeleteTitle;
+
+  /// No description provided for @serverProfileDeleteMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将删除「{name}」的本地凭据。'**
+  String serverProfileDeleteMessage(String name);
+
   /// No description provided for @settingsServerConfigTitle.
   ///
   /// In zh, this message translates to:

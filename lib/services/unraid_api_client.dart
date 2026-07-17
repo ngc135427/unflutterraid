@@ -106,6 +106,23 @@ class UnraidApiClient {
     });
   }
 
+  /// Fetch recent Docker container logs via GraphQL `docker.logs`.
+  Future<List<DockerLogLine>> fetchDockerLogs(
+    String containerId, {
+    int tail = 200,
+  }) async {
+    final data = await _request(
+      _dockerLogsQuery,
+      variables: {
+        'id': containerId,
+        // Schema may ignore extra vars; tail is best-effort documentation.
+      },
+    );
+    final docker = _asMap(data['docker']);
+    final logs = _asMap(docker['logs']);
+    return _asList(logs['lines']).map(DockerLogLine.fromJson).toList();
+  }
+
   Future<List<UnraidFileEntry>> fetchDirectory(String path) async {
     return fileManager.listDirectory(path);
   }
@@ -330,16 +347,59 @@ class UnraidFileManager {
     if (destination == path) {
       throw UnraidApiException(DisplayCopy.current.apiInvalidData);
     }
-    await _renameToDestination(path, destination);
+    await _patchResourceAction(
+      path: path,
+      action: 'rename',
+      destination: destination,
+      actionLabel: DisplayCopy.current.apiActionRename,
+    );
+  }
+
+  /// Copy [path] into [destinationDirectory], keeping the same base name.
+  Future<void> copy(String path, String destinationDirectory) async {
+    final destDir = destinationDirectory.trim().isEmpty
+        ? '/mnt/user'
+        : destinationDirectory.trim();
+    if (isInvalidMoveTarget(path, destDir)) {
+      throw UnraidApiException(DisplayCopy.current.apiInvalidData);
+    }
+    final name = _entryName(path);
+    if (name.isEmpty) {
+      throw UnraidApiException(DisplayCopy.current.apiInvalidData);
+    }
+    final destination = _joinAppPaths(destDir, name);
+    if (destination == path) {
+      throw UnraidApiException(DisplayCopy.current.apiInvalidData);
+    }
+    await _patchResourceAction(
+      path: path,
+      action: 'copy',
+      destination: destination,
+      actionLabel: DisplayCopy.current.apiActionUpload,
+    );
   }
 
   Future<void> _renameToDestination(String path, String destination) async {
+    await _patchResourceAction(
+      path: path,
+      action: 'rename',
+      destination: destination,
+      actionLabel: DisplayCopy.current.apiActionRename,
+    );
+  }
+
+  Future<void> _patchResourceAction({
+    required String path,
+    required String action,
+    required String destination,
+    required String actionLabel,
+  }) async {
     await _send(
       'PATCH',
       _fileBrowserUri('/api/resources', path),
-      actionLabel: DisplayCopy.current.apiActionRename,
+      actionLabel: actionLabel,
       body: {
-        'action': 'rename',
+        'action': action,
         'destination': _appPathToFileBrowserPath(destination),
         'overwrite': false,
       },
@@ -560,6 +620,39 @@ mutation ParityCheckCancel {
   }
 }
 ''';
+
+const _dockerLogsQuery = r'''
+query DockerLogs($id: PrefixedID!) {
+  docker {
+    logs(id: $id) {
+      containerId
+      lines {
+        timestamp
+        message
+      }
+      cursor
+    }
+  }
+}
+''';
+
+class DockerLogLine {
+  const DockerLogLine({
+    required this.timestamp,
+    required this.message,
+  });
+
+  final String timestamp;
+  final String message;
+
+  factory DockerLogLine.fromJson(Object? value) {
+    final json = _asMap(value);
+    return DockerLogLine(
+      timestamp: _firstText([json['timestamp'], '']),
+      message: _firstText([json['message'], '']),
+    );
+  }
+}
 
 class UnraidDashboard {
   const UnraidDashboard({
@@ -875,6 +968,11 @@ class UnraidManagementItem {
     final tailscale = _asMap(json['tailscaleStatus']);
     final updateStatus = _firstText([json['updateStatus']]);
     final networkMode = _firstText([hostConfig['networkMode']]);
+    final webUi = _firstText([
+      json['webUiUrl'],
+      labels['net.unraid.docker.webui'],
+      labels['net.unraid.docker.webui'],
+    ]);
     return UnraidManagementItem(
       id: json['id']?.toString() ?? '',
       title: _cleanDockerName(name?.toString()) ??
@@ -883,7 +981,7 @@ class UnraidManagementItem {
       description: _firstText([
         json['status'],
         json['image'],
-        labels['net.unraid.docker.webui'],
+        webUi,
         DisplayCopy.current.dockerContainer,
       ]),
       type: ManagementItemType.docker,
@@ -893,6 +991,7 @@ class UnraidManagementItem {
         if (json['isUpdateAvailable'] == true || updateStatus.isNotEmpty)
           DisplayCopy.current.updateAvailable,
         if (json['tailscaleEnabled'] == true) 'Tailscale',
+        if (webUi.isNotEmpty) 'WebUI',
       ],
       details: [
         UnraidInfoItem(
@@ -907,6 +1006,13 @@ class UnraidManagementItem {
           description: _formatContainerPortDescription(ports),
           severity: InfoSeverity.normal,
         ),
+        if (webUi.isNotEmpty)
+          UnraidInfoItem(
+            title: 'WebUI',
+            value: webUi,
+            description: webUi,
+            severity: InfoSeverity.normal,
+          ),
         if (json['tailscaleEnabled'] == true)
           UnraidInfoItem(
             title: 'Tailscale',
@@ -1526,6 +1632,10 @@ query Dashboard {
       imageId
       state
       status
+      webUiUrl
+      autoStart
+      isUpdateAvailable
+      tailscaleEnabled
       hostConfig {
         networkMode
       }

@@ -9,7 +9,9 @@ import 'pages/login_page.dart';
 import 'pages/main_shell_page.dart';
 import 'pages/music_page.dart';
 import 'pages/about_page.dart';
+import 'pages/docker_logs_page.dart';
 import 'pages/server_config_page.dart';
+import 'pages/server_profiles_page.dart';
 import 'pages/settings_page.dart';
 import 'services/display_copy.dart';
 import 'services/language_preferences.dart';
@@ -107,6 +109,8 @@ class _UnflutterRaidAppState extends State<UnflutterRaidApp> {
             DetailPage.routeName: (_) => const DetailPage(),
             SettingsPage.routeName: (_) => const SettingsPage(),
             ServerConfigPage.routeName: (_) => const ServerConfigPage(),
+            DockerLogsPage.routeName: (_) => const DockerLogsPage(),
+            ServerProfilesPage.routeName: (_) => const ServerProfilesPage(),
           },
         ),
       ),

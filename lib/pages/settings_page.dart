@@ -15,6 +15,7 @@ import '../theme/app_theme.dart';
 import '../widgets/phone_frame.dart';
 import 'about_page.dart';
 import 'server_config_page.dart';
+import 'server_profiles_page.dart';
 
 class SettingsPageArgs {
   const SettingsPageArgs({this.apiClient});
@@ -160,6 +161,19 @@ class _SettingsPageState extends State<SettingsPage> {
                               arguments: ServerConfigPageArgs(
                                 apiClient: client,
                               ),
+                            );
+                          },
+                        ),
+                        _SettingRow(
+                          icon: Icons.storage,
+                          iconColor: const Color(0xFF5C4B8A),
+                          iconBackground: const Color(0xFFF1ECFA),
+                          title: l10n.serverProfilesTitle,
+                          subtitle: l10n.serverProfilesSettingsSubtitle,
+                          value: l10n.settingsOpen,
+                          onTap: () {
+                            Navigator.of(context).pushNamed(
+                              ServerProfilesPage.routeName,
                             );
                           },
                         ),
