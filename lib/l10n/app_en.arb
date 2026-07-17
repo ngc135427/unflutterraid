@@ -30,13 +30,13 @@
   "settingsSubtitle": "App preferences",
   "settingsIntroEyebrow": "App Settings",
   "settingsIntroTitle": "Simple app settings",
-  "settingsIntroDescription": "Language is just one compact preference. Theme, notifications, display density, and more can fit here later.",
+  "settingsIntroDescription": "Language and theme are compact preferences. Notifications and density can fit here later.",
   "settingsGeneralSection": "General",
   "settingsGeneralTrailing": "Basics",
   "settingsThemeTitle": "Theme",
   "settingsThemeSubtitle": "Light, dark, or system",
   "settingsComingSoon": "Coming soon",
-  "settingsThemeToast": "Theme settings will be added later",
+  "settingsThemeToast": "Theme: {theme}",
   "settingsNotificationsTitle": "Notifications",
   "settingsNotificationsSubtitle": "Alerts and server status updates",
   "settingsNotificationsToast": "Notification preferences will be added later",
@@ -704,5 +704,61 @@
         "type": "int"
       }
     }
-  }
+  },
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "@settingsThemeToast": {
+    "placeholders": {
+      "theme": {
+        "type": "String"
+      }
+    }
+  },
+  "noMusicFound": "No music files found",
+  "musicLibraryEmpty": "No audio files under the music share. Default path: /mnt/user/music",
+  "musicTrackCount": "{count} tracks",
+  "@musicTrackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchMusic": "Search tracks",
+  "rename": "Rename",
+  "delete": "Delete",
+  "deleteConfirmTitle": "Delete this item?",
+  "deleteConfirmMessage": "This permanently deletes {name}.",
+  "@deleteConfirmMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "renameTitle": "Rename",
+  "renameHint": "New name",
+  "renameEmptyError": "Name cannot be empty",
+  "fileDeleted": "Deleted {name}",
+  "@fileDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fileRenamed": "Renamed to {name}",
+  "@fileRenamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moreActions": "More actions",
+  "openFolder": "Open",
+  "apiActionDelete": "delete",
+  "apiActionRename": "rename",
+  "apiActionUpload": "upload"
 }

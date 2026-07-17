@@ -1492,7 +1492,22 @@ class _HomeAppShortcuts extends StatelessWidget {
           label: AppLocalizations.of(context).music,
           icon: Icons.music_note,
           colors: const [Color(0xFF3498DB), Color(0xFF52C41A)],
-          onTap: () => Navigator.of(context).pushNamed(MusicPage.routeName),
+          onTap: () {
+            final client = apiClient;
+            if (client == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content:
+                      Text(AppLocalizations.of(context).connectServerFirst),
+                ),
+              );
+              return;
+            }
+            Navigator.of(context).pushNamed(
+              MusicPage.routeName,
+              arguments: MusicPageArgs(apiClient: client),
+            );
+          },
         ),
       ],
     );
@@ -2353,7 +2368,9 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                               ? Icons.folder
                               : entry.isImage
                                   ? Icons.image
-                                  : Icons.insert_drive_file,
+                                  : entry.isAudio
+                                      ? Icons.music_note
+                                      : Icons.insert_drive_file,
                           title: entry.name,
                           subtitle: entry.isDirectory
                               ? AppLocalizations.of(context)
@@ -2361,8 +2378,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                               : _fileSubtitle(entry),
                           onTap: () {
                             if (entry.isDirectory) {
-                              _showMessage(AppLocalizations.of(context)
-                                  .subdirBrowseFuture);
+                              _openSharePath(entry.path);
                             } else if (entry.isImage) {
                               _previewImage(args, entry);
                             } else {
@@ -2370,6 +2386,8 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                                   .previewUnsupported);
                             }
                           },
+                          onRename: () => _renameEntry(args, entry),
+                          onDelete: () => _deleteEntry(args, entry),
                         ),
                     ],
                   );
@@ -2494,6 +2512,109 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
       ),
     );
   }
+
+  Future<void> _renameEntry(
+    ManagementDetailArgs args,
+    UnraidFileEntry entry,
+  ) async {
+    final client = args.apiClient;
+    final l10n = AppLocalizations.of(context);
+    if (client == null) {
+      _showMessage(l10n.missingConnection);
+      return;
+    }
+    final controller = TextEditingController(text: entry.name);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.renameTitle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(hintText: l10n.renameHint),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (newName == null || !mounted) {
+      return;
+    }
+    if (newName.isEmpty) {
+      _showMessage(l10n.renameEmptyError);
+      return;
+    }
+    if (newName == entry.name) {
+      return;
+    }
+    try {
+      await client.fileManager.rename(entry.path, newName);
+      if (!mounted) {
+        return;
+      }
+      _showMessage(l10n.fileRenamed(newName));
+      _openSharePath(_sharePath ?? _shareRoot(args));
+    } on UnraidApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage(error.message);
+    }
+  }
+
+  Future<void> _deleteEntry(
+    ManagementDetailArgs args,
+    UnraidFileEntry entry,
+  ) async {
+    final client = args.apiClient;
+    final l10n = AppLocalizations.of(context);
+    if (client == null) {
+      _showMessage(l10n.missingConnection);
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteConfirmTitle),
+        content: Text(l10n.deleteConfirmMessage(entry.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    try {
+      await client.fileManager.delete(entry.path);
+      if (!mounted) {
+        return;
+      }
+      _showMessage(l10n.fileDeleted(entry.name));
+      _openSharePath(_sharePath ?? _shareRoot(args));
+    } on UnraidApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage(error.message);
+    }
+  }
 }
 
 class _DetailPanel extends StatelessWidget {
@@ -2600,15 +2721,20 @@ class _FileEntryTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.onRename,
+    this.onDelete,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final VoidCallback? onRename;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -2653,12 +2779,37 @@ class _FileEntryTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Icon(
-                icon == Icons.image ? Icons.visibility : Icons.chevron_right,
-                color: AppTheme.textLight,
-                size: 20,
-              ),
+              if (onRename != null || onDelete != null)
+                PopupMenuButton<String>(
+                  tooltip: l10n.moreActions,
+                  onSelected: (value) {
+                    if (value == 'rename') {
+                      onRename?.call();
+                    } else if (value == 'delete') {
+                      onDelete?.call();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    if (onRename != null)
+                      PopupMenuItem(
+                        value: 'rename',
+                        child: Text(l10n.rename),
+                      ),
+                    if (onDelete != null)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(l10n.delete),
+                      ),
+                  ],
+                )
+              else ...[
+                const SizedBox(width: 10),
+                Icon(
+                  icon == Icons.image ? Icons.visibility : Icons.chevron_right,
+                  color: AppTheme.textLight,
+                  size: 20,
+                ),
+              ],
             ],
           ),
         ),

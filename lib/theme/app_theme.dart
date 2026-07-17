@@ -19,54 +19,95 @@ class AppTheme {
     colors: [primary, secondary],
   );
 
+  static const List<String> _fontFallback = [
+    'PingFang SC',
+    'Microsoft YaHei',
+    'Helvetica Neue',
+    'Arial',
+  ];
+
   static ThemeData light() {
+    return _build(
+      brightness: Brightness.light,
+      scaffoldBackground: background,
+      surface: background,
+      inputFill: inputBackground,
+      borderColor: line,
+      textPrimary: textDark,
+      textSecondary: textMedium,
+    );
+  }
+
+  static ThemeData dark() {
+    const darkScaffold = Color(0xFF12141A);
+    const darkSurface = Color(0xFF1B1F2A);
+    const darkInput = Color(0xFF242836);
+    const darkLine = Color(0xFF343A4A);
+    const darkText = Color(0xFFE8EAF0);
+    const darkMuted = Color(0xFFA7AEBE);
+    return _build(
+      brightness: Brightness.dark,
+      scaffoldBackground: darkScaffold,
+      surface: darkSurface,
+      inputFill: darkInput,
+      borderColor: darkLine,
+      textPrimary: darkText,
+      textSecondary: darkMuted,
+    );
+  }
+
+  static ThemeData _build({
+    required Brightness brightness,
+    required Color scaffoldBackground,
+    required Color surface,
+    required Color inputFill,
+    required Color borderColor,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: background,
+      brightness: brightness,
+      scaffoldBackgroundColor: scaffoldBackground,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
-        brightness: Brightness.light,
+        brightness: brightness,
         primary: primary,
         secondary: secondary,
-        surface: background,
+        surface: surface,
       ),
-      fontFamilyFallback: const [
-        'PingFang SC',
-        'Microsoft YaHei',
-        'Helvetica Neue',
-        'Arial',
-      ],
-      textTheme: const TextTheme(
+      fontFamilyFallback: _fontFallback,
+      textTheme: TextTheme(
         headlineMedium: TextStyle(
-          color: textDark,
+          color: textPrimary,
           fontSize: 24,
           fontWeight: FontWeight.w600,
         ),
         titleLarge: TextStyle(
-          color: textDark,
+          color: textPrimary,
           fontSize: 22,
           fontWeight: FontWeight.w600,
         ),
         titleMedium: TextStyle(
-          color: textDark,
+          color: textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
-        bodyLarge: TextStyle(color: textMedium, fontSize: 16),
-        bodyMedium: TextStyle(color: textMedium, fontSize: 14),
+        bodyLarge: TextStyle(color: textSecondary, fontSize: 16),
+        bodyMedium: TextStyle(color: textSecondary, fontSize: 14),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: inputBackground,
+        fillColor: inputFill,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: line),
+          borderSide: BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: line),
+          borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

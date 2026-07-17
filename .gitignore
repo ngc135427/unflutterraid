@@ -13,7 +13,9 @@ dist/
 .agents/
 .codex/
 .cursor/
-.trellis/
+
+# Trellis: track specs, tasks, journals; ignore only local runtime via .trellis/.gitignore
+# Do not ignore the whole .trellis/ tree.
 
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec

@@ -240,6 +240,48 @@ class UnraidFileManager {
     );
   }
 
+  Future<void> delete(String path) async {
+    await _send(
+      'DELETE',
+      _fileBrowserUri('/api/resources', path),
+      actionLabel: DisplayCopy.current.apiActionDelete,
+    );
+  }
+
+  Future<void> rename(String path, String newName) async {
+    final trimmed = newName.trim();
+    if (trimmed.isEmpty) {
+      throw UnraidApiException(DisplayCopy.current.apiInvalidData);
+    }
+    final parent = _parentAppPath(path);
+    final destination = _joinAppPaths(parent, trimmed);
+    await _send(
+      'PATCH',
+      _fileBrowserUri('/api/resources', path),
+      actionLabel: DisplayCopy.current.apiActionRename,
+      body: {
+        'action': 'rename',
+        'destination': _appPathToFileBrowserPath(destination),
+        'overwrite': false,
+      },
+    );
+  }
+
+  Future<void> uploadBytes({
+    required String directoryPath,
+    required String fileName,
+    required List<int> bytes,
+  }) async {
+    final target = _joinAppPaths(directoryPath, fileName);
+    await _send(
+      'POST',
+      _fileBrowserUri('/api/resources', target),
+      actionLabel: DisplayCopy.current.apiActionUpload,
+      bodyBytes: bytes,
+      contentType: 'application/octet-stream',
+    );
+  }
+
   Future<Object?> _requestJson(Uri uri, {required String actionLabel}) async {
     final response = await _get(uri, actionLabel: actionLabel);
     try {
@@ -259,13 +301,46 @@ class UnraidFileManager {
   }
 
   Future<http.Response> _get(Uri uri, {required String actionLabel}) async {
+    return _send('GET', uri, actionLabel: actionLabel);
+  }
+
+  Future<http.Response> _send(
+    String method,
+    Uri uri, {
+    required String actionLabel,
+    Map<String, dynamic>? body,
+    List<int>? bodyBytes,
+    String? contentType,
+  }) async {
     late http.Response response;
     try {
-      response = await _client._httpClient.get(uri,
-          headers: {'accept': '*/*'}).timeout(const Duration(seconds: 20));
+      final headers = <String, String>{
+        'accept': '*/*',
+        if (contentType != null) 'content-type': contentType,
+        if (body != null) 'content-type': 'application/json',
+      };
+      final client = _client._httpClient;
+      response = await switch (method) {
+        'GET' => client.get(uri, headers: headers),
+        'DELETE' => client.delete(uri, headers: headers),
+        'PATCH' => client.patch(
+            uri,
+            headers: headers,
+            body: body == null ? null : jsonEncode(body),
+          ),
+        'POST' => client.post(
+            uri,
+            headers: headers,
+            body: bodyBytes ?? (body == null ? null : jsonEncode(body)),
+          ),
+        _ => throw UnraidApiException(DisplayCopy.current.apiInvalidData),
+      }
+          .timeout(const Duration(seconds: 20));
     } on TimeoutException {
       throw UnraidApiException(
           DisplayCopy.current.apiFileBrowserTimeout(actionLabel));
+    } on UnraidApiException {
+      rethrow;
     } on Object catch (error) {
       throw UnraidApiException(
         DisplayCopy.current.apiFileBrowserCannotConnect(error.toString()),
@@ -1053,6 +1128,22 @@ class UnraidFileEntry {
 
   bool get isMedia => isImage || isVideo;
 
+  bool get isAudio {
+    final ext = name.split('.').last.toLowerCase();
+    return const {
+      'mp3',
+      'flac',
+      'm4a',
+      'aac',
+      'wav',
+      'ogg',
+      'opus',
+      'wma',
+      'aiff',
+      'alac',
+    }.contains(ext);
+  }
+
   DateTime? get modifiedDate {
     if (modified.isEmpty) return null;
     return DateTime.tryParse(modified);
@@ -1818,6 +1909,22 @@ int _compareFileEntries(UnraidFileEntry a, UnraidFileEntry b) {
   return a.name.toLowerCase().compareTo(b.name.toLowerCase());
 }
 
+String _parentAppPath(String path) {
+  final trimmed = path.trim();
+  if (trimmed.isEmpty || trimmed == '/' || trimmed == '/mnt/user') {
+    return '/mnt/user';
+  }
+  final withoutTrailing = trimmed.endsWith('/') && trimmed.length > 1
+      ? trimmed.substring(0, trimmed.length - 1)
+      : trimmed;
+  final index = withoutTrailing.lastIndexOf('/');
+  if (index <= 0) {
+    return '/mnt/user';
+  }
+  final parent = withoutTrailing.substring(0, index);
+  return parent.isEmpty ? '/mnt/user' : parent;
+}
+
 String _appPathToFileBrowserPath(String path) {
   final trimmed = path.trim();
   if (trimmed.isEmpty || trimmed == '/' || trimmed == '/mnt/user') {
@@ -1886,17 +1993,6 @@ String _joinAppPaths(String parent, String name) {
       : parent;
   final cleanName = name.replaceAll(RegExp(r'^/+'), '');
   return cleanName.isEmpty ? cleanParent : '$cleanParent/$cleanName';
-}
-
-String _parentAppPath(String path) {
-  final normalized = path.endsWith('/') && path.length > 1
-      ? path.substring(0, path.length - 1)
-      : path;
-  final index = normalized.lastIndexOf('/');
-  if (index <= '/mnt/user'.length) {
-    return '/mnt/user';
-  }
-  return normalized.substring(0, index);
 }
 
 String _lastPathSegment(String path) {

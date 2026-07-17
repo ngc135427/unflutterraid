@@ -32,7 +32,7 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 
 - 共享列表来自 Unraid GraphQL API。
 - 共享详情页通过 File Manager 读取 `/mnt/user` 下的目录内容。
-- 支持目录递归进入和图片文件内容预览。
+- 支持子目录进入、图片预览，以及重命名 / 删除（File Browser 写接口）。
 
 ### 相册与媒体
 
@@ -42,44 +42,58 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 
 ### 音乐页面
 
-- 提供音乐库、歌曲列表和播放器页面。
-- 当前音乐数据为前端静态示例，用于完善媒体应用体验。
+- 通过 File Manager 扫描默认路径 `/mnt/user/music` 下的音频文件。
+- 支持歌曲列表、搜索过滤与简易播放器页（元数据展示；流式播放后续迭代）。
+
+### 国际化与主题
+
+- 默认跟随系统语言；可在登录页下拉与设置页切换简体中文 / English / 跟随系统。
+- 主题支持浅色 / 深色 / 跟随系统，设置页切换并持久化。
+- UI 文案走 `AppLocalizations`；服务层错误与映射文案走 `DisplayCopy`（由 `MaterialApp.builder` 按当前 locale 激活）。
 
 ## 技术栈
 
 - Flutter / Dart
-- Material Design
+- Material Design 3
+- `flutter_localizations` / `intl`：应用内中英文与系统语言
 - `http`：访问 Unraid GraphQL API 和 File Browser API
+- `shared_preferences`：语言与主题偏好
 - `permission_handler`：媒体权限检测
 - Android MethodChannel：登录偏好原生持久化
-- Flutter Widget Test：页面行为测试
+- Flutter Widget Test / MockClient 单元测试
 
 ## 架构概览
 
 ```text
 lib/
-  main.dart                         应用入口、路由注册
+  main.dart                         应用入口、locale/theme、DisplayCopy 激活、路由
+  app_language_scope.dart           语言偏好 InheritedWidget
+  app_theme_scope.dart              主题偏好 InheritedWidget
+  l10n/                             ARB + 生成 AppLocalizations
   pages/
-    login_page.dart                 登录和连接配置
-    main_shell_page.dart            主页、底部导航、管理列表、详情入口
+    login_page.dart                 登录、连接配置、登录前语言切换
+    main_shell_page.dart            主页、导航、共享目录浏览/重命名/删除
+    settings_page.dart              语言、主题等应用设置
     album_page.dart                 相册、视频、备份设置
-    music_page.dart                 音乐库和播放器 UI
+    music_page.dart                 音乐库（File Browser 音频扫描）
     detail_page.dart                服务器详情展示
     register_page.dart              注册页 UI
   services/
-    unraid_api_client.dart          Unraid GraphQL 访问层和数据模型
-                                    File Manager / File Browser API 适配层
-    login_preferences.dart          登录偏好跨平台封装
+    unraid_api_client.dart          GraphQL + File Manager（读/写）
+    display_copy.dart               服务层用户可见文案（随 locale 切换）
+    language_preferences.dart       语言持久化
+    theme_preferences.dart          主题持久化
+    login_preferences.dart          登录偏好（MethodChannel）
   widgets/                          通用 UI 组件
-  theme/                            主题、颜色和全局样式
+  theme/                            浅色/深色 ThemeData
 
 android/
   app/src/main/kotlin/.../MainActivity.kt
                                     Android MethodChannel 实现
 
 test/
-  widget_test.dart                  登录页 Widget 测试
-  unraid_api_client_test.dart       Unraid API 客户端行为测试
+  widget_test.dart                  登录页与语言切换
+  unraid_api_client_test.dart       File Browser 读/写与错误提示
 ```
 
 核心数据流：
@@ -321,8 +335,8 @@ dart format lib test
 
 当前测试覆盖：
 
-- 登录页基础渲染和记住登录信息恢复。
-- File Browser 基础地址推导、目录列表、递归媒体过滤、原始文件读取、缩略图读取和认证错误提示。
+- 登录页基础渲染、语言切换到 English、记住登录信息恢复。
+- File Browser 基础地址推导、目录列表、递归媒体过滤、原始文件读取、缩略图读取、删除、重命名和认证错误提示。
 
 ## API 与权限说明
 
@@ -330,7 +344,9 @@ dart format lib test
 - Docker/虚拟机操作通过 GraphQL mutation 执行。
 - File Manager 直接访问 File Browser API，默认从 Unraid URL 推导为同协议、同主机、`8080` 端口。
 - File Browser 不在应用内单独登录；项目假设匿名访问已开启，或外部反向代理已经处理认证。
-- 相册页整体通过 File Manager 实现；通用文件管理、递归目录浏览、相册缩略图和文件内容预览不依赖 Unraid WebGUI。
+- 读：`GET /api/resources`、`/api/resources/recursive`、`/api/raw`、`/api/preview`。
+- 写：`DELETE /api/resources/...`、`PATCH` 重命名；上传接口已预留（`uploadBytes`）。
+- 相册与音乐页通过 File Manager 访问媒体；不依赖 Unraid WebGUI 文件接口。
 - Android 相册备份页会请求照片/视频权限。
 - 登录页只采集服务器地址和 API Key。
 
@@ -342,9 +358,9 @@ dart format lib test
 
 ## 路线图
 
-- 将 File Manager 从读取/预览扩展到上传、移动、重命名和删除等写操作。
+- 共享浏览写操作：已支持重命名/删除；完善批量操作与拖拽移动。
+- 音乐：真实音频流播放与播放队列。
 - 将相册备份从 UI 原型推进到真实上传任务。
-- 将音乐页面接入真实媒体库。
 - 完善桌面端和 Android 端自动化发布流水线与签名配置。
 
 ## License

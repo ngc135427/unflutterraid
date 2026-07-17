@@ -239,7 +239,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsIntroDescription.
   ///
   /// In zh, this message translates to:
-  /// **'语言只是一个小设置项，后续可继续加入主题、通知、显示密度等偏好。'**
+  /// **'语言与主题是紧凑的偏好项，后续可继续加入通知、显示密度等。'**
   String get settingsIntroDescription;
 
   /// No description provided for @settingsGeneralSection.
@@ -275,8 +275,8 @@ abstract class AppLocalizations {
   /// No description provided for @settingsThemeToast.
   ///
   /// In zh, this message translates to:
-  /// **'主题设置将后续添加'**
-  String get settingsThemeToast;
+  /// **'主题：{theme}'**
+  String settingsThemeToast(String theme);
 
   /// No description provided for @settingsNotificationsTitle.
   ///
@@ -2131,6 +2131,132 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'{count} 分钟'**
   String minutesCount(int count);
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In zh, this message translates to:
+  /// **'跟随系统'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In zh, this message translates to:
+  /// **'浅色'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In zh, this message translates to:
+  /// **'深色'**
+  String get themeDark;
+
+  /// No description provided for @noMusicFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有找到音乐文件'**
+  String get noMusicFound;
+
+  /// No description provided for @musicLibraryEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'在共享目录中未发现音频。默认路径：/mnt/user/music'**
+  String get musicLibraryEmpty;
+
+  /// No description provided for @musicTrackCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 首'**
+  String musicTrackCount(int count);
+
+  /// No description provided for @searchMusic.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索歌曲'**
+  String get searchMusic;
+
+  /// No description provided for @rename.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名'**
+  String get rename;
+
+  /// No description provided for @delete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get delete;
+
+  /// No description provided for @deleteConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除此项？'**
+  String get deleteConfirmTitle;
+
+  /// No description provided for @deleteConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将永久删除 {name}。'**
+  String deleteConfirmMessage(String name);
+
+  /// No description provided for @renameTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名'**
+  String get renameTitle;
+
+  /// No description provided for @renameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'新名称'**
+  String get renameHint;
+
+  /// No description provided for @renameEmptyError.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称不能为空'**
+  String get renameEmptyError;
+
+  /// No description provided for @fileDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'已删除 {name}'**
+  String fileDeleted(String name);
+
+  /// No description provided for @fileRenamed.
+  ///
+  /// In zh, this message translates to:
+  /// **'已重命名为 {name}'**
+  String fileRenamed(String name);
+
+  /// No description provided for @moreActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'更多操作'**
+  String get moreActions;
+
+  /// No description provided for @openFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开'**
+  String get openFolder;
+
+  /// No description provided for @apiActionDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get apiActionDelete;
+
+  /// No description provided for @apiActionRename.
+  ///
+  /// In zh, this message translates to:
+  /// **'重命名'**
+  String get apiActionRename;
+
+  /// No description provided for @apiActionUpload.
+  ///
+  /// In zh, this message translates to:
+  /// **'上传'**
+  String get apiActionUpload;
 }
 
 class _AppLocalizationsDelegate

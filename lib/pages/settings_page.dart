@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../app_language_scope.dart';
+import '../app_theme_scope.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../l10n/language_names.dart';
 import '../services/language_preferences.dart';
+import '../services/theme_preferences.dart';
 import '../theme/app_theme.dart';
 import '../widgets/phone_frame.dart';
 
@@ -15,7 +17,8 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scope = AppLanguageScope.of(context);
+    final languageScope = AppLanguageScope.of(context);
+    final themeScope = AppThemeScope.of(context);
 
     return PhoneFrame(
       maxContentWidth: 520,
@@ -44,20 +47,12 @@ class SettingsPage extends StatelessWidget {
                     _SettingsCard(
                       children: [
                         _LanguageSettingRow(
-                          language: scope.language,
-                          onChanged: scope.onLanguageChanged,
+                          language: languageScope.language,
+                          onChanged: languageScope.onLanguageChanged,
                         ),
-                        _SettingRow(
-                          icon: Icons.palette,
-                          iconColor: const Color(0xFF9A6200),
-                          iconBackground: const Color(0xFFFFF6E5),
-                          title: l10n.settingsThemeTitle,
-                          subtitle: l10n.settingsThemeSubtitle,
-                          value: l10n.settingsComingSoon,
-                          onTap: () => _showMessage(
-                            context,
-                            l10n.settingsThemeToast,
-                          ),
+                        _ThemeSettingRow(
+                          theme: themeScope.theme,
+                          onChanged: themeScope.onThemeChanged,
                         ),
                         _SettingRow(
                           icon: Icons.notifications,
@@ -327,6 +322,97 @@ class _LanguageSettingRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ThemeSettingRow extends StatelessWidget {
+  const _ThemeSettingRow({
+    required this.theme,
+    required this.onChanged,
+  });
+
+  final AppThemePreference theme;
+  final ValueChanged<AppThemePreference> onChanged;
+
+  String _label(AppLocalizations l10n, AppThemePreference value) {
+    return switch (value) {
+      AppThemePreference.system => l10n.themeSystem,
+      AppThemePreference.light => l10n.themeLight,
+      AppThemePreference.dark => l10n.themeDark,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      children: [
+        _SettingRow(
+          icon: Icons.palette,
+          iconColor: const Color(0xFF9A6200),
+          iconBackground: const Color(0xFFFFF6E5),
+          title: l10n.settingsThemeTitle,
+          subtitle: l10n.settingsThemeSubtitle,
+          value: _label(l10n, theme),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(52, 0, 12, 12),
+          child: _ThemeSegmentedControl(
+            theme: theme,
+            labelFor: (value) => _label(l10n, value),
+            onChanged: (value) {
+              onChanged(value);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.settingsThemeToast(_label(l10n, value))),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ThemeSegmentedControl extends StatelessWidget {
+  const _ThemeSegmentedControl({
+    required this.theme,
+    required this.labelFor,
+    required this.onChanged,
+  });
+
+  final AppThemePreference theme;
+  final String Function(AppThemePreference value) labelFor;
+  final ValueChanged<AppThemePreference> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.softLine),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            for (final option in AppThemePreference.values)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: _LanguageOptionButton(
+                    label: labelFor(option),
+                    selected: option == theme,
+                    onTap: () => onChanged(option),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

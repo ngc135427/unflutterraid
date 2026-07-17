@@ -21,6 +21,9 @@ class DisplayCopy {
     required this.apiActionScanMedia,
     required this.apiActionReadFile,
     required this.apiActionReadThumbnail,
+    required this.apiActionDelete,
+    required this.apiActionRename,
+    required this.apiActionUpload,
     required this.apiFileBrowserInvalidJson,
     required this.apiFileBrowserTimeout,
     required this.apiFileBrowserCannotConnect,
@@ -129,6 +132,9 @@ class DisplayCopy {
   final String apiActionScanMedia;
   final String apiActionReadFile;
   final String apiActionReadThumbnail;
+  final String apiActionDelete;
+  final String apiActionRename;
+  final String apiActionUpload;
   final String Function(String action) apiFileBrowserInvalidJson;
   final String Function(String action) apiFileBrowserTimeout;
   final String Function(String error) apiFileBrowserCannotConnect;
@@ -238,6 +244,9 @@ class DisplayCopy {
     apiActionScanMedia: '扫描媒体文件',
     apiActionReadFile: '读取文件',
     apiActionReadThumbnail: '读取缩略图',
+    apiActionDelete: '删除',
+    apiActionRename: '重命名',
+    apiActionUpload: '上传',
     apiFileBrowserInvalidJson: (action) => 'File Browser 返回了无效 JSON：$action',
     apiFileBrowserTimeout: (action) => 'File Browser $action超时',
     apiFileBrowserCannotConnect: (error) => '无法连接 File Browser：$error',
@@ -351,6 +360,9 @@ class DisplayCopy {
       apiActionScanMedia: l10n.apiActionScanMedia,
       apiActionReadFile: l10n.apiActionReadFile,
       apiActionReadThumbnail: l10n.apiActionReadThumbnail,
+      apiActionDelete: l10n.apiActionDelete,
+      apiActionRename: l10n.apiActionRename,
+      apiActionUpload: l10n.apiActionUpload,
       apiFileBrowserInvalidJson: l10n.apiFileBrowserInvalidJson,
       apiFileBrowserTimeout: l10n.apiFileBrowserTimeout,
       apiFileBrowserCannotConnect: l10n.apiFileBrowserCannotConnect,
@@ -461,6 +473,9 @@ class DisplayCopy {
     required String apiActionScanMedia,
     required String apiActionReadFile,
     required String apiActionReadThumbnail,
+    required String apiActionDelete,
+    required String apiActionRename,
+    required String apiActionUpload,
     required String Function(String action) apiFileBrowserInvalidJson,
     required String Function(String action) apiFileBrowserTimeout,
     required String Function(String error) apiFileBrowserCannotConnect,
@@ -571,6 +586,9 @@ class DisplayCopy {
       apiActionScanMedia: apiActionScanMedia,
       apiActionReadFile: apiActionReadFile,
       apiActionReadThumbnail: apiActionReadThumbnail,
+      apiActionDelete: apiActionDelete,
+      apiActionRename: apiActionRename,
+      apiActionUpload: apiActionUpload,
       apiFileBrowserInvalidJson: apiFileBrowserInvalidJson,
       apiFileBrowserTimeout: apiFileBrowserTimeout,
       apiFileBrowserCannotConnect: apiFileBrowserCannotConnect,

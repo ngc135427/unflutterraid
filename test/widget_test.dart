@@ -11,7 +11,10 @@ void main() {
   const channel = MethodChannel(LoginPreferences.channelName);
 
   setUp(() {
-    SharedPreferences.setMockInitialValues({'app_language': 'zh'});
+    SharedPreferences.setMockInitialValues({
+      'app_language': 'zh',
+      'app_theme': 'light',
+    });
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'load') {

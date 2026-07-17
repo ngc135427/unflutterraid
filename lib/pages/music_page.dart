@@ -1,74 +1,113 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/generated/app_localizations.dart';
-
+import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fade_slide.dart';
 import '../widgets/phone_frame.dart';
 
-class MusicPage extends StatelessWidget {
+class MusicPageArgs {
+  const MusicPageArgs({
+    required this.apiClient,
+    this.rootPath = '/mnt/user/music',
+  });
+
+  final UnraidApiClient apiClient;
+  final String rootPath;
+}
+
+class MusicPage extends StatefulWidget {
   const MusicPage({super.key});
 
   static const routeName = '/music';
 
-  static const _tracks = [
-    _Track('Midnight Drive', 'NAS Library', '3:42', Icons.music_note),
-    _Track('Home Server', 'Favorites', '4:18', Icons.album),
-    _Track('Backup Melody', 'Recently Added', '2:56', Icons.library_music),
-    _Track('Array Lights', 'Media Share', '5:08', Icons.graphic_eq),
-  ];
+  @override
+  State<MusicPage> createState() => _MusicPageState();
+}
+
+class _MusicPageState extends State<MusicPage> {
+  List<UnraidFileEntry> _tracks = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadTracks());
+  }
+
+  MusicPageArgs? get _args {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    return args is MusicPageArgs ? args : null;
+  }
+
+  Future<void> _loadTracks() async {
+    final args = _args;
+    if (args == null) {
+      setState(() {
+        _error = AppLocalizations.of(context).missingConnectionArgs;
+        _loading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final media = await args.apiClient.fileManager.listMedia(args.rootPath);
+      final tracks = media.where((entry) => entry.isAudio).toList();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _tracks = tracks;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = AppLocalizations.of(context).loadFailed(error.toString());
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final preview = _tracks.take(8).toList();
+    final current = _tracks.isEmpty ? null : _tracks.first;
+
     return _MusicScaffold(
-      title: AppLocalizations.of(context).music,
+      title: l10n.music,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _MusicSummary(
+            songCount: _tracks.length,
             onSongsTap: () => Navigator.of(context).pushNamed(
               MusicTracksPage.routeName,
+              arguments: _args,
             ),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
           _NowPlayingCard(
-            onTap: () => Navigator.of(context).pushNamed(
-              MusicPlayerPage.routeName,
-            ),
+            track: current,
+            onTap: current == null
+                ? null
+                : () => Navigator.of(context).pushNamed(
+                      MusicPlayerPage.routeName,
+                      arguments: current,
+                    ),
           ),
-          SizedBox(height: 22),
+          const SizedBox(height: 22),
           Text(
-            AppLocalizations.of(context).musicLibrary,
-            style: const TextStyle(
-              color: AppTheme.textDark,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 12),
-          for (final track in _tracks) _TrackTile(track: track),
-        ],
-      ),
-    );
-  }
-}
-
-class MusicTracksPage extends StatelessWidget {
-  const MusicTracksPage({super.key});
-
-  static const routeName = '/music-tracks';
-
-  @override
-  Widget build(BuildContext context) {
-    return _MusicScaffold(
-      title: AppLocalizations.of(context).songs,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _TrackSearchBox(),
-          SizedBox(height: 18),
-          Text(
-            AppLocalizations.of(context).allSongs,
+            l10n.musicLibrary,
             style: const TextStyle(
               color: AppTheme.textDark,
               fontSize: 17,
@@ -76,7 +115,165 @@ class MusicTracksPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          for (final track in MusicPage._tracks) _TrackTile(track: track),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null)
+            _MusicMessage(
+              icon: Icons.error_outline,
+              title: l10n.readFailedTitle,
+              message: _error!,
+              actionLabel: l10n.retry,
+              onAction: _loadTracks,
+            )
+          else if (_tracks.isEmpty)
+            _MusicMessage(
+              icon: Icons.library_music_outlined,
+              title: l10n.noMusicFound,
+              message: l10n.musicLibraryEmpty,
+              actionLabel: l10n.retry,
+              onAction: _loadTracks,
+            )
+          else
+            for (final track in preview)
+              _TrackTile(
+                track: track,
+                onTap: () => Navigator.of(context).pushNamed(
+                  MusicPlayerPage.routeName,
+                  arguments: track,
+                ),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+class MusicTracksPage extends StatefulWidget {
+  const MusicTracksPage({super.key});
+
+  static const routeName = '/music-tracks';
+
+  @override
+  State<MusicTracksPage> createState() => _MusicTracksPageState();
+}
+
+class _MusicTracksPageState extends State<MusicTracksPage> {
+  final _searchController = TextEditingController();
+  List<UnraidFileEntry> _tracks = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadTracks());
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  MusicPageArgs? get _args {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    return args is MusicPageArgs ? args : null;
+  }
+
+  Future<void> _loadTracks() async {
+    final args = _args;
+    if (args == null) {
+      setState(() {
+        _error = AppLocalizations.of(context).missingConnectionArgs;
+        _loading = false;
+      });
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final media = await args.apiClient.fileManager.listMedia(args.rootPath);
+      final tracks = media.where((entry) => entry.isAudio).toList();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _tracks = tracks;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = AppLocalizations.of(context).loadFailed(error.toString());
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final query = _searchController.text.trim().toLowerCase();
+    final filtered = query.isEmpty
+        ? _tracks
+        : _tracks
+            .where((track) => track.name.toLowerCase().contains(query))
+            .toList();
+
+    return _MusicScaffold(
+      title: l10n.songs,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _TrackSearchBox(
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            l10n.allSongs,
+            style: const TextStyle(
+              color: AppTheme.textDark,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null)
+            _MusicMessage(
+              icon: Icons.error_outline,
+              title: l10n.readFailedTitle,
+              message: _error!,
+              actionLabel: l10n.retry,
+              onAction: _loadTracks,
+            )
+          else if (filtered.isEmpty)
+            _MusicMessage(
+              icon: Icons.search_off,
+              title: l10n.noMatchesTitle,
+              message: l10n.noMatchesMessage,
+            )
+          else
+            for (final track in filtered)
+              _TrackTile(
+                track: track,
+                onTap: () => Navigator.of(context).pushNamed(
+                  MusicPlayerPage.routeName,
+                  arguments: track,
+                ),
+              ),
         ],
       ),
     );
@@ -90,6 +287,11 @@ class MusicPlayerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final track = args is UnraidFileEntry ? args : null;
+    final title = track?.name ?? AppLocalizations.of(context).music;
+    final album = track?.path ?? '';
+
     return PhoneFrame(
       maxContentWidth: 900,
       child: Column(
@@ -149,11 +351,11 @@ class MusicPlayerPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Text(
-                      'Midnight Drive',
+                    Text(
+                      title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
@@ -161,9 +363,10 @@ class MusicPlayerPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'NAS Library',
-                      maxLines: 1,
+                      album,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.74),
                         fontSize: 15,
@@ -255,22 +458,18 @@ class _MusicScaffold extends StatelessWidget {
   }
 }
 
-class _Track {
-  const _Track(this.title, this.album, this.duration, this.icon);
-
-  final String title;
-  final String album;
-  final String duration;
-  final IconData icon;
-}
-
 class _MusicSummary extends StatelessWidget {
-  const _MusicSummary({required this.onSongsTap});
+  const _MusicSummary({
+    required this.songCount,
+    required this.onSongsTap,
+  });
 
+  final int songCount;
   final VoidCallback onSongsTap;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -287,12 +486,12 @@ class _MusicSummary extends StatelessWidget {
       child: Row(
         children: [
           _MusicStat(
-            label: AppLocalizations.of(context).songs,
-            value: '286',
+            label: l10n.songs,
+            value: songCount.toString(),
             onTap: onSongsTap,
           ),
-          _MusicStat(label: AppLocalizations.of(context).albums, value: '42'),
-          _MusicStat(label: AppLocalizations.of(context).lossless, value: '96'),
+          _MusicStat(label: l10n.albums, value: '—'),
+          _MusicStat(label: l10n.lossless, value: '—'),
         ],
       ),
     );
@@ -346,7 +545,13 @@ class _MusicStat extends StatelessWidget {
 }
 
 class _TrackSearchBox extends StatelessWidget {
-  const _TrackSearchBox();
+  const _TrackSearchBox({
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -361,13 +566,18 @@ class _TrackSearchBox extends StatelessWidget {
       child: Row(
         children: [
           const Icon(Icons.search, color: AppTheme.primary, size: 20),
-          SizedBox(width: 9),
+          const SizedBox(width: 9),
           Expanded(
-            child: Text(
-              AppLocalizations.of(context).searchSongsAlbums,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppTheme.textLight, fontSize: 14),
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                hintText: AppLocalizations.of(context).searchMusic,
+                hintStyle:
+                    const TextStyle(color: AppTheme.textLight, fontSize: 14),
+              ),
             ),
           ),
         ],
@@ -386,7 +596,7 @@ class _PlayerProgress extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
-            value: 0.38,
+            value: 0,
             minHeight: 5,
             backgroundColor: Colors.white.withValues(alpha: 0.18),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
@@ -397,14 +607,14 @@ class _PlayerProgress extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '1:26',
+              '0:00',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.76),
                 fontSize: 12,
               ),
             ),
             Text(
-              '3:42',
+              '—:—',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.76),
                 fontSize: 12,
@@ -438,7 +648,7 @@ class _PlayerControls extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: const Icon(
-            Icons.pause,
+            Icons.play_arrow,
             color: AppTheme.primary,
             size: 34,
           ),
@@ -454,12 +664,17 @@ class _PlayerControls extends StatelessWidget {
 }
 
 class _NowPlayingCard extends StatelessWidget {
-  const _NowPlayingCard({required this.onTap});
+  const _NowPlayingCard({
+    required this.track,
+    required this.onTap,
+  });
 
-  final VoidCallback onTap;
+  final UnraidFileEntry? track;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -486,22 +701,22 @@ class _NowPlayingCard extends StatelessWidget {
           child: Row(
             children: [
               const Icon(Icons.play_circle_fill, color: Colors.white, size: 42),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      AppLocalizations.of(context).nowPlaying,
+                      l10n.nowPlaying,
                       style:
                           const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      'Midnight Drive',
+                      track?.name ?? l10n.noMusicFound,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
@@ -510,7 +725,6 @@ class _NowPlayingCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.open_in_full, color: Colors.white),
             ],
           ),
         ),
@@ -520,64 +734,127 @@ class _NowPlayingCard extends StatelessWidget {
 }
 
 class _TrackTile extends StatelessWidget {
-  const _TrackTile({required this.track});
+  const _TrackTile({
+    required this.track,
+    required this.onTap,
+  });
 
-  final _Track track;
+  final UnraidFileEntry track;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.softLine),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Ink(
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              color: AppTheme.background,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.softLine),
             ),
-            child: Icon(track.icon, color: AppTheme.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  track.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textDark,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.music_note, color: AppTheme.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        track.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.textDark,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        track.path,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.textLight,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  track.album,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textMedium,
-                    fontSize: 13,
+                if (track.size.isNotEmpty)
+                  Text(
+                    track.size,
+                    style: const TextStyle(
+                      color: AppTheme.textLight,
+                      fontSize: 12,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+        ),
+      ),
+    );
+  }
+}
+
+class _MusicMessage extends StatelessWidget {
+  const _MusicMessage({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      child: Column(
+        children: [
+          Icon(icon, size: 42, color: AppTheme.textLight),
+          const SizedBox(height: 12),
           Text(
-            track.duration,
-            style: const TextStyle(color: AppTheme.textLight, fontSize: 12),
+            title,
+            style: const TextStyle(
+              color: AppTheme.textDark,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppTheme.textMedium, fontSize: 13),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 14),
+            TextButton(onPressed: onAction, child: Text(actionLabel!)),
+          ],
         ],
       ),
     );

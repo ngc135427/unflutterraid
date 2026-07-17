@@ -176,5 +176,48 @@ void main() {
         ),
       );
     });
+
+    test('delete sends DELETE to File Browser resources', () async {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'DELETE');
+          expect(request.url.path, '/api/resources/photos/a.jpg');
+          return http.Response('', 204);
+        }),
+      );
+
+      await client.fileManager.delete('/mnt/user/photos/a.jpg');
+    });
+
+    test('rename sends PATCH with destination path', () async {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'PATCH');
+          expect(request.url.path, '/api/resources/music/old.mp3');
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['action'], 'rename');
+          expect(body['destination'], '/music/new.mp3');
+          return http.Response('{}', 200);
+        }),
+      );
+
+      await client.fileManager.rename('/mnt/user/music/old.mp3', 'new.mp3');
+    });
+
+    test('audio extension detection', () {
+      const track = UnraidFileEntry(
+        name: 'song.flac',
+        path: '/mnt/user/music/song.flac',
+        isDirectory: false,
+        size: '1 MB',
+        modified: '',
+      );
+      expect(track.isAudio, isTrue);
+      expect(track.isMedia, isFalse);
+    });
   });
 }

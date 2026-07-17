@@ -30,13 +30,13 @@
   "settingsSubtitle": "应用偏好",
   "settingsIntroEyebrow": "App Settings",
   "settingsIntroTitle": "简洁的应用设置",
-  "settingsIntroDescription": "语言只是一个小设置项，后续可继续加入主题、通知、显示密度等偏好。",
+  "settingsIntroDescription": "语言与主题是紧凑的偏好项，后续可继续加入通知、显示密度等。",
   "settingsGeneralSection": "通用",
   "settingsGeneralTrailing": "基础偏好",
   "settingsThemeTitle": "主题",
   "settingsThemeSubtitle": "浅色、深色或跟随系统",
   "settingsComingSoon": "即将支持",
-  "settingsThemeToast": "主题设置将后续添加",
+  "settingsThemeToast": "主题：{theme}",
   "settingsNotificationsTitle": "通知",
   "settingsNotificationsSubtitle": "告警提醒与运行状态推送",
   "settingsNotificationsToast": "通知偏好将后续添加",
@@ -704,5 +704,61 @@
         "type": "int"
       }
     }
-  }
+  },
+  "themeSystem": "跟随系统",
+  "themeLight": "浅色",
+  "themeDark": "深色",
+  "@settingsThemeToast": {
+    "placeholders": {
+      "theme": {
+        "type": "String"
+      }
+    }
+  },
+  "noMusicFound": "没有找到音乐文件",
+  "musicLibraryEmpty": "在共享目录中未发现音频。默认路径：/mnt/user/music",
+  "musicTrackCount": "{count} 首",
+  "@musicTrackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchMusic": "搜索歌曲",
+  "rename": "重命名",
+  "delete": "删除",
+  "deleteConfirmTitle": "删除此项？",
+  "deleteConfirmMessage": "将永久删除 {name}。",
+  "@deleteConfirmMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "renameTitle": "重命名",
+  "renameHint": "新名称",
+  "renameEmptyError": "名称不能为空",
+  "fileDeleted": "已删除 {name}",
+  "@fileDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fileRenamed": "已重命名为 {name}",
+  "@fileRenamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moreActions": "更多操作",
+  "openFolder": "打开",
+  "apiActionDelete": "删除",
+  "apiActionRename": "重命名",
+  "apiActionUpload": "上传"
 }

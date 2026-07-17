@@ -81,7 +81,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsIntroDescription =>
-      'Language is just one compact preference. Theme, notifications, display density, and more can fit here later.';
+      'Language and theme are compact preferences. Notifications and density can fit here later.';
 
   @override
   String get settingsGeneralSection => 'General';
@@ -99,7 +99,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsComingSoon => 'Coming soon';
 
   @override
-  String get settingsThemeToast => 'Theme settings will be added later';
+  String settingsThemeToast(String theme) {
+    return 'Theme: $theme';
+  }
 
   @override
   String get settingsNotificationsTitle => 'Notifications';
@@ -1138,4 +1140,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String minutesCount(int count) {
     return '$count minutes';
   }
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get noMusicFound => 'No music files found';
+
+  @override
+  String get musicLibraryEmpty =>
+      'No audio files under the music share. Default path: /mnt/user/music';
+
+  @override
+  String musicTrackCount(int count) {
+    return '$count tracks';
+  }
+
+  @override
+  String get searchMusic => 'Search tracks';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get deleteConfirmTitle => 'Delete this item?';
+
+  @override
+  String deleteConfirmMessage(String name) {
+    return 'This permanently deletes $name.';
+  }
+
+  @override
+  String get renameTitle => 'Rename';
+
+  @override
+  String get renameHint => 'New name';
+
+  @override
+  String get renameEmptyError => 'Name cannot be empty';
+
+  @override
+  String fileDeleted(String name) {
+    return 'Deleted $name';
+  }
+
+  @override
+  String fileRenamed(String name) {
+    return 'Renamed to $name';
+  }
+
+  @override
+  String get moreActions => 'More actions';
+
+  @override
+  String get openFolder => 'Open';
+
+  @override
+  String get apiActionDelete => 'delete';
+
+  @override
+  String get apiActionRename => 'rename';
+
+  @override
+  String get apiActionUpload => 'upload';
 }

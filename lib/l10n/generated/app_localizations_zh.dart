@@ -80,7 +80,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsIntroTitle => '简洁的应用设置';
 
   @override
-  String get settingsIntroDescription => '语言只是一个小设置项，后续可继续加入主题、通知、显示密度等偏好。';
+  String get settingsIntroDescription => '语言与主题是紧凑的偏好项，后续可继续加入通知、显示密度等。';
 
   @override
   String get settingsGeneralSection => '通用';
@@ -98,7 +98,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsComingSoon => '即将支持';
 
   @override
-  String get settingsThemeToast => '主题设置将后续添加';
+  String settingsThemeToast(String theme) {
+    return '主题：$theme';
+  }
 
   @override
   String get settingsNotificationsTitle => '通知';
@@ -1122,4 +1124,75 @@ class AppLocalizationsZh extends AppLocalizations {
   String minutesCount(int count) {
     return '$count 分钟';
   }
+
+  @override
+  String get themeSystem => '跟随系统';
+
+  @override
+  String get themeLight => '浅色';
+
+  @override
+  String get themeDark => '深色';
+
+  @override
+  String get noMusicFound => '没有找到音乐文件';
+
+  @override
+  String get musicLibraryEmpty => '在共享目录中未发现音频。默认路径：/mnt/user/music';
+
+  @override
+  String musicTrackCount(int count) {
+    return '$count 首';
+  }
+
+  @override
+  String get searchMusic => '搜索歌曲';
+
+  @override
+  String get rename => '重命名';
+
+  @override
+  String get delete => '删除';
+
+  @override
+  String get deleteConfirmTitle => '删除此项？';
+
+  @override
+  String deleteConfirmMessage(String name) {
+    return '将永久删除 $name。';
+  }
+
+  @override
+  String get renameTitle => '重命名';
+
+  @override
+  String get renameHint => '新名称';
+
+  @override
+  String get renameEmptyError => '名称不能为空';
+
+  @override
+  String fileDeleted(String name) {
+    return '已删除 $name';
+  }
+
+  @override
+  String fileRenamed(String name) {
+    return '已重命名为 $name';
+  }
+
+  @override
+  String get moreActions => '更多操作';
+
+  @override
+  String get openFolder => '打开';
+
+  @override
+  String get apiActionDelete => '删除';
+
+  @override
+  String get apiActionRename => '重命名';
+
+  @override
+  String get apiActionUpload => '上传';
 }
