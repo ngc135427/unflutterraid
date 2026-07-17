@@ -1266,6 +1266,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreActions => 'More actions';
 
   @override
+  String get selectMode => 'Select';
+
+  @override
+  String get cancelSelection => 'Cancel selection';
+
+  @override
+  String get selectAll => 'Select all';
+
+  @override
+  String selectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get batchDelete => 'Delete';
+
+  @override
+  String get batchMove => 'Move';
+
+  @override
+  String get batchDeleteConfirmTitle => 'Delete selected items?';
+
+  @override
+  String batchDeleteConfirmMessage(int count) {
+    return 'This permanently deletes $count items.';
+  }
+
+  @override
+  String batchResultSummary(int success, int skipped, int failed) {
+    return 'Done: $success ok, $skipped skipped, $failed failed';
+  }
+
+  @override
+  String get moveToTitle => 'Move to…';
+
+  @override
+  String get selectMoveDestination => 'Choose destination folder';
+
+  @override
+  String get moveHere => 'Move here';
+
+  @override
+  String get cannotMoveIntoSelf =>
+      'Cannot move a folder into itself or a subfolder';
+
+  @override
+  String get batchBusy => 'Working…';
+
+  @override
   String get openFolder => 'Open';
 
   @override

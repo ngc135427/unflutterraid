@@ -813,6 +813,37 @@
     }
   },
   "moreActions": "More actions",
+  "selectMode": "Select",
+  "cancelSelection": "Cancel selection",
+  "selectAll": "Select all",
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "batchDelete": "Delete",
+  "batchMove": "Move",
+  "batchDeleteConfirmTitle": "Delete selected items?",
+  "batchDeleteConfirmMessage": "This permanently deletes {count} items.",
+  "@batchDeleteConfirmMessage": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "batchResultSummary": "Done: {success} ok, {skipped} skipped, {failed} failed",
+  "@batchResultSummary": {
+    "placeholders": {
+      "success": { "type": "int" },
+      "skipped": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "moveToTitle": "Move to…",
+  "selectMoveDestination": "Choose destination folder",
+  "moveHere": "Move here",
+  "cannotMoveIntoSelf": "Cannot move a folder into itself or a subfolder",
+  "batchBusy": "Working…",
   "openFolder": "Open",
   "apiActionDelete": "delete",
   "apiActionRename": "rename",

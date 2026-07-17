@@ -1245,6 +1245,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String get moreActions => '更多操作';
 
   @override
+  String get selectMode => '选择';
+
+  @override
+  String get cancelSelection => '取消选择';
+
+  @override
+  String get selectAll => '全选';
+
+  @override
+  String selectedCount(int count) {
+    return '已选 $count 项';
+  }
+
+  @override
+  String get batchDelete => '删除';
+
+  @override
+  String get batchMove => '移动';
+
+  @override
+  String get batchDeleteConfirmTitle => '删除所选项目？';
+
+  @override
+  String batchDeleteConfirmMessage(int count) {
+    return '将永久删除 $count 个项目。';
+  }
+
+  @override
+  String batchResultSummary(int success, int skipped, int failed) {
+    return '完成：成功 $success，跳过 $skipped，失败 $failed';
+  }
+
+  @override
+  String get moveToTitle => '移动到…';
+
+  @override
+  String get selectMoveDestination => '选择目标文件夹';
+
+  @override
+  String get moveHere => '移动到此目录';
+
+  @override
+  String get cannotMoveIntoSelf => '不能将文件夹移动到其自身或子目录中';
+
+  @override
+  String get batchBusy => '正在处理…';
+
+  @override
   String get openFolder => '打开';
 
   @override

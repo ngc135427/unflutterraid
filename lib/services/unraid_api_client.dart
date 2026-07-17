@@ -286,6 +286,32 @@ class UnraidFileManager {
     }
     final parent = _parentAppPath(path);
     final destination = _joinAppPaths(parent, trimmed);
+    await _renameToDestination(path, destination);
+  }
+
+  /// Move [path] into [destinationDirectory], keeping the same base name.
+  ///
+  /// Uses File Browser rename with a cross-directory destination.
+  /// Throws [UnraidApiException] if the move would nest a folder into itself.
+  Future<void> move(String path, String destinationDirectory) async {
+    final destDir = destinationDirectory.trim().isEmpty
+        ? '/mnt/user'
+        : destinationDirectory.trim();
+    if (isInvalidMoveTarget(path, destDir)) {
+      throw UnraidApiException(DisplayCopy.current.apiInvalidData);
+    }
+    final name = _entryName(path);
+    if (name.isEmpty) {
+      throw UnraidApiException(DisplayCopy.current.apiInvalidData);
+    }
+    final destination = _joinAppPaths(destDir, name);
+    if (destination == path) {
+      throw UnraidApiException(DisplayCopy.current.apiInvalidData);
+    }
+    await _renameToDestination(path, destination);
+  }
+
+  Future<void> _renameToDestination(String path, String destination) async {
     await _send(
       'PATCH',
       _fileBrowserUri('/api/resources', path),
@@ -296,6 +322,34 @@ class UnraidFileManager {
         'overwrite': false,
       },
     );
+  }
+
+  /// True when [destinationDirectory] is [sourcePath] or a descendant of it.
+  static bool isInvalidMoveTarget(
+      String sourcePath, String destinationDirectory) {
+    final source = _normalizeAppPath(sourcePath);
+    final dest = _normalizeAppPath(destinationDirectory);
+    if (source.isEmpty || dest.isEmpty) {
+      return true;
+    }
+    return dest == source || dest.startsWith('$source/');
+  }
+
+  static String _normalizeAppPath(String path) {
+    var value = path.trim();
+    if (value.length > 1 && value.endsWith('/')) {
+      value = value.substring(0, value.length - 1);
+    }
+    return value;
+  }
+
+  static String _entryName(String path) {
+    final normalized = _normalizeAppPath(path);
+    final index = normalized.lastIndexOf('/');
+    if (index < 0 || index == normalized.length - 1) {
+      return normalized;
+    }
+    return normalized.substring(index + 1);
   }
 
   Future<void> uploadBytes({

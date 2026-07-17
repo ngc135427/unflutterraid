@@ -208,6 +208,51 @@ void main() {
       await client.fileManager.rename('/mnt/user/music/old.mp3', 'new.mp3');
     });
 
+    test('move sends PATCH with destination under new directory', () async {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'PATCH');
+          expect(request.url.path, '/api/resources/photos/a.jpg');
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['action'], 'rename');
+          expect(body['destination'], '/archive/a.jpg');
+          expect(body['overwrite'], false);
+          return http.Response('{}', 200);
+        }),
+      );
+
+      await client.fileManager.move(
+        '/mnt/user/photos/a.jpg',
+        '/mnt/user/archive',
+      );
+    });
+
+    test('isInvalidMoveTarget blocks nesting into self', () {
+      expect(
+        UnraidFileManager.isInvalidMoveTarget(
+          '/mnt/user/photos',
+          '/mnt/user/photos',
+        ),
+        isTrue,
+      );
+      expect(
+        UnraidFileManager.isInvalidMoveTarget(
+          '/mnt/user/photos',
+          '/mnt/user/photos/2026',
+        ),
+        isTrue,
+      );
+      expect(
+        UnraidFileManager.isInvalidMoveTarget(
+          '/mnt/user/photos',
+          '/mnt/user/archive',
+        ),
+        isFalse,
+      );
+    });
+
     test('audio extension detection', () {
       const track = UnraidFileEntry(
         name: 'song.flac',

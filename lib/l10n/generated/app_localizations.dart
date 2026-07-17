@@ -2330,6 +2330,90 @@ abstract class AppLocalizations {
   /// **'更多操作'**
   String get moreActions;
 
+  /// No description provided for @selectMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择'**
+  String get selectMode;
+
+  /// No description provided for @cancelSelection.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消选择'**
+  String get cancelSelection;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全选'**
+  String get selectAll;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选 {count} 项'**
+  String selectedCount(int count);
+
+  /// No description provided for @batchDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get batchDelete;
+
+  /// No description provided for @batchMove.
+  ///
+  /// In zh, this message translates to:
+  /// **'移动'**
+  String get batchMove;
+
+  /// No description provided for @batchDeleteConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除所选项目？'**
+  String get batchDeleteConfirmTitle;
+
+  /// No description provided for @batchDeleteConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将永久删除 {count} 个项目。'**
+  String batchDeleteConfirmMessage(int count);
+
+  /// No description provided for @batchResultSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成：成功 {success}，跳过 {skipped}，失败 {failed}'**
+  String batchResultSummary(int success, int skipped, int failed);
+
+  /// No description provided for @moveToTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'移动到…'**
+  String get moveToTitle;
+
+  /// No description provided for @selectMoveDestination.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择目标文件夹'**
+  String get selectMoveDestination;
+
+  /// No description provided for @moveHere.
+  ///
+  /// In zh, this message translates to:
+  /// **'移动到此目录'**
+  String get moveHere;
+
+  /// No description provided for @cannotMoveIntoSelf.
+  ///
+  /// In zh, this message translates to:
+  /// **'不能将文件夹移动到其自身或子目录中'**
+  String get cannotMoveIntoSelf;
+
+  /// No description provided for @batchBusy.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在处理…'**
+  String get batchBusy;
+
   /// No description provided for @openFolder.
   ///
   /// In zh, this message translates to:

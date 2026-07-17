@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../l10n/generated/app_localizations.dart';
@@ -2053,6 +2055,10 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
   bool _isSubmitting = false;
   String? _sharePath;
   Future<List<UnraidFileEntry>>? _shareFuture;
+  bool _selecting = false;
+  final Set<String> _selectedPaths = <String>{};
+  bool _batchBusy = false;
+  List<UnraidFileEntry> _lastShareEntries = const [];
 
   @override
   Widget build(BuildContext context) {
@@ -2237,6 +2243,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
 
   Widget _buildShareBrowser(ManagementDetailArgs args) {
     final currentPath = _sharePath ?? _shareRoot(args);
+    final l10n = AppLocalizations.of(context);
     return PhoneFrame(
       maxContentWidth: 900,
       child: Container(
@@ -2252,19 +2259,88 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
               child: Row(
                 children: [
                   TextButton.icon(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.arrow_back),
-                    label: Text(AppLocalizations.of(context).back),
+                    onPressed: _batchBusy
+                        ? null
+                        : () {
+                            if (_selecting) {
+                              _exitSelection();
+                            } else {
+                              Navigator.of(context).maybePop();
+                            }
+                          },
+                    icon: Icon(_selecting ? Icons.close : Icons.arrow_back),
+                    label: Text(_selecting ? l10n.cancelSelection : l10n.back),
                   ),
                   const Spacer(),
-                  IconButton(
-                    tooltip: AppLocalizations.of(context).refresh,
-                    onPressed: () => _openSharePath(currentPath),
-                    icon: const Icon(Icons.refresh),
-                  ),
+                  if (_selecting) ...[
+                    Text(
+                      l10n.selectedCount(_selectedPaths.length),
+                      style: const TextStyle(
+                        color: AppTheme.textMedium,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: l10n.selectAll,
+                      onPressed: _batchBusy
+                          ? null
+                          : () => _selectAllVisible(_lastShareEntries),
+                      icon: const Icon(Icons.select_all),
+                    ),
+                    IconButton(
+                      tooltip: l10n.batchMove,
+                      onPressed: _batchBusy || _selectedPaths.isEmpty
+                          ? null
+                          : () => unawaited(_batchMove(args)),
+                      icon: const Icon(Icons.drive_file_move_outline),
+                    ),
+                    IconButton(
+                      tooltip: l10n.batchDelete,
+                      onPressed: _batchBusy || _selectedPaths.isEmpty
+                          ? null
+                          : () => unawaited(_batchDelete(args)),
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ] else ...[
+                    IconButton(
+                      tooltip: l10n.selectMode,
+                      onPressed: _batchBusy
+                          ? null
+                          : () => setState(() => _selecting = true),
+                      icon: const Icon(Icons.checklist),
+                    ),
+                    IconButton(
+                      tooltip: l10n.refresh,
+                      onPressed:
+                          _batchBusy ? null : () => _openSharePath(currentPath),
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
                 ],
               ),
             ),
+            if (_batchBusy)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(30, 0, 30, 8),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      l10n.batchBusy,
+                      style: const TextStyle(
+                        color: AppTheme.textMedium,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(30, 0, 30, 12),
               child: Column(
@@ -2325,14 +2401,12 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                   if (snapshot.connectionState != ConnectionState.done) {
                     return _StateMessage(
                       icon: Icons.folder_open,
-                      title: AppLocalizations.of(context).readingDirectoryTitle,
-                      message:
-                          AppLocalizations.of(context).readingDirectoryMessage,
+                      title: l10n.readingDirectoryTitle,
+                      message: l10n.readingDirectoryMessage,
                     );
                   }
 
                   if (snapshot.hasError) {
-                    final l10n = AppLocalizations.of(context);
                     return _StateMessage(
                       icon: Icons.error_outline,
                       title: l10n.readFailedTitle,
@@ -2343,12 +2417,12 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                   }
 
                   final entries = snapshot.data ?? const <UnraidFileEntry>[];
+                  _lastShareEntries = entries;
                   if (entries.isEmpty) {
                     return _StateMessage(
                       icon: Icons.inbox_outlined,
-                      title: AppLocalizations.of(context).noShareDirectoryTitle,
-                      message:
-                          AppLocalizations.of(context).noShareDirectoryMessage,
+                      title: l10n.noShareDirectoryTitle,
+                      message: l10n.noShareDirectoryMessage,
                     );
                   }
 
@@ -2358,9 +2432,14 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                       if (_canGoUp(args))
                         _FileEntryTile(
                           icon: Icons.drive_folder_upload,
-                          title: AppLocalizations.of(context).parentDirectory,
+                          title: l10n.parentDirectory,
                           subtitle: _parentPath(currentPath),
-                          onTap: () => _openSharePath(_parentPath(currentPath)),
+                          onTap: _batchBusy
+                              ? () {}
+                              : () {
+                                  _exitSelection();
+                                  _openSharePath(_parentPath(currentPath));
+                                },
                         ),
                       for (final entry in entries)
                         _FileEntryTile(
@@ -2373,21 +2452,35 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                                       : Icons.insert_drive_file,
                           title: entry.name,
                           subtitle: entry.isDirectory
-                              ? AppLocalizations.of(context)
-                                  .shareRootSize(entry.size)
+                              ? l10n.shareRootSize(entry.size)
                               : _fileSubtitle(entry),
+                          selected: _selectedPaths.contains(entry.path),
+                          selecting: _selecting,
+                          onLongPress: _batchBusy
+                              ? null
+                              : () => _beginSelect(entry.path),
                           onTap: () {
+                            if (_batchBusy) {
+                              return;
+                            }
+                            if (_selecting) {
+                              _toggleSelected(entry.path);
+                              return;
+                            }
                             if (entry.isDirectory) {
                               _openSharePath(entry.path);
                             } else if (entry.isImage) {
                               _previewImage(args, entry);
                             } else {
-                              _showMessage(AppLocalizations.of(context)
-                                  .previewUnsupported);
+                              _showMessage(l10n.previewUnsupported);
                             }
                           },
-                          onRename: () => _renameEntry(args, entry),
-                          onDelete: () => _deleteEntry(args, entry),
+                          onRename: _selecting || _batchBusy
+                              ? null
+                              : () => _renameEntry(args, entry),
+                          onDelete: _selecting || _batchBusy
+                              ? null
+                              : () => _deleteEntry(args, entry),
                         ),
                     ],
                   );
@@ -2398,6 +2491,150 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
         ),
       ),
     );
+  }
+
+  void _exitSelection() {
+    setState(() {
+      _selecting = false;
+      _selectedPaths.clear();
+    });
+  }
+
+  void _beginSelect(String path) {
+    setState(() {
+      _selecting = true;
+      _selectedPaths.add(path);
+    });
+  }
+
+  void _toggleSelected(String path) {
+    setState(() {
+      if (_selectedPaths.contains(path)) {
+        _selectedPaths.remove(path);
+      } else {
+        _selectedPaths.add(path);
+      }
+    });
+  }
+
+  void _selectAllVisible(List<UnraidFileEntry> entries) {
+    setState(() {
+      _selecting = true;
+      _selectedPaths
+        ..clear()
+        ..addAll(entries.map((entry) => entry.path));
+    });
+  }
+
+  Future<void> _batchDelete(ManagementDetailArgs args) async {
+    final client = args.apiClient;
+    final l10n = AppLocalizations.of(context);
+    if (client == null) {
+      _showMessage(l10n.missingConnection);
+      return;
+    }
+    final paths = _selectedPaths.toList(growable: false);
+    if (paths.isEmpty) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.batchDeleteConfirmTitle),
+        content: Text(l10n.batchDeleteConfirmMessage(paths.length)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() => _batchBusy = true);
+    var success = 0;
+    var failed = 0;
+    for (final path in paths) {
+      try {
+        await client.fileManager.delete(path);
+        success += 1;
+      } catch (_) {
+        failed += 1;
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _batchBusy = false;
+      _selectedPaths.clear();
+      _selecting = false;
+    });
+    _showMessage(l10n.batchResultSummary(success, 0, failed));
+    _openSharePath(_sharePath ?? _shareRoot(args));
+  }
+
+  Future<void> _batchMove(ManagementDetailArgs args) async {
+    final client = args.apiClient;
+    final l10n = AppLocalizations.of(context);
+    if (client == null) {
+      _showMessage(l10n.missingConnection);
+      return;
+    }
+    final paths = _selectedPaths.toList(growable: false);
+    if (paths.isEmpty) {
+      return;
+    }
+
+    final destination = await showDialog<String>(
+      context: context,
+      builder: (context) => _MoveDestinationDialog(
+        apiClient: client,
+        initialPath: _shareRoot(args),
+      ),
+    );
+    if (destination == null || !mounted) {
+      return;
+    }
+
+    setState(() => _batchBusy = true);
+    var success = 0;
+    var skipped = 0;
+    var failed = 0;
+    for (final path in paths) {
+      final parent = _parentPath(path);
+      if (parent == destination) {
+        skipped += 1;
+        continue;
+      }
+      if (UnraidFileManager.isInvalidMoveTarget(path, destination)) {
+        skipped += 1;
+        continue;
+      }
+      try {
+        await client.fileManager.move(path, destination);
+        success += 1;
+      } catch (_) {
+        failed += 1;
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _batchBusy = false;
+      _selectedPaths.clear();
+      _selecting = false;
+    });
+    _showMessage(l10n.batchResultSummary(success, skipped, failed));
+    _openSharePath(_sharePath ?? _shareRoot(args));
   }
 
   Future<void> _runAction(
@@ -2462,6 +2699,10 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
     setState(() {
       _sharePath = path;
       _shareFuture = client.fileManager.listDirectory(path);
+      if (_selecting) {
+        _selectedPaths.clear();
+        _selecting = false;
+      }
     });
   }
 
@@ -2721,16 +2962,22 @@ class _FileEntryTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.onLongPress,
     this.onRename,
     this.onDelete,
+    this.selecting = false,
+    this.selected = false,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final VoidCallback? onRename;
   final VoidCallback? onDelete;
+  final bool selecting;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -2740,16 +2987,28 @@ class _FileEntryTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppTheme.background,
+            color: selected
+                ? AppTheme.primary.withValues(alpha: 0.08)
+                : AppTheme.background,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.softLine),
+            border: Border.all(
+              color: selected ? AppTheme.primary : AppTheme.softLine,
+            ),
           ),
           child: Row(
             children: [
+              if (selecting) ...[
+                Icon(
+                  selected ? Icons.check_box : Icons.check_box_outline_blank,
+                  color: AppTheme.primary,
+                ),
+                const SizedBox(width: 10),
+              ],
               Icon(icon, color: AppTheme.primary),
               const SizedBox(width: 12),
               Expanded(
@@ -2779,7 +3038,7 @@ class _FileEntryTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (onRename != null || onDelete != null)
+              if (!selecting && (onRename != null || onDelete != null))
                 PopupMenuButton<String>(
                   tooltip: l10n.moreActions,
                   onSelected: (value) {
@@ -2802,7 +3061,7 @@ class _FileEntryTile extends StatelessWidget {
                       ),
                   ],
                 )
-              else ...[
+              else if (!selecting) ...[
                 const SizedBox(width: 10),
                 Icon(
                   icon == Icons.image ? Icons.visibility : Icons.chevron_right,
@@ -2814,6 +3073,152 @@ class _FileEntryTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MoveDestinationDialog extends StatefulWidget {
+  const _MoveDestinationDialog({
+    required this.apiClient,
+    required this.initialPath,
+  });
+
+  final UnraidApiClient apiClient;
+  final String initialPath;
+
+  @override
+  State<_MoveDestinationDialog> createState() => _MoveDestinationDialogState();
+}
+
+class _MoveDestinationDialogState extends State<_MoveDestinationDialog> {
+  late String _path;
+  bool _loading = true;
+  String? _error;
+  List<UnraidFileEntry> _dirs = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _path = widget.initialPath;
+    unawaited(_load(_path));
+  }
+
+  Future<void> _load(String path) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+      _path = path;
+    });
+    try {
+      final entries = await widget.apiClient.fileManager.listDirectory(path);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _dirs = entries.where((entry) => entry.isDirectory).toList();
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = error.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  void _goUp() {
+    if (_path == '/mnt/user') {
+      return;
+    }
+    final normalized = _path.endsWith('/') && _path.length > 1
+        ? _path.substring(0, _path.length - 1)
+        : _path;
+    final index = normalized.lastIndexOf('/');
+    final parent = index <= 0 ? '/mnt/user' : normalized.substring(0, index);
+    unawaited(_load(parent.isEmpty ? '/mnt/user' : parent));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.selectMoveDestination),
+      content: SizedBox(
+        width: 420,
+        height: 420,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _path,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.textMedium,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            if (_path != '/mnt/user')
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading:
+                    const Icon(Icons.arrow_upward, color: AppTheme.primary),
+                title: Text(l10n.goUp),
+                onTap: _loading ? null : _goUp,
+              ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(
+                          child: Text(
+                            _error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: AppTheme.textMedium),
+                          ),
+                        )
+                      : _dirs.isEmpty
+                          ? Center(
+                              child: Text(
+                                l10n.noSubfolders,
+                                style:
+                                    const TextStyle(color: AppTheme.textMedium),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: _dirs.length,
+                              itemBuilder: (context, index) {
+                                final entry = _dirs[index];
+                                return ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: const Icon(
+                                    Icons.folder,
+                                    color: Color(0xFFFFD54F),
+                                  ),
+                                  title: Text(entry.name),
+                                  onTap: () => unawaited(_load(entry.path)),
+                                );
+                              },
+                            ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: _loading ? null : () => Navigator.of(context).pop(_path),
+          child: Text(l10n.moveHere),
+        ),
+      ],
     );
   }
 }
