@@ -208,6 +208,50 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsConnectionTrailing => '登录相关';
 
   @override
+  String get settingsAboutSection => '关于';
+
+  @override
+  String get settingsAboutTrailing => '版本与许可';
+
+  @override
+  String get settingsOpen => '查看';
+
+  @override
+  String get aboutTitle => '关于 Unflutterraid';
+
+  @override
+  String get aboutSettingsSubtitle => '版本、许可与凭据说明';
+
+  @override
+  String aboutVersion(String version) {
+    return '版本 $version';
+  }
+
+  @override
+  String get aboutDescription =>
+      'Unflutterraid 是面向 Unraid 的轻量管理客户端，通过 API Key 连接服务器，并使用 File Browser 处理文件与媒体。';
+
+  @override
+  String get aboutAuthTitle => '如何登录';
+
+  @override
+  String get aboutAuthBody =>
+      '在 Unraid 中创建 API Key（具备所需权限），在登录页填写服务器地址与密钥。无需应用内注册账号。';
+
+  @override
+  String get aboutLicenseTitle => '开源许可';
+
+  @override
+  String get aboutLicenseBody => '本项目使用 AGPL-3.0 许可，详见仓库 LICENSE 文件。';
+
+  @override
+  String get aboutSecurityTitle => '凭据存储';
+
+  @override
+  String get aboutSecurityBody =>
+      '「记住我」会将 API Key 写入系统安全存储（如 Android Keystore）；服务器地址等非敏感项保存在本地偏好中。';
+
+  @override
   String get settingsServerConfigTitle => '服务器配置';
 
   @override

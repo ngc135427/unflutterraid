@@ -11,7 +11,7 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 - 支持 `http://` / `https://` 协议切换。
 - 使用 Unraid API Key 连接 Unraid Connect/API。
 - 登录表单保持简洁，仅包含 Unraid 地址、协议和 API Key，并提供基础校验、连接状态反馈和登录成功过渡。
-- 支持“记住我”，在 Android 端通过原生 `SharedPreferences` 保存服务器地址、API Key 和协议偏好。
+- 支持“记住我”：API Key 写入平台安全存储（`flutter_secure_storage` / Keystore 等）；地址与协议等非敏感项使用本地偏好，并兼容迁移旧版 MethodChannel 存储。
 
 ### 服务器主页
 
@@ -57,6 +57,7 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 - 默认跟随系统语言；可在登录页下拉与设置页切换简体中文 / English / 跟随系统。
 - 主题支持浅色 / 深色 / 跟随系统，设置页切换并持久化。
 - 设置 → 服务器配置：查看当前连接、修改地址/协议/API Key 后保存并重连，或断开返回登录页。
+- 设置 → 关于：版本号、AGPL 许可说明、API Key 登录方式与凭据存储说明（无应用内注册账号）。
 - UI 文案走 `AppLocalizations`；服务层错误与映射文案走 `DisplayCopy`（由 `MaterialApp.builder` 按当前 locale 激活）。
 
 ## 技术栈
@@ -346,7 +347,9 @@ dart format lib test
 
 - **CI**（`.github/workflows/ci.yml`）：在 `main` 的 push / PR 上自动执行 `flutter pub get`、`gen-l10n`、`analyze`、`test`。
 - **Release**（`.github/workflows/release.yml`）：GitHub Actions 手动触发（`workflow_dispatch`），打包 Android split/universal APK 与 Web zip，写入 `dist/` 风格产物并上传 artifact，附带 `SHA256SUMS.txt`。
-- 当前 Release 工作流使用 **debug/默认签名的 release APK**（未配置上传密钥）；面向商店或正式分发时需在仓库 Secrets 中接入签名配置后再扩展流水线。
+- **Android 签名（可选）**：
+  - 本地：复制 `android/key.properties.example` 为 `android/key.properties`（已 gitignore），填写 keystore 路径与密码后 `flutter build apk --release`。
+  - CI：在仓库 Secrets 配置 `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。未配置时 release 构建回退到 debug 签名，便于继续打通流水线。
 - Windows 桌面包仍建议在 Windows 构建机本地打包（见上文桌面端章节）。
 
 当前测试覆盖：
@@ -369,7 +372,7 @@ dart format lib test
 ## 安全说明
 
 - API Key 属于敏感凭据，请避免提交到仓库或公开日志。
-- Android 端“记住我”当前使用 `SharedPreferences` 保存偏好，适合本地开发和个人设备使用；如面向生产发布，建议改为平台安全存储。
+- “记住我”将 API Key 存入 `flutter_secure_storage`（Android 使用加密 SharedPreferences / Keystore 路径）；keystore 与 `key.properties` 不得提交仓库。
 - 关机/重启等系统电源入口未在当前主页 UI 暴露。
 
 ## 路线图
@@ -377,7 +380,7 @@ dart format lib test
 - 共享浏览写操作：重命名/删除/多选批量删除与移动（已完成 MVP）；拖拽移动后续。
 - 音乐：真实音频流播放与播放队列（已完成 MVP）。
 - 相册备份：手动「立即备份」照片上传（已完成 MVP）；视频与后台守护后续。
-- 完善桌面端和 Android 端自动化发布流水线与签名配置。
+- Android 可选签名与 Release 流水线已支持；商店级 applicationId / Play 上传可继续完善。
 
 ## License
 

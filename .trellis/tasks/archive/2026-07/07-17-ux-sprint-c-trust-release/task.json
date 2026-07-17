@@ -1,0 +1,30 @@
+{
+  "id": "ux-sprint-c-trust-release",
+  "name": "ux-sprint-c-trust-release",
+  "title": "体验 Sprint C：信任与发布",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "liqiangqiang",
+  "assignee": "liqiangqiang",
+  "createdAt": "2026-07-17",
+  "completedAt": "2026-07-17",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-17-secure-credentials",
+    "07-17-register-cleanup-about",
+    "07-17-release-signing-workflow"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

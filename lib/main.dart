@@ -8,7 +8,7 @@ import 'pages/detail_page.dart';
 import 'pages/login_page.dart';
 import 'pages/main_shell_page.dart';
 import 'pages/music_page.dart';
-import 'pages/register_page.dart';
+import 'pages/about_page.dart';
 import 'pages/server_config_page.dart';
 import 'pages/settings_page.dart';
 import 'services/display_copy.dart';
@@ -94,8 +94,8 @@ class _UnflutterRaidAppState extends State<UnflutterRaidApp> {
           initialRoute: LoginPage.routeName,
           routes: {
             LoginPage.routeName: (_) => const LoginPage(),
-            RegisterPage.routeName: (_) => const RegisterPage(),
             MainShellPage.routeName: (_) => const MainShellPage(),
+            AboutPage.routeName: (_) => const AboutPage(),
             ManagementDetailPage.routeName: (_) => const ManagementDetailPage(),
             AlbumPage.routeName: (_) => const AlbumPage(),
             AlbumGroupsPage.routeName: (_) => const AlbumGroupsPage(),

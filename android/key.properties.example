@@ -1,0 +1,11 @@
+# Copy this file to android/key.properties (gitignored) for local release signing.
+# Or set ANDROID_* secrets in GitHub Actions for CI signing.
+#
+# storePassword=your-store-password
+# keyPassword=your-key-password
+# keyAlias=your-key-alias
+# storeFile=../path/to/your-upload-keystore.jks
+storePassword=
+keyPassword=
+keyAlias=
+storeFile=

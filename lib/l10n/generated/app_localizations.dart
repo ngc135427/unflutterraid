@@ -452,6 +452,84 @@ abstract class AppLocalizations {
   /// **'登录相关'**
   String get settingsConnectionTrailing;
 
+  /// No description provided for @settingsAboutSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'关于'**
+  String get settingsAboutSection;
+
+  /// No description provided for @settingsAboutTrailing.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本与许可'**
+  String get settingsAboutTrailing;
+
+  /// No description provided for @settingsOpen.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看'**
+  String get settingsOpen;
+
+  /// No description provided for @aboutTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'关于 Unflutterraid'**
+  String get aboutTitle;
+
+  /// No description provided for @aboutSettingsSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本、许可与凭据说明'**
+  String get aboutSettingsSubtitle;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本 {version}'**
+  String aboutVersion(String version);
+
+  /// No description provided for @aboutDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'Unflutterraid 是面向 Unraid 的轻量管理客户端，通过 API Key 连接服务器，并使用 File Browser 处理文件与媒体。'**
+  String get aboutDescription;
+
+  /// No description provided for @aboutAuthTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'如何登录'**
+  String get aboutAuthTitle;
+
+  /// No description provided for @aboutAuthBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'在 Unraid 中创建 API Key（具备所需权限），在登录页填写服务器地址与密钥。无需应用内注册账号。'**
+  String get aboutAuthBody;
+
+  /// No description provided for @aboutLicenseTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'开源许可'**
+  String get aboutLicenseTitle;
+
+  /// No description provided for @aboutLicenseBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'本项目使用 AGPL-3.0 许可，详见仓库 LICENSE 文件。'**
+  String get aboutLicenseBody;
+
+  /// No description provided for @aboutSecurityTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'凭据存储'**
+  String get aboutSecurityTitle;
+
+  /// No description provided for @aboutSecurityBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'「记住我」会将 API Key 写入系统安全存储（如 Android Keystore）；服务器地址等非敏感项保存在本地偏好中。'**
+  String get aboutSecurityBody;
+
   /// No description provided for @settingsServerConfigTitle.
   ///
   /// In zh, this message translates to:

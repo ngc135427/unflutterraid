@@ -114,6 +114,24 @@
   "backupResultCancelledNote": "任务已取消，以下为已处理结果。",
   "settingsConnectionSection": "连接",
   "settingsConnectionTrailing": "登录相关",
+  "settingsAboutSection": "关于",
+  "settingsAboutTrailing": "版本与许可",
+  "settingsOpen": "查看",
+  "aboutTitle": "关于 Unflutterraid",
+  "aboutSettingsSubtitle": "版本、许可与凭据说明",
+  "aboutVersion": "版本 {version}",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "aboutDescription": "Unflutterraid 是面向 Unraid 的轻量管理客户端，通过 API Key 连接服务器，并使用 File Browser 处理文件与媒体。",
+  "aboutAuthTitle": "如何登录",
+  "aboutAuthBody": "在 Unraid 中创建 API Key（具备所需权限），在登录页填写服务器地址与密钥。无需应用内注册账号。",
+  "aboutLicenseTitle": "开源许可",
+  "aboutLicenseBody": "本项目使用 AGPL-3.0 许可，详见仓库 LICENSE 文件。",
+  "aboutSecurityTitle": "凭据存储",
+  "aboutSecurityBody": "「记住我」会将 API Key 写入系统安全存储（如 Android Keystore）；服务器地址等非敏感项保存在本地偏好中。",
   "settingsServerConfigTitle": "服务器配置",
   "settingsServerConfigSubtitle": "地址、协议与 API Key",
   "settingsPlanned": "规划中",

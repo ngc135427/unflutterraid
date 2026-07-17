@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unflutterraid/main.dart';
 import 'package:unflutterraid/services/login_preferences.dart';
@@ -8,33 +8,13 @@ import 'package:unflutterraid/services/login_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const channel = MethodChannel(LoginPreferences.channelName);
-
   setUp(() {
     SharedPreferences.setMockInitialValues({
       'app_language': 'zh',
       'app_theme': 'light',
     });
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) async {
-      if (call.method == 'load') {
-        return {
-          'rememberMe': false,
-          'domain': '',
-          'apiKey': '',
-          'useHttps': false,
-        };
-      }
-      if (call.method == 'save') {
-        return null;
-      }
-      throw MissingPluginException();
-    });
-  });
-
-  tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, null);
+    FlutterSecureStorage.setMockInitialValues({});
+    LoginPreferences.secureStorage = const FlutterSecureStorage();
   });
 
   testWidgets('shows the login screen', (tester) async {
@@ -47,6 +27,7 @@ void main() {
     expect(find.text('WebGUI 用户名'), findsNothing);
     expect(find.text('WebGUI 密码'), findsNothing);
     expect(find.text('登录'), findsOneWidget);
+    expect(find.text('注册'), findsNothing);
   });
 
   testWidgets('switches login copy to English from language dropdown',
@@ -65,21 +46,18 @@ void main() {
   });
 
   testWidgets('restores remembered login fields', (tester) async {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) async {
-      if (call.method == 'load') {
-        return {
-          'rememberMe': true,
-          'domain': 'tower.local',
-          'apiKey': 'saved-api-key',
-          'useHttps': true,
-        };
-      }
-      if (call.method == 'save') {
-        return null;
-      }
-      throw MissingPluginException();
+    SharedPreferences.setMockInitialValues({
+      'app_language': 'zh',
+      'app_theme': 'light',
+      'login_remember_me': true,
+      'login_domain': 'tower.local',
+      'login_use_https': true,
+      'login_prefs_migrated_v2': true,
     });
+    FlutterSecureStorage.setMockInitialValues({
+      'login_api_key': 'saved-api-key',
+    });
+    LoginPreferences.secureStorage = const FlutterSecureStorage();
 
     await tester.pumpWidget(const UnflutterRaidApp());
     await tester.pumpAndSettle();

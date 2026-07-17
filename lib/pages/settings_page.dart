@@ -13,6 +13,7 @@ import '../services/theme_preferences.dart';
 import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/phone_frame.dart';
+import 'about_page.dart';
 import 'server_config_page.dart';
 
 class SettingsPageArgs {
@@ -159,6 +160,29 @@ class _SettingsPageState extends State<SettingsPage> {
                               arguments: ServerConfigPageArgs(
                                 apiClient: client,
                               ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    _SectionTitle(
+                      title: l10n.settingsAboutSection,
+                      trailing: l10n.settingsAboutTrailing,
+                    ),
+                    const SizedBox(height: 9),
+                    _SettingsCard(
+                      children: [
+                        _SettingRow(
+                          icon: Icons.info_outline,
+                          iconColor: const Color(0xFF3D5A80),
+                          iconBackground: const Color(0xFFEAF1FB),
+                          title: l10n.aboutTitle,
+                          subtitle: l10n.aboutSettingsSubtitle,
+                          value: l10n.settingsOpen,
+                          onTap: () {
+                            Navigator.of(context).pushNamed(
+                              AboutPage.routeName,
                             );
                           },
                         ),

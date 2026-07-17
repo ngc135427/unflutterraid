@@ -212,6 +212,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsConnectionTrailing => 'Sign-in';
 
   @override
+  String get settingsAboutSection => 'About';
+
+  @override
+  String get settingsAboutTrailing => 'Version & license';
+
+  @override
+  String get settingsOpen => 'Open';
+
+  @override
+  String get aboutTitle => 'About Unflutterraid';
+
+  @override
+  String get aboutSettingsSubtitle => 'Version, license, and credential notes';
+
+  @override
+  String aboutVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get aboutDescription =>
+      'Unflutterraid is a lightweight Unraid client. It connects with an API key and uses File Browser for files and media.';
+
+  @override
+  String get aboutAuthTitle => 'How to sign in';
+
+  @override
+  String get aboutAuthBody =>
+      'Create an Unraid API key with the needed permissions, then enter your server URL and key on the login screen. There is no in-app registration.';
+
+  @override
+  String get aboutLicenseTitle => 'License';
+
+  @override
+  String get aboutLicenseBody =>
+      'This project is licensed under AGPL-3.0. See LICENSE in the repository.';
+
+  @override
+  String get aboutSecurityTitle => 'Credential storage';
+
+  @override
+  String get aboutSecurityBody =>
+      'When you choose Remember me, the API key is stored in platform secure storage (e.g. Android Keystore). Non-secret fields use local preferences.';
+
+  @override
   String get settingsServerConfigTitle => 'Server configuration';
 
   @override

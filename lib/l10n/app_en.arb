@@ -114,6 +114,24 @@
   "backupResultCancelledNote": "Cancelled. Showing processed items only.",
   "settingsConnectionSection": "Connection",
   "settingsConnectionTrailing": "Sign-in",
+  "settingsAboutSection": "About",
+  "settingsAboutTrailing": "Version & license",
+  "settingsOpen": "Open",
+  "aboutTitle": "About Unflutterraid",
+  "aboutSettingsSubtitle": "Version, license, and credential notes",
+  "aboutVersion": "Version {version}",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "aboutDescription": "Unflutterraid is a lightweight Unraid client. It connects with an API key and uses File Browser for files and media.",
+  "aboutAuthTitle": "How to sign in",
+  "aboutAuthBody": "Create an Unraid API key with the needed permissions, then enter your server URL and key on the login screen. There is no in-app registration.",
+  "aboutLicenseTitle": "License",
+  "aboutLicenseBody": "This project is licensed under AGPL-3.0. See LICENSE in the repository.",
+  "aboutSecurityTitle": "Credential storage",
+  "aboutSecurityBody": "When you choose Remember me, the API key is stored in platform secure storage (e.g. Android Keystore). Non-secret fields use local preferences.",
   "settingsServerConfigTitle": "Server configuration",
   "settingsServerConfigSubtitle": "Address, protocol, and API key",
   "settingsPlanned": "Planned",
