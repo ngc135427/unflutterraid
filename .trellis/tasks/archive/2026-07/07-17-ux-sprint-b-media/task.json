@@ -1,0 +1,30 @@
+{
+  "id": "ux-sprint-b-media",
+  "name": "ux-sprint-b-media",
+  "title": "体验 Sprint B：媒体体验包",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "liqiangqiang",
+  "assignee": "liqiangqiang",
+  "createdAt": "2026-07-17",
+  "completedAt": "2026-07-17",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-17-music-mini-player",
+    "07-17-album-fullscreen-swipe",
+    "07-17-backup-result-detail"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

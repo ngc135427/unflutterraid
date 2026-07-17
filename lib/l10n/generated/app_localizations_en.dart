@@ -176,6 +176,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get uploadCancelled => 'Upload cancelled';
 
   @override
+  String albumViewerPage(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get backupResultTitle => 'Backup result';
+
+  @override
+  String backupResultSuccessSection(int count) {
+    return 'Uploaded ($count)';
+  }
+
+  @override
+  String backupResultSkippedSection(int count) {
+    return 'Skipped ($count)';
+  }
+
+  @override
+  String backupResultFailedSection(int count) {
+    return 'Failed ($count)';
+  }
+
+  @override
+  String get backupResultEmptySection => 'None';
+
+  @override
+  String get backupResultCancelledNote =>
+      'Cancelled. Showing processed items only.';
+
+  @override
   String get settingsConnectionSection => 'Connection';
 
   @override

@@ -173,6 +173,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get uploadCancelled => '已取消上传';
 
   @override
+  String albumViewerPage(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get backupResultTitle => '备份结果';
+
+  @override
+  String backupResultSuccessSection(int count) {
+    return '成功 ($count)';
+  }
+
+  @override
+  String backupResultSkippedSection(int count) {
+    return '跳过 ($count)';
+  }
+
+  @override
+  String backupResultFailedSection(int count) {
+    return '失败 ($count)';
+  }
+
+  @override
+  String get backupResultEmptySection => '无';
+
+  @override
+  String get backupResultCancelledNote => '任务已取消，以下为已处理结果。';
+
+  @override
   String get settingsConnectionSection => '连接';
 
   @override

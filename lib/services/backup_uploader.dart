@@ -6,14 +6,18 @@ class BackupRunResult {
     required this.success,
     required this.failed,
     required this.skipped,
+    required this.successNames,
     required this.failedNames,
+    required this.skippedNames,
     required this.cancelled,
   });
 
   final int success;
   final int failed;
   final int skipped;
+  final List<String> successNames;
   final List<String> failedNames;
+  final List<String> skippedNames;
   final bool cancelled;
 
   int get totalProcessed => success + failed + skipped;
@@ -43,7 +47,9 @@ class BackupUploader {
         success: 0,
         failed: 0,
         skipped: 0,
+        successNames: [],
         failedNames: [],
+        skippedNames: [],
         cancelled: false,
       );
     }
@@ -52,7 +58,9 @@ class BackupUploader {
     var success = 0;
     var failed = 0;
     var skipped = 0;
+    final successNames = <String>[];
     final failedNames = <String>[];
+    final skippedNames = <String>[];
     final total = photos.length;
 
     for (var i = 0; i < photos.length; i++) {
@@ -61,7 +69,9 @@ class BackupUploader {
           success: success,
           failed: failed,
           skipped: skipped,
+          successNames: successNames,
           failedNames: failedNames,
+          skippedNames: skippedNames,
           cancelled: true,
         );
       }
@@ -72,6 +82,7 @@ class BackupUploader {
 
       if (existing.contains(name.toLowerCase())) {
         skipped += 1;
+        skippedNames.add(name);
         onProgress?.call(i + 1, total, name);
         continue;
       }
@@ -91,6 +102,7 @@ class BackupUploader {
         );
         existing.add(name.toLowerCase());
         success += 1;
+        successNames.add(name);
       } catch (_) {
         failed += 1;
         failedNames.add(name);
@@ -102,7 +114,9 @@ class BackupUploader {
       success: success,
       failed: failed,
       skipped: skipped,
+      successNames: successNames,
       failedNames: failedNames,
+      skippedNames: skippedNames,
       cancelled: false,
     );
   }

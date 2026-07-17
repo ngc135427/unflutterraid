@@ -398,6 +398,48 @@ abstract class AppLocalizations {
   /// **'已取消上传'**
   String get uploadCancelled;
 
+  /// No description provided for @albumViewerPage.
+  ///
+  /// In zh, this message translates to:
+  /// **'{current} / {total}'**
+  String albumViewerPage(int current, int total);
+
+  /// No description provided for @backupResultTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份结果'**
+  String get backupResultTitle;
+
+  /// No description provided for @backupResultSuccessSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'成功 ({count})'**
+  String backupResultSuccessSection(int count);
+
+  /// No description provided for @backupResultSkippedSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过 ({count})'**
+  String backupResultSkippedSection(int count);
+
+  /// No description provided for @backupResultFailedSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'失败 ({count})'**
+  String backupResultFailedSection(int count);
+
+  /// No description provided for @backupResultEmptySection.
+  ///
+  /// In zh, this message translates to:
+  /// **'无'**
+  String get backupResultEmptySection;
+
+  /// No description provided for @backupResultCancelledNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'任务已取消，以下为已处理结果。'**
+  String get backupResultCancelledNote;
+
   /// No description provided for @settingsConnectionSection.
   ///
   /// In zh, this message translates to:

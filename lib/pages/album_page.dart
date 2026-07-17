@@ -797,22 +797,12 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
       });
       await BackupPreferences.saveLastSync(lastSync);
 
-      final message = result.cancelled
-          ? l10n.backupCancelledSummary(
-              result.success,
-              result.skipped,
-              result.failed,
-            )
-          : l10n.backupDoneSummary(
-              result.success,
-              result.skipped,
-              result.failed,
-            );
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+      await showDialog<void>(
+        context: context,
+        builder: (context) => _BackupResultDialog(result: result),
       );
     } catch (error) {
       if (!mounted) {
@@ -1682,6 +1672,18 @@ class _TimelineSection extends StatelessWidget {
   final _MediaSection section;
   final bool isVideo;
 
+  void _openViewer(BuildContext context, int index) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _AlbumFullscreenViewer(
+          items: section.items,
+          initialIndex: index,
+          isVideo: isVideo,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -1709,7 +1711,11 @@ class _TimelineSection extends StatelessWidget {
               childAspectRatio: 0.86,
             ),
             itemBuilder: (context, index) {
-              return _MediaTile(item: section.items[index], isVideo: isVideo);
+              return _MediaTile(
+                item: section.items[index],
+                isVideo: isVideo,
+                onTap: () => _openViewer(context, index),
+              );
             },
           ),
         ],
@@ -1719,10 +1725,15 @@ class _TimelineSection extends StatelessWidget {
 }
 
 class _MediaTile extends StatefulWidget {
-  const _MediaTile({required this.item, required this.isVideo});
+  const _MediaTile({
+    required this.item,
+    required this.isVideo,
+    required this.onTap,
+  });
 
   final _MediaItem item;
   final bool isVideo;
+  final VoidCallback onTap;
 
   @override
   State<_MediaTile> createState() => _MediaTileState();
@@ -1741,40 +1752,47 @@ class _MediaTileState extends State<_MediaTile> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: AppTheme.background,
-        ),
-        child: FutureBuilder<Uint8List>(
-          future: _previewFuture,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.memory(
-                    snapshot.data!,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                  ),
-                  if (widget.isVideo)
-                    const Align(
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.play_circle_fill,
-                        color: Colors.white,
-                        size: 32,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              color: AppTheme.background,
+            ),
+            child: FutureBuilder<Uint8List>(
+              future: _previewFuture,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.memory(
+                        snapshot.data!,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
                       ),
-                    ),
-                ],
-              );
-            }
-            return _buildPlaceholder(
-              loading: snapshot.connectionState != ConnectionState.done,
-            );
-          },
+                      if (widget.isVideo)
+                        const Align(
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.play_circle_fill,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                        ),
+                    ],
+                  );
+                }
+                return _buildPlaceholder(
+                  loading: snapshot.connectionState != ConnectionState.done,
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -1797,6 +1815,303 @@ class _MediaTileState extends State<_MediaTile> {
             child: LinearProgressIndicator(minHeight: 2),
           ),
       ],
+    );
+  }
+}
+
+class _AlbumFullscreenViewer extends StatefulWidget {
+  const _AlbumFullscreenViewer({
+    required this.items,
+    required this.initialIndex,
+    required this.isVideo,
+  });
+
+  final List<_MediaItem> items;
+  final int initialIndex;
+  final bool isVideo;
+
+  @override
+  State<_AlbumFullscreenViewer> createState() => _AlbumFullscreenViewerState();
+}
+
+class _AlbumFullscreenViewerState extends State<_AlbumFullscreenViewer> {
+  late final PageController _pageController;
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex.clamp(0, widget.items.length - 1);
+    _pageController = PageController(initialPage: _index);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final item = widget.items[_index];
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.items.length,
+              onPageChanged: (value) => setState(() => _index = value),
+              itemBuilder: (context, index) {
+                final media = widget.items[index];
+                return _FullscreenMediaPage(
+                  item: media,
+                  isVideo: widget.isVideo,
+                );
+              },
+            ),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.close, color: Colors.white),
+                tooltip: l10n.close,
+              ),
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 20,
+              child: Column(
+                children: [
+                  Text(
+                    item.file.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.albumViewerPage(_index + 1, widget.items.length),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FullscreenMediaPage extends StatefulWidget {
+  const _FullscreenMediaPage({
+    required this.item,
+    required this.isVideo,
+  });
+
+  final _MediaItem item;
+  final bool isVideo;
+
+  @override
+  State<_FullscreenMediaPage> createState() => _FullscreenMediaPageState();
+}
+
+class _FullscreenMediaPageState extends State<_FullscreenMediaPage> {
+  late final Future<Uint8List> _bytesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Prefer full raw for photos; video falls back to preview placeholder icon.
+    _bytesFuture = widget.isVideo
+        ? widget.item.apiClient.fileManager
+            .readPreviewBytes(widget.item.file.path)
+        : widget.item.apiClient.fileManager
+            .readFileBytes(widget.item.file.path);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InteractiveViewer(
+      minScale: 1,
+      maxScale: 4,
+      child: Center(
+        child: FutureBuilder<Uint8List>(
+          future: _bytesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.memory(
+                    snapshot.data!,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                  ),
+                  if (widget.isVideo)
+                    const Icon(
+                      Icons.play_circle_fill,
+                      color: Colors.white70,
+                      size: 64,
+                    ),
+                ],
+              );
+            }
+            if (snapshot.hasError) {
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  AppLocalizations.of(context)
+                      .loadFailed(snapshot.error.toString()),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              );
+            }
+            return const CircularProgressIndicator(color: Colors.white);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _BackupResultDialog extends StatelessWidget {
+  const _BackupResultDialog({required this.result});
+
+  final BackupRunResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.backupResultTitle),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                result.cancelled
+                    ? l10n.backupCancelledSummary(
+                        result.success,
+                        result.skipped,
+                        result.failed,
+                      )
+                    : l10n.backupDoneSummary(
+                        result.success,
+                        result.skipped,
+                        result.failed,
+                      ),
+                style: const TextStyle(
+                  color: AppTheme.textDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (result.cancelled) ...[
+                const SizedBox(height: 8),
+                Text(
+                  l10n.backupResultCancelledNote,
+                  style: const TextStyle(
+                    color: AppTheme.textMedium,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              _BackupResultSection(
+                title: l10n.backupResultSuccessSection(result.success),
+                names: result.successNames,
+              ),
+              _BackupResultSection(
+                title: l10n.backupResultSkippedSection(result.skipped),
+                names: result.skippedNames,
+              ),
+              _BackupResultSection(
+                title: l10n.backupResultFailedSection(result.failed),
+                names: result.failedNames,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.close),
+        ),
+      ],
+    );
+  }
+}
+
+class _BackupResultSection extends StatelessWidget {
+  const _BackupResultSection({
+    required this.title,
+    required this.names,
+  });
+
+  final String title;
+  final List<String> names;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: AppTheme.textDark,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (names.isEmpty)
+            Text(
+              l10n.backupResultEmptySection,
+              style: const TextStyle(color: AppTheme.textLight, fontSize: 12),
+            )
+          else
+            for (final name in names.take(30))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  '· $name',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textMedium,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          if (names.length > 30)
+            Text(
+              '… +${names.length - 30}',
+              style: const TextStyle(color: AppTheme.textLight, fontSize: 12),
+            ),
+        ],
+      ),
     );
   }
 }

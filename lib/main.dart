@@ -15,6 +15,7 @@ import 'services/display_copy.dart';
 import 'services/language_preferences.dart';
 import 'services/theme_preferences.dart';
 import 'theme/app_theme.dart';
+import 'widgets/music_mini_bar.dart';
 
 void main() {
   runApp(const UnflutterRaidApp());
@@ -78,7 +79,17 @@ class _UnflutterRaidAppState extends State<UnflutterRaidApp> {
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) {
             DisplayCopy.fromL10n(AppLocalizations.of(context)).activate();
-            return child ?? const SizedBox.shrink();
+            final page = child ?? const SizedBox.shrink();
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                page,
+                const Align(
+                  alignment: Alignment.bottomCenter,
+                  child: MusicMiniBar(),
+                ),
+              ],
+            );
           },
           initialRoute: LoginPage.routeName,
           routes: {

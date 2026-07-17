@@ -84,6 +84,34 @@
     }
   },
   "uploadCancelled": "已取消上传",
+  "albumViewerPage": "{current} / {total}",
+  "@albumViewerPage": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "backupResultTitle": "备份结果",
+  "backupResultSuccessSection": "成功 ({count})",
+  "@backupResultSuccessSection": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "backupResultSkippedSection": "跳过 ({count})",
+  "@backupResultSkippedSection": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "backupResultFailedSection": "失败 ({count})",
+  "@backupResultFailedSection": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "backupResultEmptySection": "无",
+  "backupResultCancelledNote": "任务已取消，以下为已处理结果。",
   "settingsConnectionSection": "连接",
   "settingsConnectionTrailing": "登录相关",
   "settingsServerConfigTitle": "服务器配置",

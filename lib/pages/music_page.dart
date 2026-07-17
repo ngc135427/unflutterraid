@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../services/music_player_controller.dart';
 import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fade_slide.dart';
@@ -93,17 +93,26 @@ class _MusicPageState extends State<MusicPage> {
     }
   }
 
-  void _openPlayer(int index) {
+  Future<void> _openPlayer(int index) async {
     final args = _args;
     if (args == null || _tracks.isEmpty) {
       return;
     }
     final safeIndex = index.clamp(0, _tracks.length - 1);
+    final queue = List<UnraidFileEntry>.from(_tracks);
+    await MusicPlayerController.instance.playQueue(
+      apiClient: args.apiClient,
+      queue: queue,
+      initialIndex: safeIndex,
+    );
+    if (!mounted) {
+      return;
+    }
     Navigator.of(context).pushNamed(
       MusicPlayerPage.routeName,
       arguments: MusicPlayerArgs(
         apiClient: args.apiClient,
-        queue: List<UnraidFileEntry>.from(_tracks),
+        queue: queue,
         initialIndex: safeIndex,
       ),
     );
@@ -250,17 +259,26 @@ class _MusicTracksPageState extends State<MusicTracksPage> {
         .toList();
   }
 
-  void _openPlayer(List<UnraidFileEntry> queue, int index) {
+  Future<void> _openPlayer(List<UnraidFileEntry> queue, int index) async {
     final args = _args;
     if (args == null || queue.isEmpty) {
       return;
     }
     final safeIndex = index.clamp(0, queue.length - 1);
+    final list = List<UnraidFileEntry>.from(queue);
+    await MusicPlayerController.instance.playQueue(
+      apiClient: args.apiClient,
+      queue: list,
+      initialIndex: safeIndex,
+    );
+    if (!mounted) {
+      return;
+    }
     Navigator.of(context).pushNamed(
       MusicPlayerPage.routeName,
       arguments: MusicPlayerArgs(
         apiClient: args.apiClient,
-        queue: List<UnraidFileEntry>.from(queue),
+        queue: list,
         initialIndex: safeIndex,
       ),
     );
@@ -331,353 +349,194 @@ class MusicPlayerPage extends StatefulWidget {
 }
 
 class _MusicPlayerPageState extends State<MusicPlayerPage> {
-  final AudioPlayer _player = AudioPlayer();
-  StreamSubscription<PlayerState>? _playerStateSub;
-  StreamSubscription<Duration>? _positionSub;
-  StreamSubscription<Duration?>? _durationSub;
-  StreamSubscription<PlaybackEvent>? _eventSub;
-
-  MusicPlayerArgs? _args;
-  int _index = 0;
-  bool _loading = true;
-  String? _error;
-  Duration _position = Duration.zero;
-  Duration _duration = Duration.zero;
-  bool _playing = false;
-  bool _initialized = false;
-
-  UnraidFileEntry? get _track {
-    final args = _args;
-    if (args == null || args.queue.isEmpty) {
-      return null;
-    }
-    if (_index < 0 || _index >= args.queue.length) {
-      return null;
-    }
-    return args.queue[_index];
-  }
-
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_initialized) {
-      return;
-    }
-    _initialized = true;
-    final raw = ModalRoute.of(context)?.settings.arguments;
-    if (raw is MusicPlayerArgs && raw.queue.isNotEmpty) {
-      _args = raw;
-      _index = raw.initialIndex.clamp(0, raw.queue.length - 1);
-      _bindPlayerStreams();
-      unawaited(_loadCurrentTrack(autoplay: true));
-    } else if (raw is UnraidFileEntry) {
-      // Legacy single-track args are not supported without a client.
-      _error = AppLocalizations.of(context).missingConnectionArgs;
-      _loading = false;
-    } else {
-      _error = AppLocalizations.of(context).missingConnectionArgs;
-      _loading = false;
-    }
-  }
-
-  void _bindPlayerStreams() {
-    _positionSub = _player.positionStream.listen((position) {
-      if (!mounted) {
-        return;
-      }
-      setState(() => _position = position);
-    });
-    _durationSub = _player.durationStream.listen((duration) {
-      if (!mounted || duration == null) {
-        return;
-      }
-      setState(() => _duration = duration);
-    });
-    _playerStateSub = _player.playerStateStream.listen((state) {
-      if (!mounted) {
-        return;
-      }
-      setState(() => _playing = state.playing);
-      if (state.processingState == ProcessingState.completed) {
-        unawaited(_onTrackCompleted());
-      }
-    });
-    _eventSub = _player.playbackEventStream.listen(
-      (_) {},
-      onError: (Object error, StackTrace stackTrace) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          _loading = false;
-          _error =
-              AppLocalizations.of(context).musicPlaybackError(error.toString());
-        });
-      },
-    );
-  }
-
-  Future<void> _loadCurrentTrack({required bool autoplay}) async {
-    final args = _args;
-    final track = _track;
-    if (args == null || track == null) {
-      return;
-    }
-
-    setState(() {
-      _loading = true;
-      _error = null;
-      _position = Duration.zero;
-      _duration = Duration.zero;
-    });
-
-    try {
-      final uri = args.apiClient.fileManager.rawUri(track.path);
-      await _player.setAudioSource(AudioSource.uri(uri));
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _loading = false;
-        _duration = _player.duration ?? Duration.zero;
-      });
-      if (autoplay) {
-        await _player.play();
-      }
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _loading = false;
-        _error =
-            AppLocalizations.of(context).musicPlaybackError(error.toString());
-      });
-    }
-  }
-
-  Future<void> _onTrackCompleted() async {
-    final args = _args;
-    if (args == null) {
-      return;
-    }
-    if (_index + 1 < args.queue.length) {
-      setState(() => _index += 1);
-      await _loadCurrentTrack(autoplay: true);
-    } else {
-      await _player.seek(Duration.zero);
-      await _player.pause();
-    }
-  }
-
-  Future<void> _togglePlayPause() async {
-    if (_loading || _error != null) {
-      return;
-    }
-    if (_player.playing) {
-      await _player.pause();
-    } else {
-      await _player.play();
-    }
-  }
-
-  Future<void> _seek(double value) async {
-    if (_duration.inMilliseconds <= 0) {
-      return;
-    }
-    final position = Duration(
-      milliseconds: (value * _duration.inMilliseconds).round(),
-    );
-    await _player.seek(position);
-  }
-
-  Future<void> _previous() async {
-    final l10n = AppLocalizations.of(context);
-    if (_index <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.musicQueueStart)),
-      );
-      return;
-    }
-    setState(() => _index -= 1);
-    await _loadCurrentTrack(autoplay: true);
-  }
-
-  Future<void> _next() async {
-    final args = _args;
-    final l10n = AppLocalizations.of(context);
-    if (args == null || _index + 1 >= args.queue.length) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.musicQueueEnd)),
-      );
-      return;
-    }
-    setState(() => _index += 1);
-    await _loadCurrentTrack(autoplay: true);
+  void initState() {
+    super.initState();
+    MusicPlayerController.instance.setFullPlayerOpen(true);
   }
 
   @override
   void dispose() {
-    _playerStateSub?.cancel();
-    _positionSub?.cancel();
-    _durationSub?.cancel();
-    _eventSub?.cancel();
-    unawaited(_player.dispose());
+    MusicPlayerController.instance.setFullPlayerOpen(false);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final controller = MusicPlayerController.instance;
     final l10n = AppLocalizations.of(context);
-    final track = _track;
-    final title = track?.name ?? l10n.music;
-    final subtitle = track?.path ?? '';
-    final progress = _duration.inMilliseconds <= 0
-        ? 0.0
-        : (_position.inMilliseconds / _duration.inMilliseconds)
-            .clamp(0.0, 1.0)
-            .toDouble();
 
-    return PhoneFrame(
-      maxContentWidth: 900,
-      child: Column(
-        children: [
-          SizedBox(
-            height: 68,
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 12,
-                  top: 10,
-                  child: TextButton.icon(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.keyboard_arrow_down,
-                        color: Colors.white),
-                    label: Text(
-                      l10n.collapse,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(30, 20, 30, 34),
-              child: FadeSlide(
-                child: Column(
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final track = controller.track;
+        final title = track?.name ?? l10n.music;
+        final subtitle = track?.path ?? '';
+        final loading = controller.loading;
+        final error = controller.error == null
+            ? null
+            : l10n.musicPlaybackError(controller.error!);
+        final enabled = !loading && error == null && controller.hasSession;
+
+        return PhoneFrame(
+          maxContentWidth: 900,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 68,
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: Center(
-                        child: Container(
-                          width: 240,
-                          height: 240,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF3498DB), Color(0xFF52C41A)],
-                            ),
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF3498DB)
-                                    .withValues(alpha: 0.28),
-                                blurRadius: 28,
-                                offset: const Offset(0, 14),
-                              ),
-                            ],
-                          ),
-                          child: _loading
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.music_note,
-                                  color: Colors.white,
-                                  size: 78,
-                                ),
+                    Positioned(
+                      left: 12,
+                      top: 10,
+                      child: TextButton.icon(
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.white,
                         ),
-                      ),
-                    ),
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.74),
-                        fontSize: 15,
-                      ),
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _error!,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.red.shade100,
-                          fontSize: 13,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () =>
-                            unawaited(_loadCurrentTrack(autoplay: true)),
-                        child: Text(
-                          l10n.retry,
+                        label: Text(
+                          l10n.collapse,
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
-                    ] else if (_loading) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        l10n.musicLoadingTrack,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 26),
-                    _PlayerProgress(
-                      progress: progress,
-                      position: _position,
-                      duration: _duration,
-                      enabled: !_loading && _error == null,
-                      onSeek: (value) => unawaited(_seek(value)),
-                    ),
-                    const SizedBox(height: 24),
-                    _PlayerControls(
-                      playing: _playing,
-                      enabled: !_loading && _error == null,
-                      onPrevious: () => unawaited(_previous()),
-                      onPlayPause: () => unawaited(_togglePlayPause()),
-                      onNext: () => unawaited(_next()),
                     ),
                   ],
                 ),
               ),
-            ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(30, 20, 30, 34),
+                  child: FadeSlide(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Container(
+                              width: 240,
+                              height: 240,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFF3498DB),
+                                    Color(0xFF52C41A),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(28),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF3498DB)
+                                        .withValues(alpha: 0.28),
+                                    blurRadius: 28,
+                                    offset: const Offset(0, 14),
+                                  ),
+                                ],
+                              ),
+                              child: loading
+                                  ? const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.music_note,
+                                      color: Colors.white,
+                                      size: 78,
+                                    ),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.74),
+                            fontSize: 15,
+                          ),
+                        ),
+                        if (error != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            error,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.red.shade100,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ] else if (loading) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            l10n.musicLoadingTrack,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 26),
+                        _PlayerProgress(
+                          progress: controller.progress,
+                          position: controller.position,
+                          duration: controller.duration,
+                          enabled: enabled,
+                          onSeek: (value) =>
+                              unawaited(controller.seekFraction(value)),
+                        ),
+                        const SizedBox(height: 24),
+                        _PlayerControls(
+                          playing: controller.playing,
+                          enabled: enabled,
+                          onPrevious: () => unawaited(_previous(context)),
+                          onPlayPause: () =>
+                              unawaited(controller.togglePlayPause()),
+                          onNext: () => unawaited(_next(context)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  Future<void> _previous(BuildContext context) async {
+    final ok = await MusicPlayerController.instance.skipPrevious();
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).musicQueueStart)),
+      );
+    }
+  }
+
+  Future<void> _next(BuildContext context) async {
+    final ok = await MusicPlayerController.instance.skipNext();
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).musicQueueEnd)),
+      );
+    }
   }
 }
 

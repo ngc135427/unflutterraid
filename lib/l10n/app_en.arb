@@ -84,6 +84,34 @@
     }
   },
   "uploadCancelled": "Upload cancelled",
+  "albumViewerPage": "{current} / {total}",
+  "@albumViewerPage": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "backupResultTitle": "Backup result",
+  "backupResultSuccessSection": "Uploaded ({count})",
+  "@backupResultSuccessSection": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "backupResultSkippedSection": "Skipped ({count})",
+  "@backupResultSkippedSection": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "backupResultFailedSection": "Failed ({count})",
+  "@backupResultFailedSection": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "backupResultEmptySection": "None",
+  "backupResultCancelledNote": "Cancelled. Showing processed items only.",
   "settingsConnectionSection": "Connection",
   "settingsConnectionTrailing": "Sign-in",
   "settingsServerConfigTitle": "Server configuration",
