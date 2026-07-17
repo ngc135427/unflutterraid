@@ -71,3 +71,36 @@ Filled all frontend/backend Trellis specs from real Flutter patterns (l10n, Disp
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: Roadmap MVP theme music file writes
+
+**Date**: 2026-07-17
+**Task**: Roadmap MVP theme music file writes
+**Branch**: `main`
+
+### Summary
+
+Implemented theme prefs, music library from File Browser, share rename/delete, README + Trellis git tracking. Tests 12/12 green.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5129cd1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
