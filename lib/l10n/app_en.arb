@@ -725,6 +725,17 @@
       }
     }
   },
+  "musicLoadingTrack": "Loading…",
+  "musicPlaybackError": "Playback failed: {error}",
+  "@musicPlaybackError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "musicQueueStart": "Already at the first track",
+  "musicQueueEnd": "Already at the last track",
   "searchMusic": "Search tracks",
   "rename": "Rename",
   "delete": "Delete",

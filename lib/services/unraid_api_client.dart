@@ -202,17 +202,48 @@ class UnraidFileManager {
     return entries;
   }
 
+  /// Recursive visual media (images + videos). Does **not** include audio.
+  /// Use [listAudio] for music library scans.
   Future<List<UnraidFileEntry>> listMedia(
     String rootPath, {
     int maxDepth = 3,
   }) async {
+    return _listRecursiveFiltered(
+      rootPath,
+      actionLabel: DisplayCopy.current.apiActionScanMedia,
+      keep: (entry) => entry.isMedia,
+    );
+  }
+
+  /// Recursive audio files under [rootPath] (music library).
+  Future<List<UnraidFileEntry>> listAudio(
+    String rootPath, {
+    int maxDepth = 3,
+  }) async {
+    return _listRecursiveFiltered(
+      rootPath,
+      actionLabel: DisplayCopy.current.apiActionScanMedia,
+      keep: (entry) => entry.isAudio,
+    );
+  }
+
+  /// Public File Browser raw stream URL for [appPath] (e.g. `/mnt/user/music/a.mp3`).
+  Uri rawUri(String appPath) {
+    return _fileBrowserUri('/api/raw', appPath);
+  }
+
+  Future<List<UnraidFileEntry>> _listRecursiveFiltered(
+    String rootPath, {
+    required String actionLabel,
+    required bool Function(UnraidFileEntry entry) keep,
+  }) async {
     final decoded = await _requestJson(
       _fileBrowserUri('/api/resources/recursive', rootPath),
-      actionLabel: DisplayCopy.current.apiActionScanMedia,
+      actionLabel: actionLabel,
     );
     final entries = <UnraidFileEntry>[];
     _collectFileBrowserEntries(decoded, rootPath, entries);
-    entries.removeWhere((entry) => entry.isDirectory || !entry.isMedia);
+    entries.removeWhere((entry) => entry.isDirectory || !keep(entry));
     entries.sort((a, b) {
       final da = a.modifiedDate ?? DateTime(0);
       final db = b.modifiedDate ?? DateTime(0);

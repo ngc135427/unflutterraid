@@ -725,6 +725,17 @@
       }
     }
   },
+  "musicLoadingTrack": "正在加载…",
+  "musicPlaybackError": "播放失败：{error}",
+  "@musicPlaybackError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "musicQueueStart": "已是队列第一首",
+  "musicQueueEnd": "已是队列最后一首",
   "searchMusic": "搜索歌曲",
   "rename": "重命名",
   "delete": "删除",

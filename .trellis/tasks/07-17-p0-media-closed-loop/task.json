@@ -1,0 +1,29 @@
+{
+  "id": "p0-media-closed-loop",
+  "name": "p0-media-closed-loop",
+  "title": "P0 媒体闭环：音乐播放与相册备份上传",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P0",
+  "creator": "liqiangqiang",
+  "assignee": "liqiangqiang",
+  "createdAt": "2026-07-17",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-17-music-streaming-player",
+    "07-17-album-backup-upload"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

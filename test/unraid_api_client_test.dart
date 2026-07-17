@@ -219,5 +219,75 @@ void main() {
       expect(track.isAudio, isTrue);
       expect(track.isMedia, isFalse);
     });
+
+    test('listAudio returns only audio files from recursive scan', () async {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(request.url.path, '/api/resources/recursive/music');
+
+          return http.Response(
+            jsonEncode({
+              'name': 'music',
+              'path': '/music',
+              'isDir': true,
+              'items': [
+                {
+                  'name': 'a.mp3',
+                  'path': '/music/a.mp3',
+                  'isDir': false,
+                  'size': 1024,
+                  'modified': '2026-06-05T00:00:00Z',
+                },
+                {
+                  'name': 'cover.jpg',
+                  'path': '/music/cover.jpg',
+                  'isDir': false,
+                  'size': 512,
+                  'modified': '2026-06-04T00:00:00Z',
+                },
+                {
+                  'name': 'deep',
+                  'path': '/music/deep',
+                  'isDir': true,
+                  'items': [
+                    {
+                      'name': 'b.flac',
+                      'path': '/music/deep/b.flac',
+                      'isDir': false,
+                      'size': 2048,
+                      'modified': '2026-06-06T00:00:00Z',
+                    },
+                  ],
+                },
+              ],
+            }),
+            200,
+          );
+        }),
+      );
+
+      final entries = await client.fileManager.listAudio('/mnt/user/music');
+
+      expect(entries.map((entry) => entry.name), ['b.flac', 'a.mp3']);
+      expect(entries.every((entry) => entry.isAudio), isTrue);
+      expect(entries.any((entry) => entry.isMedia), isFalse);
+    });
+
+    test('rawUri maps app path to File Browser raw endpoint', () {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async => http.Response('{}', 500)),
+      );
+
+      final uri = client.fileManager.rawUri('/mnt/user/music/song.mp3');
+      expect(uri.scheme, 'http');
+      expect(uri.host, 'tower.local');
+      expect(uri.port, 8080);
+      expect(uri.path, '/api/raw/music/song.mp3');
+    });
   });
 }

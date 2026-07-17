@@ -2168,6 +2168,30 @@ abstract class AppLocalizations {
   /// **'{count} 首'**
   String musicTrackCount(int count);
 
+  /// No description provided for @musicLoadingTrack.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加载…'**
+  String get musicLoadingTrack;
+
+  /// No description provided for @musicPlaybackError.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放失败：{error}'**
+  String musicPlaybackError(String error);
+
+  /// No description provided for @musicQueueStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'已是队列第一首'**
+  String get musicQueueStart;
+
+  /// No description provided for @musicQueueEnd.
+  ///
+  /// In zh, this message translates to:
+  /// **'已是队列最后一首'**
+  String get musicQueueEnd;
+
   /// No description provided for @searchMusic.
   ///
   /// In zh, this message translates to:

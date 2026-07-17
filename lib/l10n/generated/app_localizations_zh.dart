@@ -1146,6 +1146,20 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get musicLoadingTrack => '正在加载…';
+
+  @override
+  String musicPlaybackError(String error) {
+    return '播放失败：$error';
+  }
+
+  @override
+  String get musicQueueStart => '已是队列第一首';
+
+  @override
+  String get musicQueueEnd => '已是队列最后一首';
+
+  @override
   String get searchMusic => '搜索歌曲';
 
   @override

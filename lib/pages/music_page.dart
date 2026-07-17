@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../services/unraid_api_client.dart';
@@ -14,6 +17,20 @@ class MusicPageArgs {
 
   final UnraidApiClient apiClient;
   final String rootPath;
+}
+
+class MusicPlayerArgs {
+  const MusicPlayerArgs({
+    required this.apiClient,
+    required this.queue,
+    required this.initialIndex,
+  });
+
+  final UnraidApiClient apiClient;
+  final List<UnraidFileEntry> queue;
+  final int initialIndex;
+
+  UnraidFileEntry get initialTrack => queue[initialIndex];
 }
 
 class MusicPage extends StatefulWidget {
@@ -57,8 +74,7 @@ class _MusicPageState extends State<MusicPage> {
     });
 
     try {
-      final media = await args.apiClient.fileManager.listMedia(args.rootPath);
-      final tracks = media.where((entry) => entry.isAudio).toList();
+      final tracks = await args.apiClient.fileManager.listAudio(args.rootPath);
       if (!mounted) {
         return;
       }
@@ -75,6 +91,22 @@ class _MusicPageState extends State<MusicPage> {
         _loading = false;
       });
     }
+  }
+
+  void _openPlayer(int index) {
+    final args = _args;
+    if (args == null || _tracks.isEmpty) {
+      return;
+    }
+    final safeIndex = index.clamp(0, _tracks.length - 1);
+    Navigator.of(context).pushNamed(
+      MusicPlayerPage.routeName,
+      arguments: MusicPlayerArgs(
+        apiClient: args.apiClient,
+        queue: List<UnraidFileEntry>.from(_tracks),
+        initialIndex: safeIndex,
+      ),
+    );
   }
 
   @override
@@ -98,12 +130,7 @@ class _MusicPageState extends State<MusicPage> {
           const SizedBox(height: 18),
           _NowPlayingCard(
             track: current,
-            onTap: current == null
-                ? null
-                : () => Navigator.of(context).pushNamed(
-                      MusicPlayerPage.routeName,
-                      arguments: current,
-                    ),
+            onTap: current == null ? null : () => _openPlayer(0),
           ),
           const SizedBox(height: 22),
           Text(
@@ -137,13 +164,10 @@ class _MusicPageState extends State<MusicPage> {
               onAction: _loadTracks,
             )
           else
-            for (final track in preview)
+            for (var i = 0; i < preview.length; i++)
               _TrackTile(
-                track: track,
-                onTap: () => Navigator.of(context).pushNamed(
-                  MusicPlayerPage.routeName,
-                  arguments: track,
-                ),
+                track: preview[i],
+                onTap: () => _openPlayer(i),
               ),
         ],
       ),
@@ -197,8 +221,7 @@ class _MusicTracksPageState extends State<MusicTracksPage> {
       _error = null;
     });
     try {
-      final media = await args.apiClient.fileManager.listMedia(args.rootPath);
-      final tracks = media.where((entry) => entry.isAudio).toList();
+      final tracks = await args.apiClient.fileManager.listAudio(args.rootPath);
       if (!mounted) {
         return;
       }
@@ -217,15 +240,36 @@ class _MusicTracksPageState extends State<MusicTracksPage> {
     }
   }
 
+  List<UnraidFileEntry> get _filtered {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      return _tracks;
+    }
+    return _tracks
+        .where((track) => track.name.toLowerCase().contains(query))
+        .toList();
+  }
+
+  void _openPlayer(List<UnraidFileEntry> queue, int index) {
+    final args = _args;
+    if (args == null || queue.isEmpty) {
+      return;
+    }
+    final safeIndex = index.clamp(0, queue.length - 1);
+    Navigator.of(context).pushNamed(
+      MusicPlayerPage.routeName,
+      arguments: MusicPlayerArgs(
+        apiClient: args.apiClient,
+        queue: List<UnraidFileEntry>.from(queue),
+        initialIndex: safeIndex,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final query = _searchController.text.trim().toLowerCase();
-    final filtered = query.isEmpty
-        ? _tracks
-        : _tracks
-            .where((track) => track.name.toLowerCase().contains(query))
-            .toList();
+    final filtered = _filtered;
 
     return _MusicScaffold(
       title: l10n.songs,
@@ -266,13 +310,10 @@ class _MusicTracksPageState extends State<MusicTracksPage> {
               message: l10n.noMatchesMessage,
             )
           else
-            for (final track in filtered)
+            for (var i = 0; i < filtered.length; i++)
               _TrackTile(
-                track: track,
-                onTap: () => Navigator.of(context).pushNamed(
-                  MusicPlayerPage.routeName,
-                  arguments: track,
-                ),
+                track: filtered[i],
+                onTap: () => _openPlayer(filtered, i),
               ),
         ],
       ),
@@ -280,17 +321,222 @@ class _MusicTracksPageState extends State<MusicTracksPage> {
   }
 }
 
-class MusicPlayerPage extends StatelessWidget {
+class MusicPlayerPage extends StatefulWidget {
   const MusicPlayerPage({super.key});
 
   static const routeName = '/music-player';
 
   @override
+  State<MusicPlayerPage> createState() => _MusicPlayerPageState();
+}
+
+class _MusicPlayerPageState extends State<MusicPlayerPage> {
+  final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<PlayerState>? _playerStateSub;
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<Duration?>? _durationSub;
+  StreamSubscription<PlaybackEvent>? _eventSub;
+
+  MusicPlayerArgs? _args;
+  int _index = 0;
+  bool _loading = true;
+  String? _error;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
+  bool _playing = false;
+  bool _initialized = false;
+
+  UnraidFileEntry? get _track {
+    final args = _args;
+    if (args == null || args.queue.isEmpty) {
+      return null;
+    }
+    if (_index < 0 || _index >= args.queue.length) {
+      return null;
+    }
+    return args.queue[_index];
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) {
+      return;
+    }
+    _initialized = true;
+    final raw = ModalRoute.of(context)?.settings.arguments;
+    if (raw is MusicPlayerArgs && raw.queue.isNotEmpty) {
+      _args = raw;
+      _index = raw.initialIndex.clamp(0, raw.queue.length - 1);
+      _bindPlayerStreams();
+      unawaited(_loadCurrentTrack(autoplay: true));
+    } else if (raw is UnraidFileEntry) {
+      // Legacy single-track args are not supported without a client.
+      _error = AppLocalizations.of(context).missingConnectionArgs;
+      _loading = false;
+    } else {
+      _error = AppLocalizations.of(context).missingConnectionArgs;
+      _loading = false;
+    }
+  }
+
+  void _bindPlayerStreams() {
+    _positionSub = _player.positionStream.listen((position) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _position = position);
+    });
+    _durationSub = _player.durationStream.listen((duration) {
+      if (!mounted || duration == null) {
+        return;
+      }
+      setState(() => _duration = duration);
+    });
+    _playerStateSub = _player.playerStateStream.listen((state) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _playing = state.playing);
+      if (state.processingState == ProcessingState.completed) {
+        unawaited(_onTrackCompleted());
+      }
+    });
+    _eventSub = _player.playbackEventStream.listen(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _loading = false;
+          _error =
+              AppLocalizations.of(context).musicPlaybackError(error.toString());
+        });
+      },
+    );
+  }
+
+  Future<void> _loadCurrentTrack({required bool autoplay}) async {
+    final args = _args;
+    final track = _track;
+    if (args == null || track == null) {
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+      _position = Duration.zero;
+      _duration = Duration.zero;
+    });
+
+    try {
+      final uri = args.apiClient.fileManager.rawUri(track.path);
+      await _player.setAudioSource(AudioSource.uri(uri));
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loading = false;
+        _duration = _player.duration ?? Duration.zero;
+      });
+      if (autoplay) {
+        await _player.play();
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loading = false;
+        _error =
+            AppLocalizations.of(context).musicPlaybackError(error.toString());
+      });
+    }
+  }
+
+  Future<void> _onTrackCompleted() async {
+    final args = _args;
+    if (args == null) {
+      return;
+    }
+    if (_index + 1 < args.queue.length) {
+      setState(() => _index += 1);
+      await _loadCurrentTrack(autoplay: true);
+    } else {
+      await _player.seek(Duration.zero);
+      await _player.pause();
+    }
+  }
+
+  Future<void> _togglePlayPause() async {
+    if (_loading || _error != null) {
+      return;
+    }
+    if (_player.playing) {
+      await _player.pause();
+    } else {
+      await _player.play();
+    }
+  }
+
+  Future<void> _seek(double value) async {
+    if (_duration.inMilliseconds <= 0) {
+      return;
+    }
+    final position = Duration(
+      milliseconds: (value * _duration.inMilliseconds).round(),
+    );
+    await _player.seek(position);
+  }
+
+  Future<void> _previous() async {
+    final l10n = AppLocalizations.of(context);
+    if (_index <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.musicQueueStart)),
+      );
+      return;
+    }
+    setState(() => _index -= 1);
+    await _loadCurrentTrack(autoplay: true);
+  }
+
+  Future<void> _next() async {
+    final args = _args;
+    final l10n = AppLocalizations.of(context);
+    if (args == null || _index + 1 >= args.queue.length) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.musicQueueEnd)),
+      );
+      return;
+    }
+    setState(() => _index += 1);
+    await _loadCurrentTrack(autoplay: true);
+  }
+
+  @override
+  void dispose() {
+    _playerStateSub?.cancel();
+    _positionSub?.cancel();
+    _durationSub?.cancel();
+    _eventSub?.cancel();
+    unawaited(_player.dispose());
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    final track = args is UnraidFileEntry ? args : null;
-    final title = track?.name ?? AppLocalizations.of(context).music;
-    final album = track?.path ?? '';
+    final l10n = AppLocalizations.of(context);
+    final track = _track;
+    final title = track?.name ?? l10n.music;
+    final subtitle = track?.path ?? '';
+    final progress = _duration.inMilliseconds <= 0
+        ? 0.0
+        : (_position.inMilliseconds / _duration.inMilliseconds)
+            .clamp(0.0, 1.0)
+            .toDouble();
 
     return PhoneFrame(
       maxContentWidth: 900,
@@ -308,7 +554,7 @@ class MusicPlayerPage extends StatelessWidget {
                     icon: const Icon(Icons.keyboard_arrow_down,
                         color: Colors.white),
                     label: Text(
-                      AppLocalizations.of(context).collapse,
+                      l10n.collapse,
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
@@ -343,11 +589,17 @@ class MusicPlayerPage extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.music_note,
-                            color: Colors.white,
-                            size: 78,
-                          ),
+                          child: _loading
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.music_note,
+                                  color: Colors.white,
+                                  size: 78,
+                                ),
                         ),
                       ),
                     ),
@@ -363,7 +615,7 @@ class MusicPlayerPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      album,
+                      subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
@@ -372,10 +624,52 @@ class MusicPlayerPage extends StatelessWidget {
                         fontSize: 15,
                       ),
                     ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _error!,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.red.shade100,
+                          fontSize: 13,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            unawaited(_loadCurrentTrack(autoplay: true)),
+                        child: Text(
+                          l10n.retry,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ] else if (_loading) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.musicLoadingTrack,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 26),
-                    const _PlayerProgress(),
+                    _PlayerProgress(
+                      progress: progress,
+                      position: _position,
+                      duration: _duration,
+                      enabled: !_loading && _error == null,
+                      onSeek: (value) => unawaited(_seek(value)),
+                    ),
                     const SizedBox(height: 24),
-                    const _PlayerControls(),
+                    _PlayerControls(
+                      playing: _playing,
+                      enabled: !_loading && _error == null,
+                      onPrevious: () => unawaited(_previous()),
+                      onPlayPause: () => unawaited(_togglePlayPause()),
+                      onNext: () => unawaited(_next()),
+                    ),
                   ],
                 ),
               ),
@@ -587,34 +881,51 @@ class _TrackSearchBox extends StatelessWidget {
 }
 
 class _PlayerProgress extends StatelessWidget {
-  const _PlayerProgress();
+  const _PlayerProgress({
+    required this.progress,
+    required this.position,
+    required this.duration,
+    required this.enabled,
+    required this.onSeek,
+  });
+
+  final double progress;
+  final Duration position;
+  final Duration duration;
+  final bool enabled;
+  final ValueChanged<double> onSeek;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: 0,
-            minHeight: 5,
-            backgroundColor: Colors.white.withValues(alpha: 0.18),
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+            activeTrackColor: Colors.white,
+            inactiveTrackColor: Colors.white.withValues(alpha: 0.18),
+            thumbColor: Colors.white,
+            overlayColor: Colors.white.withValues(alpha: 0.16),
+          ),
+          child: Slider(
+            value: progress.clamp(0.0, 1.0),
+            onChanged: enabled ? onSeek : null,
           ),
         ),
-        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '0:00',
+              _formatDuration(position),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.76),
                 fontSize: 12,
               ),
             ),
             Text(
-              '—:—',
+              duration.inMilliseconds <= 0 ? '—:—' : _formatDuration(duration),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.76),
                 fontSize: 12,
@@ -628,7 +939,19 @@ class _PlayerProgress extends StatelessWidget {
 }
 
 class _PlayerControls extends StatelessWidget {
-  const _PlayerControls();
+  const _PlayerControls({
+    required this.playing,
+    required this.enabled,
+    required this.onPrevious,
+    required this.onPlayPause,
+    required this.onNext,
+  });
+
+  final bool playing;
+  final bool enabled;
+  final VoidCallback onPrevious;
+  final VoidCallback onPlayPause;
+  final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
@@ -636,27 +959,41 @@ class _PlayerControls extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.skip_previous, color: Colors.white, size: 34),
-        ),
-        const SizedBox(width: 18),
-        Container(
-          width: 64,
-          height: 64,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.play_arrow,
-            color: AppTheme.primary,
+          onPressed: enabled ? onPrevious : null,
+          icon: Icon(
+            Icons.skip_previous,
+            color: Colors.white.withValues(alpha: enabled ? 1 : 0.4),
             size: 34,
           ),
         ),
         const SizedBox(width: 18),
+        Material(
+          color: Colors.white,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: enabled ? onPlayPause : null,
+            child: SizedBox(
+              width: 64,
+              height: 64,
+              child: Icon(
+                playing ? Icons.pause : Icons.play_arrow,
+                color: enabled
+                    ? AppTheme.primary
+                    : AppTheme.primary.withValues(alpha: 0.4),
+                size: 34,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 18),
         IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.skip_next, color: Colors.white, size: 34),
+          onPressed: enabled ? onNext : null,
+          icon: Icon(
+            Icons.skip_next,
+            color: Colors.white.withValues(alpha: enabled ? 1 : 0.4),
+            size: 34,
+          ),
         ),
       ],
     );
@@ -797,14 +1134,7 @@ class _TrackTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (track.size.isNotEmpty)
-                  Text(
-                    track.size,
-                    style: const TextStyle(
-                      color: AppTheme.textLight,
-                      fontSize: 12,
-                    ),
-                  ),
+                const Icon(Icons.play_arrow, color: AppTheme.primary),
               ],
             ),
           ),
@@ -835,7 +1165,7 @@ class _MusicMessage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Column(
         children: [
-          Icon(icon, size: 42, color: AppTheme.textLight),
+          Icon(icon, size: 44, color: AppTheme.textLight),
           const SizedBox(height: 12),
           Text(
             title,
@@ -859,4 +1189,11 @@ class _MusicMessage extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatDuration(Duration value) {
+  final totalSeconds = value.inSeconds;
+  final minutes = totalSeconds ~/ 60;
+  final seconds = totalSeconds % 60;
+  return '$minutes:${seconds.toString().padLeft(2, '0')}';
 }

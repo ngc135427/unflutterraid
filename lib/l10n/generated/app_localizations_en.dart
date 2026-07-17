@@ -1163,6 +1163,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get musicLoadingTrack => 'Loading…';
+
+  @override
+  String musicPlaybackError(String error) {
+    return 'Playback failed: $error';
+  }
+
+  @override
+  String get musicQueueStart => 'Already at the first track';
+
+  @override
+  String get musicQueueEnd => 'Already at the last track';
+
+  @override
   String get searchMusic => 'Search tracks';
 
   @override
