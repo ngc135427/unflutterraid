@@ -208,6 +208,25 @@ void main() {
       await client.fileManager.rename('/mnt/user/music/old.mp3', 'new.mp3');
     });
 
+    test('createDirectory posts type=1 resource', () async {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'POST');
+          expect(request.url.path, '/api/resources/photos/new-folder');
+          expect(request.url.queryParameters['type'], '1');
+          expect(request.url.queryParameters['override'], 'false');
+          return http.Response('{}', 201);
+        }),
+      );
+
+      await client.fileManager.createDirectory(
+        parentDirectory: '/mnt/user/photos',
+        folderName: 'new-folder',
+      );
+    });
+
     test('move sends PATCH with destination under new directory', () async {
       final client = UnraidApiClient(
         baseUrl: 'http://tower.local',
