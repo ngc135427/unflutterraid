@@ -133,26 +133,51 @@ class _MainShellPageState extends State<MainShellPage> {
 
         if (snapshot.hasError) {
           final l10n = AppLocalizations.of(context);
-          return _StateMessage(
-            icon: Icons.error_outline,
-            title: l10n.readFailedTitle,
-            message: snapshot.error.toString(),
-            actionLabel: l10n.retry,
-            onAction: _refreshDashboard,
+          return RefreshIndicator(
+            onRefresh: _refreshDashboard,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: MediaQuery.sizeOf(context).height * 0.55,
+                  child: _StateMessage(
+                    icon: Icons.error_outline,
+                    title: l10n.readFailedTitle,
+                    message: snapshot.error.toString(),
+                    actionLabel: l10n.retry,
+                    onAction: () => unawaited(_refreshDashboard()),
+                  ),
+                ),
+              ],
+            ),
           );
         }
 
         final dashboard = snapshot.data;
         if (dashboard == null) {
           final l10n = AppLocalizations.of(context);
-          return _StateMessage(
-            icon: Icons.inbox_outlined,
-            title: l10n.noDataTitle,
-            message: l10n.noDataMessage,
+          return RefreshIndicator(
+            onRefresh: _refreshDashboard,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: MediaQuery.sizeOf(context).height * 0.55,
+                  child: _StateMessage(
+                    icon: Icons.inbox_outlined,
+                    title: l10n.noDataTitle,
+                    message: l10n.noDataMessage,
+                  ),
+                ),
+              ],
+            ),
           );
         }
 
-        return _buildCurrentPage(dashboard);
+        return RefreshIndicator(
+          onRefresh: _refreshDashboard,
+          child: _buildCurrentPage(dashboard),
+        );
       },
     );
   }
@@ -168,6 +193,7 @@ class _MainShellPageState extends State<MainShellPage> {
               .map((item) => ManagementData.fromApi(item, Icons.layers))
               .toList(),
           apiClient: _apiClient,
+          onRefresh: _refreshDashboard,
         );
       case 2:
         return _ManagementPage(
@@ -178,6 +204,7 @@ class _MainShellPageState extends State<MainShellPage> {
               .map((item) => ManagementData.fromApi(item, Icons.computer))
               .toList(),
           apiClient: _apiClient,
+          onRefresh: _refreshDashboard,
         );
       case 3:
         return _ManagementPage(
@@ -188,6 +215,7 @@ class _MainShellPageState extends State<MainShellPage> {
               .map((item) => ManagementData.fromApi(item, Icons.folder_shared))
               .toList(),
           apiClient: _apiClient,
+          onRefresh: _refreshDashboard,
         );
       default:
         return _ServerInfoPage(
@@ -202,14 +230,29 @@ class _MainShellPageState extends State<MainShellPage> {
     }
   }
 
-  void _refreshDashboard() {
+  Future<void> _refreshDashboard() async {
     final client = _apiClient;
     if (client == null) {
       return;
     }
-    setState(() {
-      _dashboardFuture = client.fetchDashboard();
-    });
+    // Await first so FutureBuilder keeps the previous completed snapshot
+    // while RefreshIndicator shows its spinner (avoids full-page loading flash).
+    try {
+      final dashboard = await client.fetchDashboard();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _dashboardFuture = Future<UnraidDashboard>.value(dashboard);
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _dashboardFuture = Future<UnraidDashboard>.error(error);
+      });
+    }
   }
 
   Future<void> _showIconPicker() async {
@@ -310,6 +353,7 @@ class _ServerInfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 86),
       child: FadeSlide(
         child: Column(
@@ -1635,12 +1679,14 @@ class _ManagementPage extends StatefulWidget {
     required this.dashboard,
     required this.items,
     required this.apiClient,
+    required this.onRefresh,
   });
 
   final String type;
   final UnraidDashboard dashboard;
   final List<ManagementData> items;
   final UnraidApiClient? apiClient;
+  final Future<void> Function() onRefresh;
 
   @override
   State<_ManagementPage> createState() => _ManagementPageState();
@@ -1678,6 +1724,7 @@ class _ManagementPageState extends State<_ManagementPage> {
     }).toList();
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 86),
       child: FadeSlide(
         child: Column(
@@ -1703,8 +1750,7 @@ class _ManagementPageState extends State<_ManagementPage> {
                 _CompactActionButton(
                   icon: Icons.sync,
                   label: AppLocalizations.of(context).refresh,
-                  onPressed: () =>
-                      _showMessage(l10n.typeRefreshSubmitted(typeLabel)),
+                  onPressed: () => unawaited(_manualRefresh(typeLabel)),
                 ),
               ],
             ),
@@ -1716,7 +1762,7 @@ class _ManagementPageState extends State<_ManagementPage> {
                 onTap: () => _openDetail(item),
                 onAction: item.type == ManagementItemType.share
                     ? null
-                    : (action) => _runAction(item, action),
+                    : (action) => unawaited(_runAction(item, action)),
               ),
             if (widget.items.isEmpty)
               _StateMessage(
@@ -1736,15 +1782,32 @@ class _ManagementPageState extends State<_ManagementPage> {
     );
   }
 
+  Future<void> _manualRefresh(String typeLabel) async {
+    await widget.onRefresh();
+    if (!mounted) {
+      return;
+    }
+    _showMessage(
+      AppLocalizations.of(context).typeRefreshSubmitted(typeLabel),
+    );
+  }
+
   void _openDetail(ManagementData item) {
-    Navigator.of(context).pushNamed(
+    Navigator.of(context)
+        .pushNamed(
       ManagementDetailPage.routeName,
       arguments: ManagementDetailArgs(
         type: widget.type,
         data: item,
         apiClient: widget.apiClient,
+        onDashboardChanged: widget.onRefresh,
       ),
-    );
+    )
+        .then((_) {
+      if (mounted) {
+        unawaited(widget.onRefresh());
+      }
+    });
   }
 
   Future<void> _runAction(
@@ -1769,6 +1832,7 @@ class _ManagementPageState extends State<_ManagementPage> {
       }
       _showMessage(AppLocalizations.of(context)
           .actionSubmitted(item.title, _actionLabel(context, action)));
+      await widget.onRefresh();
     } on UnraidApiException catch (error) {
       if (!mounted) {
         return;
@@ -1793,11 +1857,13 @@ class ManagementDetailArgs {
     required this.type,
     required this.data,
     required this.apiClient,
+    this.onDashboardChanged,
   });
 
   final String type;
   final ManagementData data;
   final UnraidApiClient? apiClient;
+  final Future<void> Function()? onDashboardChanged;
 }
 
 class _ManagementStats extends StatelessWidget {
@@ -2669,6 +2735,10 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
         return;
       }
       _showMessage(AppLocalizations.of(context).labelActionSubmitted(label));
+      final refresh = args.onDashboardChanged;
+      if (refresh != null) {
+        await refresh();
+      }
     } on UnraidApiException catch (error) {
       if (!mounted) {
         return;

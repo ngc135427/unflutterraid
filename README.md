@@ -17,6 +17,7 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 
 - 展示服务器名称、版本、运行状态和通知摘要。
 - 展示 CPU、内存、磁盘、网络、UPS、云服务、插件、安全状态等概览信息。
+- 支持下拉刷新仪表盘与 Docker / 虚拟机 / 共享列表。
 - 支持服务器图标切换。
 - 提供通知、磁盘、网络、UPS、插件、安全、云服务、日志等模块化详情面板。
 - 提供相册、音乐等应用入口。
@@ -25,8 +26,8 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 
 - 通过底部导航切换 Docker、虚拟机、共享目录。
 - Docker/虚拟机列表支持搜索、状态展示、资源信息展示。
-- 支持 Docker/虚拟机启动、停止、重启操作。
-- 支持进入详情页查看分组信息和执行快捷操作。
+- 支持 Docker/虚拟机启动、停止、重启操作；操作成功后自动刷新列表。
+- 支持进入详情页查看分组信息和执行快捷操作（返回列表时同步刷新）。
 
 ### 共享目录
 
@@ -336,6 +337,13 @@ flutter analyze
 ```bash
 dart format lib test
 ```
+
+### CI / 发布流水线
+
+- **CI**（`.github/workflows/ci.yml`）：在 `main` 的 push / PR 上自动执行 `flutter pub get`、`gen-l10n`、`analyze`、`test`。
+- **Release**（`.github/workflows/release.yml`）：GitHub Actions 手动触发（`workflow_dispatch`），打包 Android split/universal APK 与 Web zip，写入 `dist/` 风格产物并上传 artifact，附带 `SHA256SUMS.txt`。
+- 当前 Release 工作流使用 **debug/默认签名的 release APK**（未配置上传密钥）；面向商店或正式分发时需在仓库 Secrets 中接入签名配置后再扩展流水线。
+- Windows 桌面包仍建议在 Windows 构建机本地打包（见上文桌面端章节）。
 
 当前测试覆盖：
 
