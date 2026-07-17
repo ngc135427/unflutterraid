@@ -182,10 +182,10 @@ flutter analyze
 flutter test
 ```
 
-版本号来自 `pubspec.yaml` 的 `version: 1.0.0+1`，也可以在发布命令里显式指定：
+版本号来自 `pubspec.yaml` 的 `version: 0.0.1+1`，也可以在发布命令里显式指定：
 
 ```bash
-flutter build <platform> --release --build-name 1.0.0 --build-number 1
+flutter build <platform> --release --build-name 0.0.1 --build-number 1
 ```
 
 Flutter 官方构建命令默认把产物写入 `build/`，不会自动写入 `dist/`。如果需要 GitHub Release 那样的统一资产列表，可以在构建后手动从 `build/` 复制或压缩到 `dist/`。
@@ -195,7 +195,7 @@ Flutter 官方构建命令默认把产物写入 `build/`，不会自动写入 `d
 按架构拆分 APK 适合官网、网盘或 GitHub Release 分发，用户按设备 CPU 下载对应安装包：
 
 ```bash
-flutter build apk --release --split-per-abi --build-name 1.0.0 --build-number 1
+flutter build apk --release --split-per-abi --build-name 0.0.1 --build-number 1
 ```
 
 | Android 架构 | 适用设备 | 产物 |
@@ -208,15 +208,15 @@ flutter build apk --release --split-per-abi --build-name 1.0.0 --build-number 1
 如果只需要某一个架构，可以使用 `--target-platform`：
 
 ```bash
-flutter build apk --release --target-platform android-arm64 --build-name 1.0.0 --build-number 1
-flutter build apk --release --target-platform android-arm --build-name 1.0.0 --build-number 1
-flutter build apk --release --target-platform android-x64 --build-name 1.0.0 --build-number 1
+flutter build apk --release --target-platform android-arm64 --build-name 0.0.1 --build-number 1
+flutter build apk --release --target-platform android-arm --build-name 0.0.1 --build-number 1
+flutter build apk --release --target-platform android-x64 --build-name 0.0.1 --build-number 1
 ```
 
 发布到 Google Play 或支持 AAB 的渠道时使用 App Bundle，由渠道按用户设备下发对应架构：
 
 ```bash
-flutter build appbundle --release --target-platform android-arm,android-arm64,android-x64 --build-name 1.0.0 --build-number 1
+flutter build appbundle --release --target-platform android-arm,android-arm64,android-x64 --build-name 0.0.1 --build-number 1
 ```
 
 产物位置：
@@ -240,7 +240,7 @@ flutter create --platforms=android,ios,web,windows,linux,macos --project-name un
 #### Windows x64 / Arm64
 
 ```powershell
-flutter build windows --release --build-name 1.0.0 --build-number 1
+flutter build windows --release --build-name 0.0.1 --build-number 1
 ```
 
 | 桌面架构 | 构建环境 | 产物目录 | 发布包 |
@@ -253,7 +253,7 @@ Flutter Windows 不按 Intel / AMD / Qualcomm 具体 CPU 型号拆包。`x64` �
 #### Linux
 
 ```bash
-flutter build linux --release --target-platform linux-x64 --build-name 1.0.0 --build-number 1
+flutter build linux --release --target-platform linux-x64 --build-name 0.0.1 --build-number 1
 ```
 
 Linux 交叉编译需要目标架构 sysroot；没有 sysroot 时建议在对应架构的 Linux 构建机上打包。
@@ -269,7 +269,7 @@ Linux 交叉编译需要目标架构 sysroot；没有 sysroot 时建议在对应
 macOS 需要在 macOS 构建机上构建和签名：
 
 ```bash
-flutter build macos --release --build-name 1.0.0 --build-number 1
+flutter build macos --release --build-name 0.0.1 --build-number 1
 ```
 
 | 桌面架构 | 推荐构建环境 | 产物 | 发布包 |
@@ -285,7 +285,7 @@ flutter build macos --release --build-name 1.0.0 --build-number 1
 3. 在真实设备或虚拟机上验证安装包可启动：Android 使用 `adb install`，Windows 运行 `unflutterraid.exe`，Linux 运行 `unflutterraid`，macOS 启动 `.app`。
 4. 如果要发布到 GitHub Release 或自有下载页，再把需要上传的产物从 `build/` 复制或压缩到 `dist/`。
 5. 为发布包生成 SHA256 校验值。
-6. 创建 `v1.0.0` 这类版本标签，并上传发布包和校验文件。
+6. 创建 `v0.0.1` 这类版本标签，并上传发布包和校验文件。
 
 Windows PowerShell 生成校验文件：
 
