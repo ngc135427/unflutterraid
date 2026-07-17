@@ -257,6 +257,76 @@ class AppLocalizationsEn extends AppLocalizations {
       'When you choose Remember me, the API key is stored in platform secure storage (e.g. Android Keystore). Non-secret fields use local preferences.';
 
   @override
+  String get powerSectionTitle => 'Array power';
+
+  @override
+  String get powerSectionTrailing => 'array power';
+
+  @override
+  String get powerStartArray => 'Start array';
+
+  @override
+  String get powerStopArray => 'Stop array';
+
+  @override
+  String get powerStartArrayConfirmTitle => 'Start the array?';
+
+  @override
+  String get powerStartArrayConfirmMessage =>
+      'This starts the Unraid array so shares and Docker can run. Continue?';
+
+  @override
+  String get powerStopArrayConfirmTitle => 'Stop the array?';
+
+  @override
+  String get powerStopArrayConfirmMessage =>
+      'Stopping the array makes shares and most containers unavailable. Confirm no critical writes are in progress.';
+
+  @override
+  String get powerConfirmWordLabel => 'Type STOP to confirm';
+
+  @override
+  String get powerConfirmWordHint => 'STOP';
+
+  @override
+  String get powerConfirmWordError => 'Type STOP to confirm';
+
+  @override
+  String powerActionSubmitted(String action) {
+    return 'Submitted: $action';
+  }
+
+  @override
+  String get powerMissingClient => 'Not connected; cannot run power actions';
+
+  @override
+  String get powerOsNote =>
+      'This API supports array start/stop. Full reboot/shutdown is not exposed in Connect GraphQL — use the WebGUI for those.';
+
+  @override
+  String get paritySectionTitle => 'Parity actions';
+
+  @override
+  String get parityStart => 'Start parity check';
+
+  @override
+  String get parityCancel => 'Cancel parity check';
+
+  @override
+  String get parityStartConfirmTitle => 'Start parity check?';
+
+  @override
+  String get parityStartConfirmMessage =>
+      'Starts a non-correcting parity check. Disk performance may drop while it runs.';
+
+  @override
+  String get parityCancelConfirmTitle => 'Cancel parity check?';
+
+  @override
+  String get parityCancelConfirmMessage =>
+      'Cancels the running parity check job.';
+
+  @override
   String get settingsServerConfigTitle => 'Server configuration';
 
   @override

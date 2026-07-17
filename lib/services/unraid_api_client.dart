@@ -84,6 +84,28 @@ class UnraidApiClient {
     );
   }
 
+  /// Start or stop the Unraid array via GraphQL `array.setState`.
+  ///
+  /// OS-level reboot/shutdown are not exposed in the current schema snapshot
+  /// under `knowledge/mutation.txt`; array power is the supported path.
+  Future<void> runArrayPowerAction(ArrayPowerAction action) async {
+    await _request(
+      _arraySetStateMutation,
+      variables: {
+        'input': {
+          'desiredState': action.desiredState,
+        },
+      },
+    );
+  }
+
+  Future<void> runParityCheckAction(ParityCheckAction action) async {
+    await _request(switch (action) {
+      ParityCheckAction.start => _parityCheckStartMutation,
+      ParityCheckAction.cancel => _parityCheckCancelMutation,
+    });
+  }
+
   Future<List<UnraidFileEntry>> fetchDirectory(String path) async {
     return fileManager.listDirectory(path);
   }
@@ -498,6 +520,46 @@ class UnraidFileManager {
 enum ManagementItemType { docker, vm, share }
 
 enum ManagementAction { start, stop, restart }
+
+/// Array power via `array.setState` (not OS reboot/shutdown).
+enum ArrayPowerAction {
+  start,
+  stop;
+
+  String get desiredState => switch (this) {
+        ArrayPowerAction.start => 'STARTED',
+        ArrayPowerAction.stop => 'STOPPED',
+      };
+}
+
+enum ParityCheckAction { start, cancel }
+
+const _arraySetStateMutation = r'''
+mutation ArraySetState($input: ArrayStateInput!) {
+  array {
+    setState(input: $input) {
+      id
+      state
+    }
+  }
+}
+''';
+
+const _parityCheckStartMutation = r'''
+mutation ParityCheckStart {
+  parityCheck {
+    start(correct: false)
+  }
+}
+''';
+
+const _parityCheckCancelMutation = r'''
+mutation ParityCheckCancel {
+  parityCheck {
+    cancel
+  }
+}
+''';
 
 class UnraidDashboard {
   const UnraidDashboard({

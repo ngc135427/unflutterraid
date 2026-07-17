@@ -288,6 +288,7 @@ class _MainShellPageState extends State<MainShellPage>
           onEditIcon: _showIconPicker,
           onOpenDetails: () => _openDashboardDetails(dashboard),
           onOpenModule: (module) => _showDashboardModule(module, dashboard),
+          onRefreshDashboard: _refreshDashboard,
         );
     }
   }
@@ -422,6 +423,7 @@ class _ServerInfoPage extends StatelessWidget {
     required this.onEditIcon,
     required this.onOpenDetails,
     required this.onOpenModule,
+    required this.onRefreshDashboard,
   });
 
   final ServerIconVariant iconVariant;
@@ -430,6 +432,7 @@ class _ServerInfoPage extends StatelessWidget {
   final VoidCallback onEditIcon;
   final VoidCallback onOpenDetails;
   final ValueChanged<_DashboardModule> onOpenModule;
+  final Future<void> Function() onRefreshDashboard;
 
   @override
   Widget build(BuildContext context) {
@@ -452,6 +455,17 @@ class _ServerInfoPage extends StatelessWidget {
               label: AppLocalizations.of(context).viewFullInfo,
               icon: Icons.info_outline,
               onPressed: onOpenDetails,
+            ),
+            const SizedBox(height: 22),
+            _SectionHeader(
+              title: AppLocalizations.of(context).powerSectionTitle,
+              trailing: AppLocalizations.of(context).powerSectionTrailing,
+            ),
+            const SizedBox(height: 10),
+            _HomePowerPanel(
+              dashboard: dashboard,
+              apiClient: apiClient,
+              onRefreshDashboard: onRefreshDashboard,
             ),
             const SizedBox(height: 22),
             _SectionHeader(
@@ -510,6 +524,312 @@ class _ServerInfoPage extends StatelessWidget {
             _HomeAppShortcuts(apiClient: apiClient),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _HomePowerPanel extends StatefulWidget {
+  const _HomePowerPanel({
+    required this.dashboard,
+    required this.apiClient,
+    required this.onRefreshDashboard,
+  });
+
+  final UnraidDashboard dashboard;
+  final UnraidApiClient? apiClient;
+  final Future<void> Function() onRefreshDashboard;
+
+  @override
+  State<_HomePowerPanel> createState() => _HomePowerPanelState();
+}
+
+class _HomePowerPanelState extends State<_HomePowerPanel> {
+  bool _busy = false;
+
+  bool get _arrayLooksStarted {
+    final state = widget.dashboard.arrayState.toLowerCase();
+    return state.contains('start') ||
+        state.contains('运行') ||
+        state.contains('online') ||
+        state.contains('started');
+  }
+
+  Future<void> _runArray(ArrayPowerAction action) async {
+    final l10n = AppLocalizations.of(context);
+    final client = widget.apiClient;
+    if (client == null) {
+      _toast(l10n.powerMissingClient);
+      return;
+    }
+
+    final confirmed = action == ArrayPowerAction.stop
+        ? await _confirmStopArray()
+        : await _confirmSimple(
+            title: l10n.powerStartArrayConfirmTitle,
+            message: l10n.powerStartArrayConfirmMessage,
+          );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() => _busy = true);
+    try {
+      await client.runArrayPowerAction(action);
+      if (!mounted) {
+        return;
+      }
+      final label = action == ArrayPowerAction.start
+          ? l10n.powerStartArray
+          : l10n.powerStopArray;
+      _toast(l10n.powerActionSubmitted(label));
+      await widget.onRefreshDashboard();
+    } on UnraidApiException catch (error) {
+      if (mounted) {
+        _toast(error.message);
+      }
+    } catch (error) {
+      if (mounted) {
+        _toast(l10n.refreshFailed(error.toString()));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<void> _runParity(ParityCheckAction action) async {
+    final l10n = AppLocalizations.of(context);
+    final client = widget.apiClient;
+    if (client == null) {
+      _toast(l10n.powerMissingClient);
+      return;
+    }
+    final confirmed = await _confirmSimple(
+      title: action == ParityCheckAction.start
+          ? l10n.parityStartConfirmTitle
+          : l10n.parityCancelConfirmTitle,
+      message: action == ParityCheckAction.start
+          ? l10n.parityStartConfirmMessage
+          : l10n.parityCancelConfirmMessage,
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await client.runParityCheckAction(action);
+      if (!mounted) {
+        return;
+      }
+      final label = action == ParityCheckAction.start
+          ? l10n.parityStart
+          : l10n.parityCancel;
+      _toast(l10n.powerActionSubmitted(label));
+      await widget.onRefreshDashboard();
+    } on UnraidApiException catch (error) {
+      if (mounted) {
+        _toast(error.message);
+      }
+    } catch (error) {
+      if (mounted) {
+        _toast(l10n.refreshFailed(error.toString()));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<bool?> _confirmSimple({
+    required String title,
+    required String message,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _confirmStopArray() async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController();
+    try {
+      return await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(l10n.powerStopArrayConfirmTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.powerStopArrayConfirmMessage),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.powerConfirmWordLabel,
+                    hintText: l10n.powerConfirmWordHint,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (controller.text.trim().toUpperCase() != 'STOP') {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.powerConfirmWordError)),
+                    );
+                    return;
+                  }
+                  Navigator.of(context).pop(true);
+                },
+                child: Text(l10n.powerStopArray),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _SurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _arrayLooksStarted ? Icons.power : Icons.power_off,
+                color: _arrayLooksStarted ? AppTheme.success : AppTheme.danger,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.arrayState + ' · ${widget.dashboard.arrayState}',
+                  style: const TextStyle(
+                    color: AppTheme.textDark,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              if (_busy)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.powerOsNote,
+            style: const TextStyle(
+              color: AppTheme.textMedium,
+              fontSize: 12,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _CompactActionButton(
+                  icon: Icons.play_arrow,
+                  label: l10n.powerStartArray,
+                  onPressed: _busy
+                      ? null
+                      : () => unawaited(_runArray(ArrayPowerAction.start)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _CompactActionButton(
+                  icon: Icons.stop,
+                  label: l10n.powerStopArray,
+                  onPressed: _busy
+                      ? null
+                      : () => unawaited(_runArray(ArrayPowerAction.stop)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            l10n.paritySectionTitle,
+            style: const TextStyle(
+              color: AppTheme.textDark,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            widget.dashboard.paritySummary.isEmpty
+                ? l10n.noParityTask
+                : widget.dashboard.paritySummary,
+            style: const TextStyle(color: AppTheme.textMedium, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _CompactActionButton(
+                  icon: Icons.fact_check_outlined,
+                  label: l10n.parityStart,
+                  onPressed: _busy
+                      ? null
+                      : () => unawaited(_runParity(ParityCheckAction.start)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _CompactActionButton(
+                  icon: Icons.cancel_outlined,
+                  label: l10n.parityCancel,
+                  onPressed: _busy
+                      ? null
+                      : () => unawaited(_runParity(ParityCheckAction.cancel)),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

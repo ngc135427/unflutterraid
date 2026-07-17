@@ -6,6 +6,60 @@ import 'package:http/testing.dart';
 import 'package:unflutterraid/services/unraid_api_client.dart';
 
 void main() {
+  group('UnraidApiClient power actions', () {
+    test('runArrayPowerAction posts array.setState with desiredState',
+        () async {
+      Map<String, dynamic>? body;
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'POST');
+          expect(request.url.path, '/graphql');
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(
+            jsonEncode({
+              'data': {
+                'array': {
+                  'setState': {'id': 'array', 'state': 'STARTED'},
+                },
+              },
+            }),
+            200,
+          );
+        }),
+      );
+
+      await client.runArrayPowerAction(ArrayPowerAction.start);
+      expect(body!['query'], contains('setState'));
+      final variables = body!['variables'] as Map<String, dynamic>;
+      expect(variables['input'], {'desiredState': 'STARTED'});
+    });
+
+    test('runParityCheckAction posts parityCheck.start', () async {
+      Map<String, dynamic>? body;
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(
+            jsonEncode({
+              'data': {
+                'parityCheck': {'start': true},
+              },
+            }),
+            200,
+          );
+        }),
+      );
+
+      await client.runParityCheckAction(ParityCheckAction.start);
+      expect(body!['query'], contains('parityCheck'));
+      expect(body!['query'], contains('start'));
+    });
+  });
+
   group('UnraidFileManager File Browser API', () {
     test('derives File Browser base URL from the Unraid URL', () {
       final client = UnraidApiClient(

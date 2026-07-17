@@ -20,6 +20,8 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 - 支持下拉刷新仪表盘与 Docker / 虚拟机 / 共享列表。
 - 支持仪表盘定时自动刷新（默认 30s，可在设置中关闭或改间隔）。
 - 支持服务器图标切换。
+- 主页阵列电源：启动/停止阵列（GraphQL `array.setState`，停止需输入 STOP 确认）；奇偶校验开始/取消。
+- 整机重启/关机未在当前 Connect GraphQL schema 暴露，主页会提示改用 WebGUI。
 - 提供通知、磁盘、网络、UPS、插件、安全、云服务、日志等模块化详情面板；通知列表来自 GraphQL（只读）。
 - 提供相册、音乐等应用入口。
 
@@ -373,7 +375,7 @@ dart format lib test
 
 - API Key 属于敏感凭据，请避免提交到仓库或公开日志。
 - “记住我”将 API Key 存入 `flutter_secure_storage`（Android 使用加密 SharedPreferences / Keystore 路径）；keystore 与 `key.properties` 不得提交仓库。
-- 关机/重启等系统电源入口未在当前主页 UI 暴露。
+- 主页提供阵列启停（非整机电源）；整机重启/关机请使用 Unraid WebGUI。
 
 ## 路线图
 

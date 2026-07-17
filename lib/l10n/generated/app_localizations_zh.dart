@@ -252,6 +252,73 @@ class AppLocalizationsZh extends AppLocalizations {
       '「记住我」会将 API Key 写入系统安全存储（如 Android Keystore）；服务器地址等非敏感项保存在本地偏好中。';
 
   @override
+  String get powerSectionTitle => '阵列电源';
+
+  @override
+  String get powerSectionTrailing => 'array power';
+
+  @override
+  String get powerStartArray => '启动阵列';
+
+  @override
+  String get powerStopArray => '停止阵列';
+
+  @override
+  String get powerStartArrayConfirmTitle => '启动阵列？';
+
+  @override
+  String get powerStartArrayConfirmMessage =>
+      '将启动 Unraid 阵列，共享与 Docker 依赖阵列可用。确认继续？';
+
+  @override
+  String get powerStopArrayConfirmTitle => '停止阵列？';
+
+  @override
+  String get powerStopArrayConfirmMessage => '停止阵列会使共享与多数容器不可用。请确认已无重要写入。';
+
+  @override
+  String get powerConfirmWordLabel => '请输入 STOP 以确认';
+
+  @override
+  String get powerConfirmWordHint => 'STOP';
+
+  @override
+  String get powerConfirmWordError => '请输入 STOP 确认';
+
+  @override
+  String powerActionSubmitted(String action) {
+    return '已提交：$action';
+  }
+
+  @override
+  String get powerMissingClient => '未连接服务器，无法执行电源操作';
+
+  @override
+  String get powerOsNote =>
+      '当前 API 支持阵列启停；整机重启/关机未在 Connect GraphQL 暴露，请使用 WebGUI。';
+
+  @override
+  String get paritySectionTitle => '校验操作';
+
+  @override
+  String get parityStart => '开始校验';
+
+  @override
+  String get parityCancel => '取消校验';
+
+  @override
+  String get parityStartConfirmTitle => '开始奇偶校验？';
+
+  @override
+  String get parityStartConfirmMessage => '将启动非纠正模式奇偶校验，可能影响磁盘性能。';
+
+  @override
+  String get parityCancelConfirmTitle => '取消奇偶校验？';
+
+  @override
+  String get parityCancelConfirmMessage => '将取消进行中的奇偶校验任务。';
+
+  @override
   String get settingsServerConfigTitle => '服务器配置';
 
   @override

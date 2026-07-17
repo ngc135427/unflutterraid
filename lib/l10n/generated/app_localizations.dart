@@ -530,6 +530,132 @@ abstract class AppLocalizations {
   /// **'「记住我」会将 API Key 写入系统安全存储（如 Android Keystore）；服务器地址等非敏感项保存在本地偏好中。'**
   String get aboutSecurityBody;
 
+  /// No description provided for @powerSectionTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'阵列电源'**
+  String get powerSectionTitle;
+
+  /// No description provided for @powerSectionTrailing.
+  ///
+  /// In zh, this message translates to:
+  /// **'array power'**
+  String get powerSectionTrailing;
+
+  /// No description provided for @powerStartArray.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动阵列'**
+  String get powerStartArray;
+
+  /// No description provided for @powerStopArray.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止阵列'**
+  String get powerStopArray;
+
+  /// No description provided for @powerStartArrayConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动阵列？'**
+  String get powerStartArrayConfirmTitle;
+
+  /// No description provided for @powerStartArrayConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将启动 Unraid 阵列，共享与 Docker 依赖阵列可用。确认继续？'**
+  String get powerStartArrayConfirmMessage;
+
+  /// No description provided for @powerStopArrayConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止阵列？'**
+  String get powerStopArrayConfirmTitle;
+
+  /// No description provided for @powerStopArrayConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止阵列会使共享与多数容器不可用。请确认已无重要写入。'**
+  String get powerStopArrayConfirmMessage;
+
+  /// No description provided for @powerConfirmWordLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 STOP 以确认'**
+  String get powerConfirmWordLabel;
+
+  /// No description provided for @powerConfirmWordHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'STOP'**
+  String get powerConfirmWordHint;
+
+  /// No description provided for @powerConfirmWordError.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 STOP 确认'**
+  String get powerConfirmWordError;
+
+  /// No description provided for @powerActionSubmitted.
+  ///
+  /// In zh, this message translates to:
+  /// **'已提交：{action}'**
+  String powerActionSubmitted(String action);
+
+  /// No description provided for @powerMissingClient.
+  ///
+  /// In zh, this message translates to:
+  /// **'未连接服务器，无法执行电源操作'**
+  String get powerMissingClient;
+
+  /// No description provided for @powerOsNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前 API 支持阵列启停；整机重启/关机未在 Connect GraphQL 暴露，请使用 WebGUI。'**
+  String get powerOsNote;
+
+  /// No description provided for @paritySectionTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'校验操作'**
+  String get paritySectionTitle;
+
+  /// No description provided for @parityStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始校验'**
+  String get parityStart;
+
+  /// No description provided for @parityCancel.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消校验'**
+  String get parityCancel;
+
+  /// No description provided for @parityStartConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始奇偶校验？'**
+  String get parityStartConfirmTitle;
+
+  /// No description provided for @parityStartConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将启动非纠正模式奇偶校验，可能影响磁盘性能。'**
+  String get parityStartConfirmMessage;
+
+  /// No description provided for @parityCancelConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消奇偶校验？'**
+  String get parityCancelConfirmTitle;
+
+  /// No description provided for @parityCancelConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'将取消进行中的奇偶校验任务。'**
+  String get parityCancelConfirmMessage;
+
   /// No description provided for @settingsServerConfigTitle.
   ///
   /// In zh, this message translates to:
