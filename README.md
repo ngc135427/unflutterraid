@@ -38,7 +38,7 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 
 - 相册、视频、相册分组和备份目录选择统一通过 File Manager 能力层访问。
 - File Manager 通过 File Browser API 获取递归媒体列表、相册缩略图和原始文件内容。
-- 提供照片备份设置界面，包括权限检测、Wi-Fi 限制、目标目录选择等 UI。
+- 照片备份（Android/iOS）：手动「立即备份」上传设备最近最多 50 张照片到所选 NAS 目录；同名跳过；支持进度/取消、Wi‑Fi 限制与上次同步记录。视频备份与后台守护进程仍属后续。
 
 ### 音乐页面
 
@@ -59,7 +59,7 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 - `flutter_localizations` / `intl`：应用内中英文与系统语言
 - `http`：访问 Unraid GraphQL API 和 File Browser API
 - `shared_preferences`：语言与主题偏好
-- `permission_handler`：媒体权限检测
+- `photo_manager` / `connectivity_plus`：相册备份权限、本地照片枚举与网络类型
 - Android MethodChannel：登录偏好原生持久化
 - Flutter Widget Test / MockClient 单元测试
 
@@ -361,7 +361,7 @@ dart format lib test
 
 - 共享浏览写操作：已支持重命名/删除；完善批量操作与拖拽移动。
 - 音乐：真实音频流播放与播放队列（已完成 MVP）。
-- 将相册备份从 UI 原型推进到真实上传任务。
+- 相册备份：手动「立即备份」照片上传（已完成 MVP）；视频与后台守护后续。
 - 完善桌面端和 Android 端自动化发布流水线与签名配置。
 
 ## License

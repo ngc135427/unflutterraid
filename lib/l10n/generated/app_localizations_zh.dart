@@ -670,7 +670,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noVideosFound => '没有找到视频';
 
   @override
-  String get mediaPermissionRequiredBackup => '需要照片和视频权限才能进行备份';
+  String get mediaPermissionRequiredBackup => '需要照片访问权限才能进行备份';
 
   @override
   String get selectBackupDirectory => '选择备份目录';
@@ -691,28 +691,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get permissionChecking => '权限检查中...';
 
   @override
-  String get permissionCheckingSubtitle => '正在检查照片和视频访问权限';
+  String get permissionCheckingSubtitle => '正在检查照片访问权限';
 
   @override
-  String get needMediaPermission => '需要媒体权限';
+  String get needMediaPermission => '需要照片权限';
 
   @override
   String get grantPermission => '授予权限';
 
   @override
-  String get mediaPermission => '媒体权限';
+  String get mediaPermission => '照片权限';
 
   @override
-  String get mediaPermissionGranted => '照片和视频访问权限已授予';
+  String get mediaPermissionGranted => '照片访问权限已授予';
 
   @override
-  String get autoBackup => '自动备份';
+  String get autoBackup => '自动备份（偏好）';
 
   @override
-  String get autoBackupSubtitle => '将手机照片同步到 Unraid 共享目录';
+  String get autoBackupSubtitle => '仅记住偏好，不会在后台自动运行；请点「立即备份」';
 
   @override
-  String get grantMediaFirst => '请先授予媒体权限';
+  String get grantMediaFirst => '请先授予照片权限';
 
   @override
   String get targetDirectory => '目标目录';
@@ -727,7 +727,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chargeWhenBackupVideo => '充电时备份视频';
 
   @override
-  String get chargeWhenBackupVideoSubtitle => '减少后台同步对电量的影响';
+  String get chargeWhenBackupVideoSubtitle => '视频备份将在后续版本支持';
 
   @override
   String get lastSync => '上次同步';
@@ -750,10 +750,56 @@ class AppLocalizationsZh extends AppLocalizations {
   String get needAuthToBackup => '需要授权才能备份';
 
   @override
-  String get photosVideosSyncToUnraid => '照片和视频将同步到 Unraid';
+  String get photosVideosSyncToUnraid => '可将最近照片手动上传到 Unraid（每次最多 50 张）';
 
   @override
-  String get grantPhotosVideosToEnable => '请授予照片和视频访问权限以启用备份功能';
+  String get grantPhotosVideosToEnable => '请授予照片访问权限以启用备份';
+
+  @override
+  String get backupNow => '立即备份';
+
+  @override
+  String get backupCancel => '取消备份';
+
+  @override
+  String backupRunning(int current, int total) {
+    return '正在备份 $current/$total';
+  }
+
+  @override
+  String backupCurrentFile(String name) {
+    return '当前：$name';
+  }
+
+  @override
+  String get backupWifiBlocked => '当前为移动网络。请连接 Wi-Fi，或关闭「仅 Wi-Fi 备份」。';
+
+  @override
+  String get backupUnsupportedPlatform => '相册备份目前仅支持 Android / iOS。';
+
+  @override
+  String get backupNoPhotos => '没有可备份的本地照片。';
+
+  @override
+  String get backupNeedConnection => '请先连接 Unraid 服务器后再备份。';
+
+  @override
+  String backupDoneSummary(int success, int skipped, int failed) {
+    return '完成：成功 $success，跳过 $skipped，失败 $failed';
+  }
+
+  @override
+  String backupCancelledSummary(int success, int skipped, int failed) {
+    return '已取消。成功 $success，跳过 $skipped，失败 $failed';
+  }
+
+  @override
+  String lastSyncSummary(String time, int success, int skipped, int failed) {
+    return '$time · 成功 $success / 跳过 $skipped / 失败 $failed';
+  }
+
+  @override
+  String get backupBatchHint => '每次上传设备上最新的最多 50 张照片；同名文件会跳过。';
 
   @override
   String get searchPhotosVideos => '搜索照片、视频';

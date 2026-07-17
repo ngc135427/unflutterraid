@@ -358,26 +358,26 @@
   "noPhotosFound": "No photos found",
   "noAlbumDirsFound": "No album folders found",
   "noVideosFound": "No videos found",
-  "mediaPermissionRequiredBackup": "Photo and video permission is required for backup",
+  "mediaPermissionRequiredBackup": "Photo access is required for backup",
   "selectBackupDirectory": "Choose backup folder",
   "selectThisDirectory": "Use this folder",
   "goUp": "Up",
   "noSubfolders": "No subfolders in this directory",
   "photoBackup": "Photo backup",
   "permissionChecking": "Checking permissions...",
-  "permissionCheckingSubtitle": "Checking photo and video access",
-  "needMediaPermission": "Media permission required",
+  "permissionCheckingSubtitle": "Checking photo library access",
+  "needMediaPermission": "Photo permission required",
   "grantPermission": "Grant permission",
-  "mediaPermission": "Media permission",
-  "mediaPermissionGranted": "Photo and video access granted",
-  "autoBackup": "Auto backup",
-  "autoBackupSubtitle": "Sync phone photos to an Unraid share",
-  "grantMediaFirst": "Grant media permission first",
+  "mediaPermission": "Photo permission",
+  "mediaPermissionGranted": "Photo access granted",
+  "autoBackup": "Auto backup (preference)",
+  "autoBackupSubtitle": "Saves preference only — no background daemon. Use Backup now.",
+  "grantMediaFirst": "Grant photo permission first",
   "targetDirectory": "Target folder",
   "wifiOnlyBackup": "Wi-Fi only",
   "wifiOnlyBackupSubtitle": "Avoid mobile data uploads",
   "chargeWhenBackupVideo": "Backup videos while charging",
-  "chargeWhenBackupVideoSubtitle": "Reduce battery impact for background sync",
+  "chargeWhenBackupVideoSubtitle": "Video backup will ship in a later version",
   "lastSync": "Last sync",
   "noSyncRecord": "No sync history yet",
   "missingPermissionAccess": "Missing access to {permissions}",
@@ -391,8 +391,53 @@
   "andJoin": " and ",
   "photoBackupReady": "Photo backup is ready",
   "needAuthToBackup": "Authorization required for backup",
-  "photosVideosSyncToUnraid": "Photos and videos will sync to Unraid",
-  "grantPhotosVideosToEnable": "Grant photo and video access to enable backup",
+  "photosVideosSyncToUnraid": "Manually upload recent photos to Unraid (up to 50 per run)",
+  "grantPhotosVideosToEnable": "Grant photo access to enable backup",
+  "backupNow": "Backup now",
+  "backupCancel": "Cancel backup",
+  "backupRunning": "Backing up {current}/{total}",
+  "@backupRunning": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "backupCurrentFile": "Current: {name}",
+  "@backupCurrentFile": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "backupWifiBlocked": "You are on mobile data. Connect to Wi-Fi or turn off Wi-Fi only.",
+  "backupUnsupportedPlatform": "Photo backup is currently available on Android / iOS only.",
+  "backupNoPhotos": "No local photos available to back up.",
+  "backupNeedConnection": "Connect to your Unraid server before backing up.",
+  "backupDoneSummary": "Done: {success} uploaded, {skipped} skipped, {failed} failed",
+  "@backupDoneSummary": {
+    "placeholders": {
+      "success": { "type": "int" },
+      "skipped": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "backupCancelledSummary": "Cancelled: {success} uploaded, {skipped} skipped, {failed} failed",
+  "@backupCancelledSummary": {
+    "placeholders": {
+      "success": { "type": "int" },
+      "skipped": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "lastSyncSummary": "{time} · {success} ok / {skipped} skipped / {failed} failed",
+  "@lastSyncSummary": {
+    "placeholders": {
+      "time": { "type": "String" },
+      "success": { "type": "int" },
+      "skipped": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "backupBatchHint": "Each run uploads up to 50 newest photos. Existing names are skipped.",
   "searchPhotosVideos": "Search photos and videos",
   "allPhotos": "All photos",
   "backupEnabledSample": "On / today 09:42",

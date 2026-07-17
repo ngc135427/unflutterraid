@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/generated/app_localizations.dart';
-import 'package:permission_handler/permission_handler.dart';
 
+import '../services/backup_preferences.dart';
+import '../services/backup_uploader.dart';
+import '../services/local_photo_source.dart';
 import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fade_slide.dart';
@@ -600,71 +603,230 @@ class AlbumBackupPage extends StatefulWidget {
 }
 
 class _AlbumBackupPageState extends State<AlbumBackupPage> {
-  bool _autoBackup = true;
+  bool _autoBackup = false;
   bool _wifiOnly = true;
-  bool _chargeVideo = false;
-  String _targetDir = '/mnt/user/photos/mobile';
+  String _targetDir = BackupPreferencesState.defaultTargetDir;
+  BackupLastSync? _lastSync;
 
-  // Permission states
   bool _photosGranted = false;
-  bool _videosGranted = false;
   bool _checkingPermissions = true;
+  final bool _platformSupported = LocalPhotoSource.isSupported;
 
-  // Directory browser state
   bool _browsingDir = false;
   String _browsePath = '';
   List<UnraidFileEntry> _browseEntries = [];
   bool _browseLoading = false;
   String? _browseError;
 
+  bool _running = false;
+  bool _cancelRequested = false;
+  int _progressDone = 0;
+  int _progressTotal = 0;
+  String _progressName = '';
+
   UnraidApiClient? get _apiClient {
     final args = ModalRoute.of(context)?.settings.arguments;
     return args is AlbumPageArgs ? args.apiClient : null;
   }
 
+  bool get _permissionsOk => _platformSupported && _photosGranted;
+
   @override
   void initState() {
     super.initState();
-    _checkPermissions();
+    unawaited(_bootstrap());
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  Future<void> _bootstrap() async {
+    final prefs = await BackupPreferences.load();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _autoBackup = prefs.autoBackup;
+      _wifiOnly = prefs.wifiOnly;
+      _targetDir = prefs.targetDir;
+      _lastSync = prefs.lastSync;
+    });
+    await _checkPermissions();
   }
 
-  // --- Permissions ---
+  Future<void> _persistPrefs() async {
+    await BackupPreferences.save(
+      BackupPreferencesState(
+        autoBackup: _autoBackup,
+        wifiOnly: _wifiOnly,
+        targetDir: _targetDir,
+        lastSync: _lastSync,
+      ),
+    );
+  }
 
   Future<void> _checkPermissions() async {
-    final photos = await Permission.photos.status;
-    final videos = await Permission.videos.status;
-    if (!mounted) return;
+    if (!_platformSupported) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _photosGranted = false;
+        _checkingPermissions = false;
+      });
+      return;
+    }
+    final granted = await LocalPhotoSource.hasPermission();
+    if (!mounted) {
+      return;
+    }
     setState(() {
-      _photosGranted = photos.isGranted;
-      _videosGranted = videos.isGranted;
+      _photosGranted = granted;
       _checkingPermissions = false;
     });
   }
 
   Future<void> _requestPermissions() async {
-    final results = await [
-      Permission.photos,
-      Permission.videos,
-    ].request();
-    if (!mounted) return;
-    setState(() {
-      _photosGranted = results[Permission.photos]?.isGranted ?? false;
-      _videosGranted = results[Permission.videos]?.isGranted ?? false;
-    });
-    if (!_photosGranted || !_videosGranted) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  AppLocalizations.of(context).mediaPermissionRequiredBackup)),
-        );
-      }
+    if (!_platformSupported) {
+      return;
     }
+    final granted = await LocalPhotoSource.ensurePermission();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _photosGranted = granted);
+    if (!granted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).mediaPermissionRequiredBackup,
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<bool> _isOnMobileData() async {
+    final results = await Connectivity().checkConnectivity();
+    return results.contains(ConnectivityResult.mobile) &&
+        !results.contains(ConnectivityResult.wifi) &&
+        !results.contains(ConnectivityResult.ethernet);
+  }
+
+  Future<void> _startBackup() async {
+    final l10n = AppLocalizations.of(context);
+    final client = _apiClient;
+    if (client == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.backupNeedConnection)),
+      );
+      return;
+    }
+    if (!_platformSupported) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.backupUnsupportedPlatform)),
+      );
+      return;
+    }
+    if (!_photosGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.mediaPermissionRequiredBackup)),
+      );
+      return;
+    }
+    if (_wifiOnly && await _isOnMobileData()) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.backupWifiBlocked)),
+      );
+      return;
+    }
+
+    setState(() {
+      _running = true;
+      _cancelRequested = false;
+      _progressDone = 0;
+      _progressTotal = 0;
+      _progressName = '';
+    });
+
+    try {
+      final photos = await LocalPhotoSource.listRecentPhotos();
+      if (!mounted) {
+        return;
+      }
+      if (photos.isEmpty) {
+        setState(() => _running = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.backupNoPhotos)),
+        );
+        return;
+      }
+
+      setState(() => _progressTotal = photos.length);
+
+      final result = await const BackupUploader().run(
+        fileManager: client.fileManager,
+        targetDir: _targetDir,
+        photos: photos,
+        isCancelled: () => _cancelRequested,
+        onProgress: (done, total, name) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _progressDone = done;
+            _progressTotal = total;
+            _progressName = name;
+          });
+        },
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      final lastSync = BackupLastSync(
+        at: DateTime.now(),
+        success: result.success,
+        failed: result.failed,
+        skipped: result.skipped,
+      );
+      setState(() {
+        _running = false;
+        _lastSync = lastSync;
+      });
+      await BackupPreferences.saveLastSync(lastSync);
+
+      final message = result.cancelled
+          ? l10n.backupCancelledSummary(
+              result.success,
+              result.skipped,
+              result.failed,
+            )
+          : l10n.backupDoneSummary(
+              result.success,
+              result.skipped,
+              result.failed,
+            );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _running = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.loadFailed(error.toString()))),
+      );
+    }
+  }
+
+  void _cancelBackup() {
+    setState(() => _cancelRequested = true);
   }
 
   // --- Directory browser ---
@@ -727,6 +889,7 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
       _targetDir = entry.path;
       _browsingDir = false;
     });
+    unawaited(_persistPrefs());
   }
 
   void _navigateUp() {
@@ -740,6 +903,7 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
       _targetDir = _browsePath;
       _browsingDir = false;
     });
+    unawaited(_persistPrefs());
   }
 
   String _parentPath(String path) {
@@ -750,8 +914,6 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
     if (index <= 0) return '/';
     return normalized.substring(0, index);
   }
-
-  bool get _permissionsOk => _photosGranted && _videosGranted;
 
   // --- Build ---
 
@@ -937,114 +1099,174 @@ class _AlbumBackupPageState extends State<AlbumBackupPage> {
   }
 
   Widget _buildSettings() {
+    final l10n = AppLocalizations.of(context);
     return _AlbumScaffold(
-      title: AppLocalizations.of(context).photoBackup,
+      title: l10n.photoBackup,
       showSearchOnScroll: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _BackupHeaderCard(
-            photosGranted: _photosGranted,
-            videosGranted: _videosGranted,
+            ready: _permissionsOk,
+            platformSupported: _platformSupported,
           ),
-          SizedBox(height: 18),
-
-          // Permission section
+          const SizedBox(height: 12),
+          Text(
+            l10n.backupBatchHint,
+            style: const TextStyle(color: AppTheme.textMedium, fontSize: 13),
+          ),
+          const SizedBox(height: 18),
           if (_checkingPermissions)
             _BackupSettingRow(
               icon: Icons.shield,
-              title: AppLocalizations.of(context).permissionChecking,
-              subtitle: AppLocalizations.of(context).permissionCheckingSubtitle,
+              title: l10n.permissionChecking,
+              subtitle: l10n.permissionCheckingSubtitle,
+            )
+          else if (!_platformSupported)
+            _BackupSettingRow(
+              icon: Icons.devices,
+              title: l10n.needMediaPermission,
+              subtitle: l10n.backupUnsupportedPlatform,
+              iconColor: const Color(0xFFFF9F43),
             )
           else if (!_permissionsOk)
             _BackupActionRow(
               icon: Icons.shield,
-              title: AppLocalizations.of(context).needMediaPermission,
-              subtitle: _permissionDeniedSubtitle(),
-              actionLabel: AppLocalizations.of(context).grantPermission,
+              title: l10n.needMediaPermission,
+              subtitle: l10n.missingPermissionAccess(l10n.photos),
+              actionLabel: l10n.grantPermission,
               onAction: _requestPermissions,
             )
           else
             _BackupSettingRow(
               icon: Icons.shield,
-              title: AppLocalizations.of(context).mediaPermission,
-              subtitle: AppLocalizations.of(context).mediaPermissionGranted,
+              title: l10n.mediaPermission,
+              subtitle: l10n.mediaPermissionGranted,
               iconColor: Colors.green,
             ),
-
-          SizedBox(height: 10),
-
-          // Auto backup toggle
+          const SizedBox(height: 10),
           _BackupSettingRow(
             icon: Icons.sync,
-            title: AppLocalizations.of(context).autoBackup,
-            subtitle: _permissionsOk
-                ? AppLocalizations.of(context).autoBackupSubtitle
-                : AppLocalizations.of(context).grantMediaFirst,
-            enabled: _autoBackup && _permissionsOk,
+            title: l10n.autoBackup,
+            subtitle:
+                _permissionsOk ? l10n.autoBackupSubtitle : l10n.grantMediaFirst,
+            enabled: _autoBackup,
             onToggle: _permissionsOk
-                ? (value) => setState(() => _autoBackup = value)
+                ? (value) {
+                    setState(() => _autoBackup = value);
+                    unawaited(_persistPrefs());
+                  }
                 : null,
           ),
-
-          // Target directory - click to browse
           _BackupSettingRow(
             icon: Icons.folder_shared,
-            title: AppLocalizations.of(context).targetDirectory,
+            title: l10n.targetDirectory,
             subtitle: _targetDir,
-            onTap: _openDirBrowser,
+            onTap: _running ? null : _openDirBrowser,
           ),
-
-          // WiFi only
           _BackupSettingRow(
             icon: Icons.wifi,
-            title: AppLocalizations.of(context).wifiOnlyBackup,
-            subtitle: AppLocalizations.of(context).wifiOnlyBackupSubtitle,
+            title: l10n.wifiOnlyBackup,
+            subtitle: l10n.wifiOnlyBackupSubtitle,
             enabled: _wifiOnly,
-            onToggle: (value) => setState(() => _wifiOnly = value),
+            onToggle: (value) {
+              setState(() => _wifiOnly = value);
+              unawaited(_persistPrefs());
+            },
           ),
-
-          // Charge video
           _BackupSettingRow(
             icon: Icons.battery_charging_full,
-            title: AppLocalizations.of(context).chargeWhenBackupVideo,
-            subtitle:
-                AppLocalizations.of(context).chargeWhenBackupVideoSubtitle,
-            enabled: _chargeVideo,
-            onToggle: (value) => setState(() => _chargeVideo = value),
+            title: l10n.chargeWhenBackupVideo,
+            subtitle: l10n.chargeWhenBackupVideoSubtitle,
           ),
-
           _BackupSettingRow(
             icon: Icons.history,
-            title: AppLocalizations.of(context).lastSync,
-            subtitle: AppLocalizations.of(context).noSyncRecord,
+            title: l10n.lastSync,
+            subtitle: _formatLastSync(l10n),
           ),
+          const SizedBox(height: 16),
+          if (_running) ...[
+            Text(
+              l10n.backupRunning(_progressDone, _progressTotal),
+              style: const TextStyle(
+                color: AppTheme.textDark,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: _progressTotal == 0
+                  ? null
+                  : (_progressDone / _progressTotal).clamp(0.0, 1.0),
+            ),
+            if (_progressName.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.backupCurrentFile(_progressName),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    const TextStyle(color: AppTheme.textMedium, fontSize: 13),
+              ),
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: _cancelBackup,
+                child: Text(l10n.backupCancel),
+              ),
+            ),
+          ] else
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: (_permissionsOk && _apiClient != null)
+                    ? () => unawaited(_startBackup())
+                    : null,
+                icon: const Icon(Icons.cloud_upload_outlined),
+                label: Text(l10n.backupNow),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  String _permissionDeniedSubtitle() {
-    final missing = <String>[];
-    final l10n = AppLocalizations.of(context);
-    if (!_photosGranted) missing.add(l10n.photos);
-    if (!_videosGranted) missing.add(l10n.videos);
-    return l10n.missingPermissionAccess(missing.join(l10n.andJoin));
+  String _formatLastSync(AppLocalizations l10n) {
+    final last = _lastSync;
+    if (last == null) {
+      return l10n.noSyncRecord;
+    }
+    final local = last.at.toLocal();
+    final time = '${local.year.toString().padLeft(4, '0')}-'
+        '${local.month.toString().padLeft(2, '0')}-'
+        '${local.day.toString().padLeft(2, '0')} '
+        '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
+    return l10n.lastSyncSummary(
+      time,
+      last.success,
+      last.skipped,
+      last.failed,
+    );
   }
 }
 
 class _BackupHeaderCard extends StatelessWidget {
   const _BackupHeaderCard({
-    required this.photosGranted,
-    required this.videosGranted,
+    required this.ready,
+    required this.platformSupported,
   });
 
-  final bool photosGranted;
-  final bool videosGranted;
+  final bool ready;
+  final bool platformSupported;
 
   @override
   Widget build(BuildContext context) {
-    final allGranted = photosGranted && videosGranted;
+    final l10n = AppLocalizations.of(context);
+    final allGranted = ready;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -1063,7 +1285,7 @@ class _BackupHeaderCard extends StatelessWidget {
             color: (allGranted ? AppTheme.primary : AppTheme.textLight)
                 .withValues(alpha: 0.2),
             blurRadius: 12,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1075,22 +1297,26 @@ class _BackupHeaderCard extends StatelessWidget {
             color: Colors.white,
             size: 28,
           ),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           Text(
-            allGranted
-                ? AppLocalizations.of(context).photoBackupReady
-                : AppLocalizations.of(context).needAuthToBackup,
-            style: TextStyle(
+            !platformSupported
+                ? l10n.backupUnsupportedPlatform
+                : allGranted
+                    ? l10n.photoBackupReady
+                    : l10n.needAuthToBackup,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           Text(
-            allGranted
-                ? AppLocalizations.of(context).photosVideosSyncToUnraid
-                : AppLocalizations.of(context).grantPhotosVideosToEnable,
+            !platformSupported
+                ? l10n.backupBatchHint
+                : allGranted
+                    ? l10n.photosVideosSyncToUnraid
+                    : l10n.grantPhotosVideosToEnable,
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],

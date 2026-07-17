@@ -1337,7 +1337,7 @@ abstract class AppLocalizations {
   /// No description provided for @mediaPermissionRequiredBackup.
   ///
   /// In zh, this message translates to:
-  /// **'需要照片和视频权限才能进行备份'**
+  /// **'需要照片访问权限才能进行备份'**
   String get mediaPermissionRequiredBackup;
 
   /// No description provided for @selectBackupDirectory.
@@ -1379,13 +1379,13 @@ abstract class AppLocalizations {
   /// No description provided for @permissionCheckingSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'正在检查照片和视频访问权限'**
+  /// **'正在检查照片访问权限'**
   String get permissionCheckingSubtitle;
 
   /// No description provided for @needMediaPermission.
   ///
   /// In zh, this message translates to:
-  /// **'需要媒体权限'**
+  /// **'需要照片权限'**
   String get needMediaPermission;
 
   /// No description provided for @grantPermission.
@@ -1397,31 +1397,31 @@ abstract class AppLocalizations {
   /// No description provided for @mediaPermission.
   ///
   /// In zh, this message translates to:
-  /// **'媒体权限'**
+  /// **'照片权限'**
   String get mediaPermission;
 
   /// No description provided for @mediaPermissionGranted.
   ///
   /// In zh, this message translates to:
-  /// **'照片和视频访问权限已授予'**
+  /// **'照片访问权限已授予'**
   String get mediaPermissionGranted;
 
   /// No description provided for @autoBackup.
   ///
   /// In zh, this message translates to:
-  /// **'自动备份'**
+  /// **'自动备份（偏好）'**
   String get autoBackup;
 
   /// No description provided for @autoBackupSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'将手机照片同步到 Unraid 共享目录'**
+  /// **'仅记住偏好，不会在后台自动运行；请点「立即备份」'**
   String get autoBackupSubtitle;
 
   /// No description provided for @grantMediaFirst.
   ///
   /// In zh, this message translates to:
-  /// **'请先授予媒体权限'**
+  /// **'请先授予照片权限'**
   String get grantMediaFirst;
 
   /// No description provided for @targetDirectory.
@@ -1451,7 +1451,7 @@ abstract class AppLocalizations {
   /// No description provided for @chargeWhenBackupVideoSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'减少后台同步对电量的影响'**
+  /// **'视频备份将在后续版本支持'**
   String get chargeWhenBackupVideoSubtitle;
 
   /// No description provided for @lastSync.
@@ -1493,14 +1493,86 @@ abstract class AppLocalizations {
   /// No description provided for @photosVideosSyncToUnraid.
   ///
   /// In zh, this message translates to:
-  /// **'照片和视频将同步到 Unraid'**
+  /// **'可将最近照片手动上传到 Unraid（每次最多 50 张）'**
   String get photosVideosSyncToUnraid;
 
   /// No description provided for @grantPhotosVideosToEnable.
   ///
   /// In zh, this message translates to:
-  /// **'请授予照片和视频访问权限以启用备份功能'**
+  /// **'请授予照片访问权限以启用备份'**
   String get grantPhotosVideosToEnable;
+
+  /// No description provided for @backupNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即备份'**
+  String get backupNow;
+
+  /// No description provided for @backupCancel.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消备份'**
+  String get backupCancel;
+
+  /// No description provided for @backupRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在备份 {current}/{total}'**
+  String backupRunning(int current, int total);
+
+  /// No description provided for @backupCurrentFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前：{name}'**
+  String backupCurrentFile(String name);
+
+  /// No description provided for @backupWifiBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前为移动网络。请连接 Wi-Fi，或关闭「仅 Wi-Fi 备份」。'**
+  String get backupWifiBlocked;
+
+  /// No description provided for @backupUnsupportedPlatform.
+  ///
+  /// In zh, this message translates to:
+  /// **'相册备份目前仅支持 Android / iOS。'**
+  String get backupUnsupportedPlatform;
+
+  /// No description provided for @backupNoPhotos.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可备份的本地照片。'**
+  String get backupNoPhotos;
+
+  /// No description provided for @backupNeedConnection.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先连接 Unraid 服务器后再备份。'**
+  String get backupNeedConnection;
+
+  /// No description provided for @backupDoneSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成：成功 {success}，跳过 {skipped}，失败 {failed}'**
+  String backupDoneSummary(int success, int skipped, int failed);
+
+  /// No description provided for @backupCancelledSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'已取消。成功 {success}，跳过 {skipped}，失败 {failed}'**
+  String backupCancelledSummary(int success, int skipped, int failed);
+
+  /// No description provided for @lastSyncSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'{time} · 成功 {success} / 跳过 {skipped} / 失败 {failed}'**
+  String lastSyncSummary(String time, int success, int skipped, int failed);
+
+  /// No description provided for @backupBatchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'每次上传设备上最新的最多 50 张照片；同名文件会跳过。'**
+  String get backupBatchHint;
 
   /// No description provided for @searchPhotosVideos.
   ///

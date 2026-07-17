@@ -681,7 +681,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mediaPermissionRequiredBackup =>
-      'Photo and video permission is required for backup';
+      'Photo access is required for backup';
 
   @override
   String get selectBackupDirectory => 'Choose backup folder';
@@ -702,28 +702,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionChecking => 'Checking permissions...';
 
   @override
-  String get permissionCheckingSubtitle => 'Checking photo and video access';
+  String get permissionCheckingSubtitle => 'Checking photo library access';
 
   @override
-  String get needMediaPermission => 'Media permission required';
+  String get needMediaPermission => 'Photo permission required';
 
   @override
   String get grantPermission => 'Grant permission';
 
   @override
-  String get mediaPermission => 'Media permission';
+  String get mediaPermission => 'Photo permission';
 
   @override
-  String get mediaPermissionGranted => 'Photo and video access granted';
+  String get mediaPermissionGranted => 'Photo access granted';
 
   @override
-  String get autoBackup => 'Auto backup';
+  String get autoBackup => 'Auto backup (preference)';
 
   @override
-  String get autoBackupSubtitle => 'Sync phone photos to an Unraid share';
+  String get autoBackupSubtitle =>
+      'Saves preference only — no background daemon. Use Backup now.';
 
   @override
-  String get grantMediaFirst => 'Grant media permission first';
+  String get grantMediaFirst => 'Grant photo permission first';
 
   @override
   String get targetDirectory => 'Target folder';
@@ -739,7 +740,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chargeWhenBackupVideoSubtitle =>
-      'Reduce battery impact for background sync';
+      'Video backup will ship in a later version';
 
   @override
   String get lastSync => 'Last sync';
@@ -763,11 +764,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get photosVideosSyncToUnraid =>
-      'Photos and videos will sync to Unraid';
+      'Manually upload recent photos to Unraid (up to 50 per run)';
 
   @override
-  String get grantPhotosVideosToEnable =>
-      'Grant photo and video access to enable backup';
+  String get grantPhotosVideosToEnable => 'Grant photo access to enable backup';
+
+  @override
+  String get backupNow => 'Backup now';
+
+  @override
+  String get backupCancel => 'Cancel backup';
+
+  @override
+  String backupRunning(int current, int total) {
+    return 'Backing up $current/$total';
+  }
+
+  @override
+  String backupCurrentFile(String name) {
+    return 'Current: $name';
+  }
+
+  @override
+  String get backupWifiBlocked =>
+      'You are on mobile data. Connect to Wi-Fi or turn off Wi-Fi only.';
+
+  @override
+  String get backupUnsupportedPlatform =>
+      'Photo backup is currently available on Android / iOS only.';
+
+  @override
+  String get backupNoPhotos => 'No local photos available to back up.';
+
+  @override
+  String get backupNeedConnection =>
+      'Connect to your Unraid server before backing up.';
+
+  @override
+  String backupDoneSummary(int success, int skipped, int failed) {
+    return 'Done: $success uploaded, $skipped skipped, $failed failed';
+  }
+
+  @override
+  String backupCancelledSummary(int success, int skipped, int failed) {
+    return 'Cancelled: $success uploaded, $skipped skipped, $failed failed';
+  }
+
+  @override
+  String lastSyncSummary(String time, int success, int skipped, int failed) {
+    return '$time · $success ok / $skipped skipped / $failed failed';
+  }
+
+  @override
+  String get backupBatchHint =>
+      'Each run uploads up to 50 newest photos. Existing names are skipped.';
 
   @override
   String get searchPhotosVideos => 'Search photos and videos';

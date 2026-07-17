@@ -358,26 +358,26 @@
   "noPhotosFound": "没有找到照片",
   "noAlbumDirsFound": "没有找到相册目录",
   "noVideosFound": "没有找到视频",
-  "mediaPermissionRequiredBackup": "需要照片和视频权限才能进行备份",
+  "mediaPermissionRequiredBackup": "需要照片访问权限才能进行备份",
   "selectBackupDirectory": "选择备份目录",
   "selectThisDirectory": "选择此目录",
   "goUp": "返回上级",
   "noSubfolders": "此目录下没有子文件夹",
   "photoBackup": "照片备份",
   "permissionChecking": "权限检查中...",
-  "permissionCheckingSubtitle": "正在检查照片和视频访问权限",
-  "needMediaPermission": "需要媒体权限",
+  "permissionCheckingSubtitle": "正在检查照片访问权限",
+  "needMediaPermission": "需要照片权限",
   "grantPermission": "授予权限",
-  "mediaPermission": "媒体权限",
-  "mediaPermissionGranted": "照片和视频访问权限已授予",
-  "autoBackup": "自动备份",
-  "autoBackupSubtitle": "将手机照片同步到 Unraid 共享目录",
-  "grantMediaFirst": "请先授予媒体权限",
+  "mediaPermission": "照片权限",
+  "mediaPermissionGranted": "照片访问权限已授予",
+  "autoBackup": "自动备份（偏好）",
+  "autoBackupSubtitle": "仅记住偏好，不会在后台自动运行；请点「立即备份」",
+  "grantMediaFirst": "请先授予照片权限",
   "targetDirectory": "目标目录",
   "wifiOnlyBackup": "仅 Wi-Fi 备份",
   "wifiOnlyBackupSubtitle": "避免使用移动网络上传",
   "chargeWhenBackupVideo": "充电时备份视频",
-  "chargeWhenBackupVideoSubtitle": "减少后台同步对电量的影响",
+  "chargeWhenBackupVideoSubtitle": "视频备份将在后续版本支持",
   "lastSync": "上次同步",
   "noSyncRecord": "暂无同步记录",
   "missingPermissionAccess": "缺少{permissions}访问权限",
@@ -391,8 +391,53 @@
   "andJoin": "和",
   "photoBackupReady": "照片备份已就绪",
   "needAuthToBackup": "需要授权才能备份",
-  "photosVideosSyncToUnraid": "照片和视频将同步到 Unraid",
-  "grantPhotosVideosToEnable": "请授予照片和视频访问权限以启用备份功能",
+  "photosVideosSyncToUnraid": "可将最近照片手动上传到 Unraid（每次最多 50 张）",
+  "grantPhotosVideosToEnable": "请授予照片访问权限以启用备份",
+  "backupNow": "立即备份",
+  "backupCancel": "取消备份",
+  "backupRunning": "正在备份 {current}/{total}",
+  "@backupRunning": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "backupCurrentFile": "当前：{name}",
+  "@backupCurrentFile": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "backupWifiBlocked": "当前为移动网络。请连接 Wi-Fi，或关闭「仅 Wi-Fi 备份」。",
+  "backupUnsupportedPlatform": "相册备份目前仅支持 Android / iOS。",
+  "backupNoPhotos": "没有可备份的本地照片。",
+  "backupNeedConnection": "请先连接 Unraid 服务器后再备份。",
+  "backupDoneSummary": "完成：成功 {success}，跳过 {skipped}，失败 {failed}",
+  "@backupDoneSummary": {
+    "placeholders": {
+      "success": { "type": "int" },
+      "skipped": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "backupCancelledSummary": "已取消。成功 {success}，跳过 {skipped}，失败 {failed}",
+  "@backupCancelledSummary": {
+    "placeholders": {
+      "success": { "type": "int" },
+      "skipped": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "lastSyncSummary": "{time} · 成功 {success} / 跳过 {skipped} / 失败 {failed}",
+  "@lastSyncSummary": {
+    "placeholders": {
+      "time": { "type": "String" },
+      "success": { "type": "int" },
+      "skipped": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "backupBatchHint": "每次上传设备上最新的最多 50 张照片；同名文件会跳过。",
   "searchPhotosVideos": "搜索照片、视频",
   "allPhotos": "全部照片",
   "backupEnabledSample": "已开启 / 今天 09:42",
