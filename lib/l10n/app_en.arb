@@ -38,8 +38,52 @@
   "settingsComingSoon": "Coming soon",
   "settingsThemeToast": "Theme: {theme}",
   "settingsNotificationsTitle": "Notifications",
-  "settingsNotificationsSubtitle": "Alerts and server status updates",
-  "settingsNotificationsToast": "Notification preferences will be added later",
+  "settingsNotificationsSubtitle": "Home notification center shows Unraid alerts (read-only)",
+  "settingsNotificationsToast": "Push preferences are not wired yet; use the home notification module",
+  "settingsAutoRefreshTitle": "Auto refresh",
+  "settingsAutoRefreshSubtitle": "Periodically reload the dashboard",
+  "settingsAutoRefreshInterval": "Every {seconds}s",
+  "@settingsAutoRefreshInterval": {
+    "placeholders": {
+      "seconds": { "type": "int" }
+    }
+  },
+  "settingsAutoRefreshEnabled": "On",
+  "settingsAutoRefreshDisabled": "Off",
+  "refreshFailed": "Refresh failed: {error}",
+  "@refreshFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "actionSucceededRefreshing": "{name} {action}; refreshing…",
+  "@actionSucceededRefreshing": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "action": { "type": "String" }
+    }
+  },
+  "createFolder": "New folder",
+  "createFolderTitle": "Create folder",
+  "createFolderHint": "Folder name",
+  "createFolderEmptyError": "Name cannot be empty",
+  "createFolderInvalidError": "Name cannot contain / or \\",
+  "folderCreated": "Created {name}",
+  "@folderCreated": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "uploadFiles": "Upload files",
+  "uploadInProgress": "Uploading…",
+  "uploadResultSummary": "Upload done: {success} ok, {failed} failed",
+  "@uploadResultSummary": {
+    "placeholders": {
+      "success": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "uploadCancelled": "Upload cancelled",
   "settingsConnectionSection": "Connection",
   "settingsConnectionTrailing": "Sign-in",
   "settingsServerConfigTitle": "Server configuration",

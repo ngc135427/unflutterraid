@@ -38,8 +38,52 @@
   "settingsComingSoon": "即将支持",
   "settingsThemeToast": "主题：{theme}",
   "settingsNotificationsTitle": "通知",
-  "settingsNotificationsSubtitle": "告警提醒与运行状态推送",
-  "settingsNotificationsToast": "通知偏好将后续添加",
+  "settingsNotificationsSubtitle": "主页通知中心展示 Unraid 未读/告警（只读）",
+  "settingsNotificationsToast": "推送偏好尚未接入；请在主页通知模块查看列表",
+  "settingsAutoRefreshTitle": "自动刷新",
+  "settingsAutoRefreshSubtitle": "仪表盘定时拉取服务器状态",
+  "settingsAutoRefreshInterval": "间隔 {seconds} 秒",
+  "@settingsAutoRefreshInterval": {
+    "placeholders": {
+      "seconds": { "type": "int" }
+    }
+  },
+  "settingsAutoRefreshEnabled": "已开启",
+  "settingsAutoRefreshDisabled": "已关闭",
+  "refreshFailed": "刷新失败：{error}",
+  "@refreshFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "actionSucceededRefreshing": "{name} 已{action}，正在刷新…",
+  "@actionSucceededRefreshing": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "action": { "type": "String" }
+    }
+  },
+  "createFolder": "新建文件夹",
+  "createFolderTitle": "新建文件夹",
+  "createFolderHint": "文件夹名称",
+  "createFolderEmptyError": "名称不能为空",
+  "createFolderInvalidError": "名称不能包含 / 或 \\",
+  "folderCreated": "已创建 {name}",
+  "@folderCreated": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "uploadFiles": "上传文件",
+  "uploadInProgress": "正在上传…",
+  "uploadResultSummary": "上传完成：成功 {success}，失败 {failed}",
+  "@uploadResultSummary": {
+    "placeholders": {
+      "success": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "uploadCancelled": "已取消上传",
   "settingsConnectionSection": "连接",
   "settingsConnectionTrailing": "登录相关",
   "settingsServerConfigTitle": "服务器配置",

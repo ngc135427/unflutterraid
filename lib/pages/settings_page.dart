@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../app_language_scope.dart';
@@ -5,6 +7,7 @@ import '../app_theme_scope.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../l10n/language_names.dart';
 import '../services/connection_url.dart';
+import '../services/dashboard_refresh_preferences.dart';
 import '../services/language_preferences.dart';
 import '../services/theme_preferences.dart';
 import '../services/unraid_api_client.dart';
@@ -18,10 +21,48 @@ class SettingsPageArgs {
   final UnraidApiClient? apiClient;
 }
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   static const routeName = '/settings';
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool _autoRefreshEnabled = true;
+  int _autoRefreshSeconds = DashboardRefreshPreferences.defaultSeconds;
+  bool _prefsLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadRefreshPrefs());
+  }
+
+  Future<void> _loadRefreshPrefs() async {
+    final enabled = await DashboardRefreshPreferences.loadEnabled();
+    final seconds = await DashboardRefreshPreferences.loadIntervalSeconds();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _autoRefreshEnabled = enabled;
+      _autoRefreshSeconds = seconds;
+      _prefsLoaded = true;
+    });
+  }
+
+  Future<void> _setAutoRefreshEnabled(bool value) async {
+    setState(() => _autoRefreshEnabled = value);
+    await DashboardRefreshPreferences.saveEnabled(value);
+  }
+
+  Future<void> _setAutoRefreshSeconds(int value) async {
+    setState(() => _autoRefreshSeconds = value);
+    await DashboardRefreshPreferences.saveIntervalSeconds(value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,12 +119,21 @@ class SettingsPage extends StatelessWidget {
                           iconBackground: const Color(0xFFEAF8F0),
                           title: l10n.settingsNotificationsTitle,
                           subtitle: l10n.settingsNotificationsSubtitle,
-                          value: l10n.settingsComingSoon,
+                          value: l10n.notifications,
                           onTap: () => _showMessage(
                             context,
                             l10n.settingsNotificationsToast,
                           ),
                         ),
+                        if (_prefsLoaded)
+                          _AutoRefreshSettingRow(
+                            enabled: _autoRefreshEnabled,
+                            seconds: _autoRefreshSeconds,
+                            onEnabledChanged: (value) =>
+                                unawaited(_setAutoRefreshEnabled(value)),
+                            onSecondsChanged: (value) =>
+                                unawaited(_setAutoRefreshSeconds(value)),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 18),
@@ -127,6 +177,68 @@ class SettingsPage extends StatelessWidget {
   void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
+    );
+  }
+}
+
+class _AutoRefreshSettingRow extends StatelessWidget {
+  const _AutoRefreshSettingRow({
+    required this.enabled,
+    required this.seconds,
+    required this.onEnabledChanged,
+    required this.onSecondsChanged,
+  });
+
+  final bool enabled;
+  final int seconds;
+  final ValueChanged<bool> onEnabledChanged;
+  final ValueChanged<int> onSecondsChanged;
+
+  static const _options = [15, 30, 60, 120];
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      children: [
+        _SettingRow(
+          icon: Icons.autorenew,
+          iconColor: const Color(0xFF0B6E4F),
+          iconBackground: const Color(0xFFE8F7F1),
+          title: l10n.settingsAutoRefreshTitle,
+          subtitle: l10n.settingsAutoRefreshSubtitle,
+          value: enabled
+              ? l10n.settingsAutoRefreshEnabled
+              : l10n.settingsAutoRefreshDisabled,
+        ),
+        SwitchListTile(
+          contentPadding: const EdgeInsets.fromLTRB(52, 0, 12, 0),
+          title: Text(
+            enabled
+                ? l10n.settingsAutoRefreshInterval(seconds)
+                : l10n.settingsAutoRefreshDisabled,
+            style: const TextStyle(fontSize: 13, color: AppTheme.textMedium),
+          ),
+          value: enabled,
+          onChanged: onEnabledChanged,
+        ),
+        if (enabled)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(52, 0, 12, 12),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final option in _options)
+                  ChoiceChip(
+                    label: Text('${option}s'),
+                    selected: seconds == option,
+                    onSelected: (_) => onSecondsChanged(option),
+                  ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

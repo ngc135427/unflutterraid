@@ -287,14 +287,116 @@ abstract class AppLocalizations {
   /// No description provided for @settingsNotificationsSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'告警提醒与运行状态推送'**
+  /// **'主页通知中心展示 Unraid 未读/告警（只读）'**
   String get settingsNotificationsSubtitle;
 
   /// No description provided for @settingsNotificationsToast.
   ///
   /// In zh, this message translates to:
-  /// **'通知偏好将后续添加'**
+  /// **'推送偏好尚未接入；请在主页通知模块查看列表'**
   String get settingsNotificationsToast;
+
+  /// No description provided for @settingsAutoRefreshTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动刷新'**
+  String get settingsAutoRefreshTitle;
+
+  /// No description provided for @settingsAutoRefreshSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'仪表盘定时拉取服务器状态'**
+  String get settingsAutoRefreshSubtitle;
+
+  /// No description provided for @settingsAutoRefreshInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'间隔 {seconds} 秒'**
+  String settingsAutoRefreshInterval(int seconds);
+
+  /// No description provided for @settingsAutoRefreshEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已开启'**
+  String get settingsAutoRefreshEnabled;
+
+  /// No description provided for @settingsAutoRefreshDisabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已关闭'**
+  String get settingsAutoRefreshDisabled;
+
+  /// No description provided for @refreshFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新失败：{error}'**
+  String refreshFailed(String error);
+
+  /// No description provided for @actionSucceededRefreshing.
+  ///
+  /// In zh, this message translates to:
+  /// **'{name} 已{action}，正在刷新…'**
+  String actionSucceededRefreshing(String name, String action);
+
+  /// No description provided for @createFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建文件夹'**
+  String get createFolder;
+
+  /// No description provided for @createFolderTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建文件夹'**
+  String get createFolderTitle;
+
+  /// No description provided for @createFolderHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件夹名称'**
+  String get createFolderHint;
+
+  /// No description provided for @createFolderEmptyError.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称不能为空'**
+  String get createFolderEmptyError;
+
+  /// No description provided for @createFolderInvalidError.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称不能包含 / 或 \\'**
+  String get createFolderInvalidError;
+
+  /// No description provided for @folderCreated.
+  ///
+  /// In zh, this message translates to:
+  /// **'已创建 {name}'**
+  String folderCreated(String name);
+
+  /// No description provided for @uploadFiles.
+  ///
+  /// In zh, this message translates to:
+  /// **'上传文件'**
+  String get uploadFiles;
+
+  /// No description provided for @uploadInProgress.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在上传…'**
+  String get uploadInProgress;
+
+  /// No description provided for @uploadResultSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'上传完成：成功 {success}，失败 {failed}'**
+  String uploadResultSummary(int success, int failed);
+
+  /// No description provided for @uploadCancelled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已取消上传'**
+  String get uploadCancelled;
 
   /// No description provided for @settingsConnectionSection.
   ///

@@ -1,0 +1,31 @@
+{
+  "id": "ux-sprint-a-management",
+  "name": "ux-sprint-a-management",
+  "title": "体验 Sprint A：管理体验包",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "liqiangqiang",
+  "assignee": "liqiangqiang",
+  "createdAt": "2026-07-17",
+  "completedAt": "2026-07-17",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "07-17-dashboard-auto-refresh",
+    "07-17-share-mkdir-upload",
+    "07-17-management-action-feedback",
+    "07-17-notifications-readonly"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

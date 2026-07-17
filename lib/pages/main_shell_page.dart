@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:file_picker/file_picker.dart';
+
 import '../l10n/generated/app_localizations.dart';
+import '../services/dashboard_refresh_preferences.dart';
 import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bottom_nav.dart';
@@ -24,16 +27,44 @@ class MainShellPage extends StatefulWidget {
   State<MainShellPage> createState() => _MainShellPageState();
 }
 
-class _MainShellPageState extends State<MainShellPage> {
+class _MainShellPageState extends State<MainShellPage>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
   ServerIconVariant _serverIcon = ServerIconVariant.defaultIcon;
   UnraidApiClient? _apiClient;
   Future<UnraidDashboard>? _dashboardFuture;
+  Timer? _autoRefreshTimer;
+  bool _autoRefreshEnabled = true;
+  int _autoRefreshSeconds = DashboardRefreshPreferences.defaultSeconds;
+  bool _refreshInFlight = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(_loadAutoRefreshPrefs());
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _autoRefreshTimer?.cancel();
     _apiClient?.close();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _restartAutoRefreshTimer();
+      if (_apiClient != null) {
+        unawaited(_refreshDashboard(silent: true));
+      }
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      _autoRefreshTimer?.cancel();
+    }
   }
 
   @override
@@ -46,7 +77,37 @@ class _MainShellPageState extends State<MainShellPage> {
     if (args is UnraidApiClient) {
       _apiClient = args;
       _dashboardFuture = args.fetchDashboard();
+      _restartAutoRefreshTimer();
     }
+  }
+
+  Future<void> _loadAutoRefreshPrefs() async {
+    final enabled = await DashboardRefreshPreferences.loadEnabled();
+    final seconds = await DashboardRefreshPreferences.loadIntervalSeconds();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _autoRefreshEnabled = enabled;
+      _autoRefreshSeconds = seconds;
+    });
+    _restartAutoRefreshTimer();
+  }
+
+  void _restartAutoRefreshTimer() {
+    _autoRefreshTimer?.cancel();
+    if (!_autoRefreshEnabled || _apiClient == null) {
+      return;
+    }
+    _autoRefreshTimer = Timer.periodic(
+      Duration(seconds: _autoRefreshSeconds),
+      (_) {
+        if (!mounted || _refreshInFlight) {
+          return;
+        }
+        unawaited(_refreshDashboard(silent: true));
+      },
+    );
   }
 
   @override
@@ -79,6 +140,7 @@ class _MainShellPageState extends State<MainShellPage> {
                   child: _OpenSettingsButton(
                     l10n: l10n,
                     apiClient: _apiClient,
+                    onSettingsClosed: () => unawaited(_loadAutoRefreshPrefs()),
                   ),
                 ),
                 Positioned(
@@ -230,11 +292,12 @@ class _MainShellPageState extends State<MainShellPage> {
     }
   }
 
-  Future<void> _refreshDashboard() async {
+  Future<void> _refreshDashboard({bool silent = false}) async {
     final client = _apiClient;
-    if (client == null) {
+    if (client == null || _refreshInFlight) {
       return;
     }
+    _refreshInFlight = true;
     // Await first so FutureBuilder keeps the previous completed snapshot
     // while RefreshIndicator shows its spinner (avoids full-page loading flash).
     try {
@@ -249,9 +312,21 @@ class _MainShellPageState extends State<MainShellPage> {
       if (!mounted) {
         return;
       }
-      setState(() {
-        _dashboardFuture = Future<UnraidDashboard>.error(error);
-      });
+      if (!silent) {
+        setState(() {
+          _dashboardFuture = Future<UnraidDashboard>.error(error);
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).refreshFailed(error.toString()),
+            ),
+          ),
+        );
+      }
+    } finally {
+      _refreshInFlight = false;
     }
   }
 
@@ -307,19 +382,25 @@ class _OpenSettingsButton extends StatelessWidget {
   const _OpenSettingsButton({
     required this.l10n,
     this.apiClient,
+    this.onSettingsClosed,
   });
 
   final AppLocalizations l10n;
   final UnraidApiClient? apiClient;
+  final VoidCallback? onSettingsClosed;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: l10n.settingsOpenTooltip,
-      onPressed: () => Navigator.of(context).pushNamed(
-        SettingsPage.routeName,
-        arguments: SettingsPageArgs(apiClient: apiClient),
-      ),
+      onPressed: () {
+        Navigator.of(context)
+            .pushNamed(
+              SettingsPage.routeName,
+              arguments: SettingsPageArgs(apiClient: apiClient),
+            )
+            .then((_) => onSettingsClosed?.call());
+      },
       style: IconButton.styleFrom(
         backgroundColor: Colors.white.withValues(alpha: 0.92),
         foregroundColor: AppTheme.primary,
@@ -1783,13 +1864,22 @@ class _ManagementPageState extends State<_ManagementPage> {
   }
 
   Future<void> _manualRefresh(String typeLabel) async {
-    await widget.onRefresh();
-    if (!mounted) {
-      return;
+    try {
+      await widget.onRefresh();
+      if (!mounted) {
+        return;
+      }
+      _showMessage(
+        AppLocalizations.of(context).typeRefreshSubmitted(typeLabel),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage(
+        AppLocalizations.of(context).refreshFailed(error.toString()),
+      );
     }
-    _showMessage(
-      AppLocalizations.of(context).typeRefreshSubmitted(typeLabel),
-    );
   }
 
   void _openDetail(ManagementData item) {
@@ -1830,9 +1920,23 @@ class _ManagementPageState extends State<_ManagementPage> {
       if (!mounted) {
         return;
       }
-      _showMessage(AppLocalizations.of(context)
-          .actionSubmitted(item.title, _actionLabel(context, action)));
-      await widget.onRefresh();
+      final actionLabel = _actionLabel(context, action);
+      _showMessage(
+        AppLocalizations.of(context).actionSucceededRefreshing(
+          item.title,
+          actionLabel,
+        ),
+      );
+      try {
+        await widget.onRefresh();
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        _showMessage(
+          AppLocalizations.of(context).refreshFailed(error.toString()),
+        );
+      }
     } on UnraidApiException catch (error) {
       if (!mounted) {
         return;
@@ -2380,6 +2484,20 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                     ),
                   ] else ...[
                     IconButton(
+                      tooltip: l10n.createFolder,
+                      onPressed: _batchBusy
+                          ? null
+                          : () => unawaited(_createFolder(args)),
+                      icon: const Icon(Icons.create_new_folder_outlined),
+                    ),
+                    IconButton(
+                      tooltip: l10n.uploadFiles,
+                      onPressed: _batchBusy
+                          ? null
+                          : () => unawaited(_uploadFiles(args)),
+                      icon: const Icon(Icons.upload_file),
+                    ),
+                    IconButton(
                       tooltip: l10n.selectMode,
                       onPressed: _batchBusy
                           ? null
@@ -2600,6 +2718,121 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
         ..clear()
         ..addAll(entries.map((entry) => entry.path));
     });
+  }
+
+  Future<void> _createFolder(ManagementDetailArgs args) async {
+    final client = args.apiClient;
+    final l10n = AppLocalizations.of(context);
+    if (client == null) {
+      _showMessage(l10n.missingConnection);
+      return;
+    }
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.createFolderTitle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(hintText: l10n.createFolderHint),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (name == null || !mounted) {
+      return;
+    }
+    if (name.isEmpty) {
+      _showMessage(l10n.createFolderEmptyError);
+      return;
+    }
+    if (name.contains('/') || name.contains('\\')) {
+      _showMessage(l10n.createFolderInvalidError);
+      return;
+    }
+    setState(() => _batchBusy = true);
+    try {
+      await client.fileManager.createDirectory(
+        parentDirectory: _sharePath ?? _shareRoot(args),
+        folderName: name,
+      );
+      if (!mounted) {
+        return;
+      }
+      _showMessage(l10n.folderCreated(name));
+      _openSharePath(_sharePath ?? _shareRoot(args));
+    } on UnraidApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage(error.message);
+    } finally {
+      if (mounted) {
+        setState(() => _batchBusy = false);
+      }
+    }
+  }
+
+  Future<void> _uploadFiles(ManagementDetailArgs args) async {
+    final client = args.apiClient;
+    final l10n = AppLocalizations.of(context);
+    if (client == null) {
+      _showMessage(l10n.missingConnection);
+      return;
+    }
+    final result = await FilePicker.pickFiles(
+      allowMultiple: true,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) {
+      if (mounted) {
+        _showMessage(l10n.uploadCancelled);
+      }
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() => _batchBusy = true);
+    _showMessage(l10n.uploadInProgress);
+    var success = 0;
+    var failed = 0;
+    final directory = _sharePath ?? _shareRoot(args);
+    for (final file in result.files) {
+      final bytes = file.bytes;
+      final name = file.name.trim();
+      if (bytes == null || bytes.isEmpty || name.isEmpty) {
+        failed += 1;
+        continue;
+      }
+      try {
+        await client.fileManager.uploadBytes(
+          directoryPath: directory,
+          fileName: name,
+          bytes: bytes,
+        );
+        success += 1;
+      } catch (_) {
+        failed += 1;
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() => _batchBusy = false);
+    _showMessage(l10n.uploadResultSummary(success, failed));
+    _openSharePath(directory);
   }
 
   Future<void> _batchDelete(ManagementDetailArgs args) async {

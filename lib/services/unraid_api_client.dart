@@ -367,6 +367,36 @@ class UnraidFileManager {
     );
   }
 
+  /// Create a directory under [parentDirectory] named [folderName].
+  ///
+  /// File Browser: `POST /api/resources/<path>?override=false&type=1`.
+  Future<void> createDirectory({
+    required String parentDirectory,
+    required String folderName,
+  }) async {
+    final trimmed = folderName.trim();
+    if (trimmed.isEmpty ||
+        trimmed.contains('/') ||
+        trimmed.contains('\\') ||
+        trimmed == '.' ||
+        trimmed == '..') {
+      throw UnraidApiException(DisplayCopy.current.apiInvalidData);
+    }
+    final target = _joinAppPaths(parentDirectory, trimmed);
+    await _send(
+      'POST',
+      _fileBrowserUri(
+        '/api/resources',
+        target,
+        queryParameters: {
+          'override': 'false',
+          'type': '1',
+        },
+      ),
+      actionLabel: DisplayCopy.current.apiActionUpload,
+    );
+  }
+
   Future<Object?> _requestJson(Uri uri, {required String actionLabel}) async {
     final response = await _get(uri, actionLabel: actionLabel);
     try {
@@ -659,7 +689,7 @@ class UnraidDashboard {
       notificationWarning: _asInt(unreadNotifications['warning']),
       notificationAlert: _asInt(unreadNotifications['alert']),
       notificationTotal: _asInt(unreadNotifications['total']),
-      notifications: const [],
+      notifications: _parseNotifications(notifications),
       diskItems: _asList(json['disks']).map(UnraidInfoItem.fromDisk).toList(),
       networkItems: networkInterfaces.isNotEmpty
           ? networkInterfaces.map(UnraidInfoItem.fromNetworkInterface).toList()
@@ -1072,6 +1102,22 @@ List<UnraidInfoItem> _serverNetworkItems(Map<String, dynamic> server) {
   ];
 }
 
+List<UnraidNotification> _parseNotifications(
+    Map<String, dynamic> notifications) {
+  final fromList = _asList(notifications['list']);
+  final fromWarnings = _asList(notifications['warningsAndAlerts']);
+  final merged = <UnraidNotification>[];
+  final seen = <String>{};
+  for (final raw in [...fromList, ...fromWarnings]) {
+    final item = UnraidNotification.fromJson(raw);
+    final key = '${item.title}|${item.timestamp}|${item.subject}';
+    if (seen.add(key)) {
+      merged.add(item);
+    }
+  }
+  return merged;
+}
+
 class UnraidNotification {
   const UnraidNotification({
     required this.title,
@@ -1364,6 +1410,28 @@ query Dashboard {
         alert
         total
       }
+    }
+    list {
+      id
+      title
+      subject
+      description
+      importance
+      link
+      type
+      timestamp
+      formattedTimestamp
+    }
+    warningsAndAlerts {
+      id
+      title
+      subject
+      description
+      importance
+      link
+      type
+      timestamp
+      formattedTimestamp
     }
   }
   array {

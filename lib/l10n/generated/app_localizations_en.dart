@@ -108,11 +108,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsNotificationsSubtitle =>
-      'Alerts and server status updates';
+      'Home notification center shows Unraid alerts (read-only)';
 
   @override
   String get settingsNotificationsToast =>
-      'Notification preferences will be added later';
+      'Push preferences are not wired yet; use the home notification module';
+
+  @override
+  String get settingsAutoRefreshTitle => 'Auto refresh';
+
+  @override
+  String get settingsAutoRefreshSubtitle => 'Periodically reload the dashboard';
+
+  @override
+  String settingsAutoRefreshInterval(int seconds) {
+    return 'Every ${seconds}s';
+  }
+
+  @override
+  String get settingsAutoRefreshEnabled => 'On';
+
+  @override
+  String get settingsAutoRefreshDisabled => 'Off';
+
+  @override
+  String refreshFailed(String error) {
+    return 'Refresh failed: $error';
+  }
+
+  @override
+  String actionSucceededRefreshing(String name, String action) {
+    return '$name $action; refreshing…';
+  }
+
+  @override
+  String get createFolder => 'New folder';
+
+  @override
+  String get createFolderTitle => 'Create folder';
+
+  @override
+  String get createFolderHint => 'Folder name';
+
+  @override
+  String get createFolderEmptyError => 'Name cannot be empty';
+
+  @override
+  String get createFolderInvalidError => 'Name cannot contain / or \\';
+
+  @override
+  String folderCreated(String name) {
+    return 'Created $name';
+  }
+
+  @override
+  String get uploadFiles => 'Upload files';
+
+  @override
+  String get uploadInProgress => 'Uploading…';
+
+  @override
+  String uploadResultSummary(int success, int failed) {
+    return 'Upload done: $success ok, $failed failed';
+  }
+
+  @override
+  String get uploadCancelled => 'Upload cancelled';
 
   @override
   String get settingsConnectionSection => 'Connection';

@@ -106,10 +106,71 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsNotificationsTitle => '通知';
 
   @override
-  String get settingsNotificationsSubtitle => '告警提醒与运行状态推送';
+  String get settingsNotificationsSubtitle => '主页通知中心展示 Unraid 未读/告警（只读）';
 
   @override
-  String get settingsNotificationsToast => '通知偏好将后续添加';
+  String get settingsNotificationsToast => '推送偏好尚未接入；请在主页通知模块查看列表';
+
+  @override
+  String get settingsAutoRefreshTitle => '自动刷新';
+
+  @override
+  String get settingsAutoRefreshSubtitle => '仪表盘定时拉取服务器状态';
+
+  @override
+  String settingsAutoRefreshInterval(int seconds) {
+    return '间隔 $seconds 秒';
+  }
+
+  @override
+  String get settingsAutoRefreshEnabled => '已开启';
+
+  @override
+  String get settingsAutoRefreshDisabled => '已关闭';
+
+  @override
+  String refreshFailed(String error) {
+    return '刷新失败：$error';
+  }
+
+  @override
+  String actionSucceededRefreshing(String name, String action) {
+    return '$name 已$action，正在刷新…';
+  }
+
+  @override
+  String get createFolder => '新建文件夹';
+
+  @override
+  String get createFolderTitle => '新建文件夹';
+
+  @override
+  String get createFolderHint => '文件夹名称';
+
+  @override
+  String get createFolderEmptyError => '名称不能为空';
+
+  @override
+  String get createFolderInvalidError => '名称不能包含 / 或 \\';
+
+  @override
+  String folderCreated(String name) {
+    return '已创建 $name';
+  }
+
+  @override
+  String get uploadFiles => '上传文件';
+
+  @override
+  String get uploadInProgress => '正在上传…';
+
+  @override
+  String uploadResultSummary(int success, int failed) {
+    return '上传完成：成功 $success，失败 $failed';
+  }
+
+  @override
+  String get uploadCancelled => '已取消上传';
 
   @override
   String get settingsConnectionSection => '连接';
