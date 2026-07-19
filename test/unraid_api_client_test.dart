@@ -68,6 +68,35 @@ void main() {
       expect(lines.first.message, 'hello');
     });
 
+    test('fetchDashboard supplies the required notification filter', () async {
+      Map<String, dynamic>? body;
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(
+            jsonEncode({
+              'data': {
+                'notifications': {
+                  'overview': {'unread': {}},
+                  'list': [],
+                  'warningsAndAlerts': [],
+                },
+              },
+            }),
+            200,
+          );
+        }),
+      );
+
+      await client.fetchDashboard();
+      expect(body!['query'], contains('list(filter: \$filter)'));
+      expect(body!['variables'], {
+        'filter': {'type': 'UNREAD', 'offset': 0, 'limit': 20},
+      });
+    });
+
     test('runParityCheckAction posts parityCheck.start', () async {
       Map<String, dynamic>? body;
       final client = UnraidApiClient(

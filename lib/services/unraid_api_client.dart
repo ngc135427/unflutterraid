@@ -58,7 +58,13 @@ class UnraidApiClient {
   }
 
   Future<UnraidDashboard> fetchDashboard() async {
-    final data = await _request(_dashboardQuery, allowPartialData: true);
+    final data = await _request(
+      _dashboardQuery,
+      variables: const {
+        'filter': {'type': 'UNREAD', 'offset': 0, 'limit': 20},
+      },
+      allowPartialData: true,
+    );
     return UnraidDashboard.fromJson(data);
   }
 
@@ -1469,7 +1475,7 @@ query ServicesCheck {
 ''';
 
 const _dashboardQuery = '''
-query Dashboard {
+query Dashboard(\$filter: NotificationFilter!) {
   owner {
     username
     url
@@ -1579,7 +1585,7 @@ query Dashboard {
         total
       }
     }
-    list {
+    list(filter: \$filter) {
       id
       title
       subject
