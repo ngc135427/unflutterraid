@@ -297,10 +297,14 @@ class UnraidFileManager {
     return entries;
   }
 
-  Future<Uint8List> readFileBytes(String path) async {
+  Future<Uint8List> readFileBytes(
+    String path, {
+    int? maxBytes,
+  }) async {
     return _requestBytes(
       _fileBrowserUri('/api/raw', path),
       actionLabel: DisplayCopy.current.apiActionReadFile,
+      maxBytes: maxBytes,
     );
   }
 
@@ -498,9 +502,71 @@ class UnraidFileManager {
   Future<Uint8List> _requestBytes(
     Uri uri, {
     required String actionLabel,
+    int? maxBytes,
   }) async {
+    if (maxBytes != null) {
+      if (maxBytes < 0) {
+        throw UnraidApiException(DisplayCopy.current.apiInvalidData);
+      }
+      return _requestLimitedBytes(
+        uri,
+        actionLabel: actionLabel,
+        maxBytes: maxBytes,
+      );
+    }
     final response = await _get(uri, actionLabel: actionLabel);
     return response.bodyBytes;
+  }
+
+  Future<Uint8List> _requestLimitedBytes(
+    Uri uri, {
+    required String actionLabel,
+    required int maxBytes,
+  }) async {
+    late http.StreamedResponse response;
+    try {
+      final request = http.Request('GET', uri);
+      request.headers['accept'] = '*/*';
+      response = await _client._httpClient
+          .send(request)
+          .timeout(const Duration(seconds: 20));
+      _ensureSuccessfulStatus(
+        response.statusCode,
+        actionLabel: actionLabel,
+      );
+
+      final contentLength = response.contentLength;
+      if (contentLength != null && contentLength > maxBytes) {
+        throw UnraidApiException(
+          DisplayCopy.current.apiFileTooLarge(
+            _formatByteAmount(maxBytes.toDouble()),
+          ),
+        );
+      }
+
+      final bytes = BytesBuilder(copy: false);
+      await for (final chunk
+          in response.stream.timeout(const Duration(seconds: 20))) {
+        if (bytes.length + chunk.length > maxBytes) {
+          throw UnraidApiException(
+            DisplayCopy.current.apiFileTooLarge(
+              _formatByteAmount(maxBytes.toDouble()),
+            ),
+          );
+        }
+        bytes.add(chunk);
+      }
+      return bytes.takeBytes();
+    } on TimeoutException {
+      throw UnraidApiException(
+          DisplayCopy.current.apiFileBrowserTimeout(actionLabel));
+    } on UnraidApiException {
+      rethrow;
+    } on Object catch (error) {
+      throw UnraidApiException(
+        DisplayCopy.current.apiFileBrowserCannotConnect(error.toString()),
+      );
+    }
   }
 
   Future<http.Response> _get(Uri uri, {required String actionLabel}) async {
@@ -550,21 +616,30 @@ class UnraidFileManager {
       );
     }
 
-    if (response.statusCode == 401 || response.statusCode == 403) {
+    _ensureSuccessfulStatus(
+      response.statusCode,
+      actionLabel: actionLabel,
+    );
+    return response;
+  }
+
+  void _ensureSuccessfulStatus(
+    int statusCode, {
+    required String actionLabel,
+  }) {
+    if (statusCode == 401 || statusCode == 403) {
       throw UnraidApiException(
-        DisplayCopy.current.apiFileBrowserForbidden(response.statusCode),
+        DisplayCopy.current.apiFileBrowserForbidden(statusCode),
       );
     }
-    if (response.statusCode == 404) {
+    if (statusCode == 404) {
       throw UnraidApiException(DisplayCopy.current.apiFileBrowserNotFound);
     }
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    if (statusCode < 200 || statusCode >= 300) {
       throw UnraidApiException(
-        DisplayCopy.current
-            .apiFileBrowserFailed(actionLabel, response.statusCode),
+        DisplayCopy.current.apiFileBrowserFailed(actionLabel, statusCode),
       );
     }
-    return response;
   }
 
   Uri _fileBrowserUri(
@@ -1332,6 +1407,8 @@ class UnraidNotification {
   }
 }
 
+enum FilePreviewKind { image, video, audio, text, pdf, unsupported }
+
 class UnraidFileEntry {
   const UnraidFileEntry({
     required this.name,
@@ -1339,6 +1416,7 @@ class UnraidFileEntry {
     required this.isDirectory,
     required this.size,
     required this.modified,
+    this.byteSize,
   });
 
   final String name;
@@ -1346,6 +1424,7 @@ class UnraidFileEntry {
   final bool isDirectory;
   final String size;
   final String modified;
+  final int? byteSize;
 
   factory UnraidFileEntry.fromShare(Object? value) {
     final json = _asMap(value);
@@ -1393,8 +1472,22 @@ class UnraidFileEntry {
           ? DisplayCopy.current.directory
           : _formatBytes(json['size']) ?? '',
       modified: modified,
+      byteSize: isDirectory ? null : _optionalNonNegativeInt(json['size']),
     );
   }
+
+  static const _imageExtensions = {
+    'avif',
+    'bmp',
+    'gif',
+    'ico',
+    'jpeg',
+    'jpg',
+    'png',
+    'tif',
+    'tiff',
+    'webp',
+  };
 
   static const _videoExtensions = {
     'mp4',
@@ -1410,44 +1503,76 @@ class UnraidFileEntry {
     'mpeg',
   };
 
-  bool get isImage {
-    final ext = name.split('.').last.toLowerCase();
-    return const {
-      'avif',
-      'bmp',
-      'gif',
-      'ico',
-      'jpeg',
-      'jpg',
-      'png',
-      'tif',
-      'tiff',
-      'webp',
-    }.contains(ext);
+  static const _audioExtensions = {
+    'mp3',
+    'flac',
+    'm4a',
+    'aac',
+    'wav',
+    'ogg',
+    'opus',
+    'wma',
+    'aiff',
+    'alac',
+  };
+
+  static const _textExtensions = {
+    'txt',
+    'log',
+    'md',
+    'markdown',
+    'json',
+    'yaml',
+    'yml',
+    'xml',
+    'csv',
+    'tsv',
+    'ini',
+    'conf',
+    'config',
+    'properties',
+    'env',
+    'sh',
+    'bat',
+    'ps1',
+    'dart',
+    'js',
+    'ts',
+    'html',
+    'css',
+    'sql',
+  };
+
+  String get extension {
+    final index = name.lastIndexOf('.');
+    if (index < 0 || index == name.length - 1) {
+      return '';
+    }
+    return name.substring(index + 1).toLowerCase();
   }
 
-  bool get isVideo {
-    final ext = name.split('.').last.toLowerCase();
-    return _videoExtensions.contains(ext);
+  FilePreviewKind get previewKind {
+    if (isDirectory) {
+      return FilePreviewKind.unsupported;
+    }
+    final ext = extension;
+    if (_imageExtensions.contains(ext)) return FilePreviewKind.image;
+    if (_videoExtensions.contains(ext)) return FilePreviewKind.video;
+    if (_audioExtensions.contains(ext)) return FilePreviewKind.audio;
+    if (_textExtensions.contains(ext)) return FilePreviewKind.text;
+    if (ext == 'pdf') return FilePreviewKind.pdf;
+    return FilePreviewKind.unsupported;
   }
+
+  bool get isPreviewable => previewKind != FilePreviewKind.unsupported;
+
+  bool get isImage => previewKind == FilePreviewKind.image;
+
+  bool get isVideo => previewKind == FilePreviewKind.video;
 
   bool get isMedia => isImage || isVideo;
 
-  bool get isAudio {
-    final ext = name.split('.').last.toLowerCase();
-    return const {
-      'mp3',
-      'flac',
-      'm4a',
-      'aac',
-      'wav',
-      'ogg',
-      'opus',
-      'wma',
-      'aiff',
-      'alac',
-    }.contains(ext);
-  }
+  bool get isAudio => previewKind == FilePreviewKind.audio;
 
   DateTime? get modifiedDate {
     if (modified.isEmpty) return null;
@@ -1837,6 +1962,13 @@ int _asInt(Object? value) {
     return value.toInt();
   }
   return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int? _optionalNonNegativeInt(Object? value) {
+  final parsed = value is num
+      ? value.toInt()
+      : int.tryParse(value?.toString().trim() ?? '');
+  return parsed != null && parsed >= 0 ? parsed : null;
 }
 
 double? _firstNumber(List<Object?> values) {

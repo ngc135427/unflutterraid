@@ -1460,6 +1460,72 @@ abstract class AppLocalizations {
   /// **'暂不支持预览该文件类型'**
   String get previewUnsupported;
 
+  /// No description provided for @previewPreviousFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'上一个文件'**
+  String get previewPreviousFile;
+
+  /// No description provided for @previewNextFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'下一个文件'**
+  String get previewNextFile;
+
+  /// No description provided for @previewViewOriginal.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看原图'**
+  String get previewViewOriginal;
+
+  /// No description provided for @previewLoadingOriginal.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加载原图…'**
+  String get previewLoadingOriginal;
+
+  /// No description provided for @previewLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'预览失败：{error}'**
+  String previewLoadFailed(String error);
+
+  /// No description provided for @previewAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'音频预览'**
+  String get previewAudio;
+
+  /// No description provided for @previewVideo.
+  ///
+  /// In zh, this message translates to:
+  /// **'视频预览'**
+  String get previewVideo;
+
+  /// No description provided for @previewText.
+  ///
+  /// In zh, this message translates to:
+  /// **'文本预览'**
+  String get previewText;
+
+  /// No description provided for @previewPdf.
+  ///
+  /// In zh, this message translates to:
+  /// **'PDF 预览'**
+  String get previewPdf;
+
+  /// No description provided for @previewPlay.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放'**
+  String get previewPlay;
+
+  /// No description provided for @previewPause.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停'**
+  String get previewPause;
+
   /// No description provided for @labelActionSubmitted.
   ///
   /// In zh, this message translates to:
@@ -2245,6 +2311,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'File Browser {action}失败：HTTP {statusCode}'**
   String apiFileBrowserFailed(String action, int statusCode);
+
+  /// No description provided for @apiFileTooLarge.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件超过预览上限 {maxSize}'**
+  String apiFileTooLarge(String maxSize);
 
   /// No description provided for @unbound.
   ///

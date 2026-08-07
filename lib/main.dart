@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
 
 import 'app_language_scope.dart';
 import 'app_theme_scope.dart';
@@ -20,6 +21,8 @@ import 'theme/app_theme.dart';
 import 'widgets/music_mini_bar.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   runApp(const UnflutterRaidApp());
 }
 

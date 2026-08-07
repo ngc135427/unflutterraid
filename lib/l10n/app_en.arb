@@ -409,6 +409,24 @@
   },
   "subdirBrowseFuture": "Subfolder browsing will ship as a File Manager feature",
   "previewUnsupported": "This file type cannot be previewed yet",
+  "previewPreviousFile": "Previous file",
+  "previewNextFile": "Next file",
+  "previewViewOriginal": "View original",
+  "previewLoadingOriginal": "Loading original…",
+  "previewLoadFailed": "Preview failed: {error}",
+  "@previewLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "previewAudio": "Audio preview",
+  "previewVideo": "Video preview",
+  "previewText": "Text preview",
+  "previewPdf": "PDF preview",
+  "previewPlay": "Play",
+  "previewPause": "Pause",
   "labelActionSubmitted": "{label} submitted",
   "@labelActionSubmitted": {
     "placeholders": {
@@ -674,6 +692,14 @@
       },
       "statusCode": {
         "type": "int"
+      }
+    }
+  },
+  "apiFileTooLarge": "File exceeds the {maxSize} preview limit",
+  "@apiFileTooLarge": {
+    "placeholders": {
+      "maxSize": {
+        "type": "String"
       }
     }
   },

@@ -30,6 +30,7 @@ class DisplayCopy {
     required this.apiFileBrowserForbidden,
     required this.apiFileBrowserNotFound,
     required this.apiFileBrowserFailed,
+    required this.apiFileTooLarge,
     required this.installedPlugins,
     required this.countUnit,
     required this.apiKeyRolesDescription,
@@ -141,6 +142,7 @@ class DisplayCopy {
   final String Function(int statusCode) apiFileBrowserForbidden;
   final String apiFileBrowserNotFound;
   final String Function(String action, int statusCode) apiFileBrowserFailed;
+  final String Function(String maxSize) apiFileTooLarge;
   final String installedPlugins;
   final String Function(int count) countUnit;
   final String apiKeyRolesDescription;
@@ -255,6 +257,7 @@ class DisplayCopy {
     apiFileBrowserNotFound: 'File Browser 未找到路径（HTTP 404）',
     apiFileBrowserFailed: (action, statusCode) =>
         'File Browser $action失败：HTTP $statusCode',
+    apiFileTooLarge: (maxSize) => '文件超过预览上限 $maxSize',
     installedPlugins: '已安装插件',
     countUnit: (count) => '$count 个',
     apiKeyRolesDescription: '可用角色与权限来自 apiKeyPossibleRoles',
@@ -369,6 +372,7 @@ class DisplayCopy {
       apiFileBrowserForbidden: l10n.apiFileBrowserForbidden,
       apiFileBrowserNotFound: l10n.apiFileBrowserNotFound,
       apiFileBrowserFailed: l10n.apiFileBrowserFailed,
+      apiFileTooLarge: l10n.apiFileTooLarge,
       installedPlugins: l10n.installedPlugins,
       countUnit: l10n.countUnit,
       apiKeyRolesDescription: l10n.apiKeyRolesDescription,
@@ -483,6 +487,7 @@ class DisplayCopy {
     required String apiFileBrowserNotFound,
     required String Function(String action, int statusCode)
         apiFileBrowserFailed,
+    required String Function(String maxSize) apiFileTooLarge,
     required String installedPlugins,
     required String Function(int count) countUnit,
     required String apiKeyRolesDescription,
@@ -595,6 +600,7 @@ class DisplayCopy {
       apiFileBrowserForbidden: apiFileBrowserForbidden,
       apiFileBrowserNotFound: apiFileBrowserNotFound,
       apiFileBrowserFailed: apiFileBrowserFailed,
+      apiFileTooLarge: apiFileTooLarge,
       installedPlugins: installedPlugins,
       countUnit: countUnit,
       apiKeyRolesDescription: apiKeyRolesDescription,

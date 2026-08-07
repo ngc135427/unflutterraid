@@ -409,6 +409,24 @@
   },
   "subdirBrowseFuture": "子目录浏览将作为 File Manager 独立功能实现",
   "previewUnsupported": "暂不支持预览该文件类型",
+  "previewPreviousFile": "上一个文件",
+  "previewNextFile": "下一个文件",
+  "previewViewOriginal": "查看原图",
+  "previewLoadingOriginal": "正在加载原图…",
+  "previewLoadFailed": "预览失败：{error}",
+  "@previewLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "previewAudio": "音频预览",
+  "previewVideo": "视频预览",
+  "previewText": "文本预览",
+  "previewPdf": "PDF 预览",
+  "previewPlay": "播放",
+  "previewPause": "暂停",
   "labelActionSubmitted": "{label} 操作已提交",
   "@labelActionSubmitted": {
     "placeholders": {
@@ -674,6 +692,14 @@
       },
       "statusCode": {
         "type": "int"
+      }
+    }
+  },
+  "apiFileTooLarge": "文件超过预览上限 {maxSize}",
+  "@apiFileTooLarge": {
+    "placeholders": {
+      "maxSize": {
+        "type": "String"
       }
     }
   },

@@ -769,6 +769,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get previewUnsupported => 'This file type cannot be previewed yet';
 
   @override
+  String get previewPreviousFile => 'Previous file';
+
+  @override
+  String get previewNextFile => 'Next file';
+
+  @override
+  String get previewViewOriginal => 'View original';
+
+  @override
+  String get previewLoadingOriginal => 'Loading original…';
+
+  @override
+  String previewLoadFailed(String error) {
+    return 'Preview failed: $error';
+  }
+
+  @override
+  String get previewAudio => 'Audio preview';
+
+  @override
+  String get previewVideo => 'Video preview';
+
+  @override
+  String get previewText => 'Text preview';
+
+  @override
+  String get previewPdf => 'PDF preview';
+
+  @override
+  String get previewPlay => 'Play';
+
+  @override
+  String get previewPause => 'Pause';
+
+  @override
   String labelActionSubmitted(String label) {
     return '$label submitted';
   }
@@ -1211,6 +1246,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String apiFileBrowserFailed(String action, int statusCode) {
     return 'File Browser $action failed: HTTP $statusCode';
+  }
+
+  @override
+  String apiFileTooLarge(String maxSize) {
+    return 'File exceeds the $maxSize preview limit';
   }
 
   @override

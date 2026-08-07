@@ -14,10 +14,9 @@ import '../widgets/fade_slide.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/phone_frame.dart';
 import '../widgets/server_icon.dart';
-import 'album_page.dart';
 import 'detail_page.dart';
 import 'docker_logs_page.dart';
-import 'music_page.dart';
+import 'share_file_preview_page.dart';
 import 'settings_page.dart';
 
 class MainShellPage extends StatefulWidget {
@@ -522,8 +521,6 @@ class _ServerInfoPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _QuickModuleGrid(onOpenModule: onOpenModule),
-            const SizedBox(height: 24),
-            _HomeAppShortcuts(apiClient: apiClient),
           ],
         ),
       ),
@@ -1914,129 +1911,6 @@ class _MetricLine extends StatelessWidget {
   }
 }
 
-class _HomeAppShortcuts extends StatelessWidget {
-  const _HomeAppShortcuts({required this.apiClient});
-
-  final UnraidApiClient? apiClient;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _HomeAppShortcut(
-          label: AppLocalizations.of(context).album,
-          icon: Icons.photo_library,
-          colors: const [AppTheme.primary, AppTheme.secondary],
-          onTap: () {
-            final client = apiClient;
-            if (client == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content:
-                        Text(AppLocalizations.of(context).connectServerFirst)),
-              );
-              return;
-            }
-            Navigator.of(context).pushNamed(
-              AlbumPage.routeName,
-              arguments: AlbumPageArgs(
-                apiClient: client,
-                rootPath: '/mnt/user/photos',
-              ),
-            );
-          },
-        ),
-        const SizedBox(width: 20),
-        _HomeAppShortcut(
-          label: AppLocalizations.of(context).music,
-          icon: Icons.music_note,
-          colors: const [Color(0xFF3498DB), Color(0xFF52C41A)],
-          onTap: () {
-            final client = apiClient;
-            if (client == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content:
-                      Text(AppLocalizations.of(context).connectServerFirst),
-                ),
-              );
-              return;
-            }
-            Navigator.of(context).pushNamed(
-              MusicPage.routeName,
-              arguments: MusicPageArgs(apiClient: client),
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _HomeAppShortcut extends StatelessWidget {
-  const _HomeAppShortcut({
-    required this.label,
-    required this.icon,
-    required this.colors,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final List<Color> colors;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 64,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Ink(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: colors,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.first.withValues(alpha: 0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: Colors.white, size: 28),
-              ),
-              const SizedBox(height: 7),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.textDark,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class ManagementData {
   const ManagementData({
     required this.id,
@@ -3026,6 +2900,10 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                     );
                   }
 
+                  final previewEntries = entries
+                      .where((entry) => entry.isPreviewable)
+                      .toList(growable: false);
+
                   return ListView(
                     padding: const EdgeInsets.fromLTRB(30, 0, 30, 30),
                     children: [
@@ -3045,11 +2923,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                         _FileEntryTile(
                           icon: entry.isDirectory
                               ? Icons.folder
-                              : entry.isImage
-                                  ? Icons.image
-                                  : entry.isAudio
-                                      ? Icons.music_note
-                                      : Icons.insert_drive_file,
+                              : _filePreviewIcon(entry.previewKind),
                           title: entry.name,
                           subtitle: entry.isDirectory
                               ? l10n.shareRootSize(entry.size)
@@ -3069,8 +2943,12 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
                             }
                             if (entry.isDirectory) {
                               _openSharePath(entry.path);
-                            } else if (entry.isImage) {
-                              _previewImage(args, entry);
+                            } else if (entry.isPreviewable) {
+                              _previewFile(
+                                args,
+                                entry,
+                                previewEntries,
+                              );
                             } else {
                               _showMessage(l10n.previewUnsupported);
                             }
@@ -3472,20 +3350,30 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
         : parts.join(' · ');
   }
 
-  Future<void> _previewImage(
+  Future<void> _previewFile(
     ManagementDetailArgs args,
     UnraidFileEntry entry,
+    List<UnraidFileEntry> previewEntries,
   ) async {
     final client = args.apiClient;
     if (client == null) {
       _showMessage(AppLocalizations.of(context).missingConnection);
       return;
     }
-    await showDialog<void>(
-      context: context,
-      builder: (context) => Dialog(
-        insetPadding: const EdgeInsets.all(18),
-        child: _ImagePreview(client: client, entry: entry),
+    final initialIndex = previewEntries.indexWhere(
+      (candidate) => candidate.path == entry.path,
+    );
+    if (initialIndex < 0) {
+      _showMessage(AppLocalizations.of(context).previewUnsupported);
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => ShareFilePreviewPage(
+          client: client,
+          entries: previewEntries,
+          initialIndex: initialIndex,
+        ),
       ),
     );
   }
@@ -3592,6 +3480,17 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
       _showMessage(error.message);
     }
   }
+}
+
+IconData _filePreviewIcon(FilePreviewKind kind) {
+  return switch (kind) {
+    FilePreviewKind.image => Icons.image_outlined,
+    FilePreviewKind.video => Icons.movie_outlined,
+    FilePreviewKind.audio => Icons.music_note,
+    FilePreviewKind.text => Icons.description_outlined,
+    FilePreviewKind.pdf => Icons.picture_as_pdf_outlined,
+    FilePreviewKind.unsupported => Icons.insert_drive_file_outlined,
+  };
 }
 
 class _DetailPanel extends StatelessWidget {
@@ -3959,90 +3858,6 @@ class _MoveDestinationDialogState extends State<_MoveDestinationDialog> {
           child: Text(widget.confirmLabel ?? l10n.moveHere),
         ),
       ],
-    );
-  }
-}
-
-class _ImagePreview extends StatelessWidget {
-  const _ImagePreview({
-    required this.client,
-    required this.entry,
-  });
-
-  final UnraidApiClient client;
-  final UnraidFileEntry entry;
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 860, maxHeight: 720),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 8, 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    entry.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.textDark,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: AppLocalizations.of(context).close,
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
-          Flexible(
-            child: FutureBuilder(
-              future: client.fileManager.readFileBytes(entry.path),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const Padding(
-                    padding: EdgeInsets.all(48),
-                    child: CircularProgressIndicator(),
-                  );
-                }
-
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      snapshot.error?.toString() ??
-                          AppLocalizations.of(context).imageLoadFailed,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppTheme.danger,
-                        fontSize: 14,
-                      ),
-                    ),
-                  );
-                }
-
-                return InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4,
-                  child: Image.memory(
-                    snapshot.data!,
-                    fit: BoxFit.contain,
-                    gaplessPlayback: true,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

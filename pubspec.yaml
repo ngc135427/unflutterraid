@@ -17,7 +17,11 @@ dependencies:
   http: ^1.2.2
   intl: ^0.20.2
   just_audio: ^0.10.6
+  media_kit: ^1.2.6
+  media_kit_libs_video: ^1.0.7
+  media_kit_video: ^2.0.1
   package_info_plus: ^9.0.1
+  pdfrx: ^2.4.7
   permission_handler: ^11.3.1
   photo_manager: ^3.10.0
   shared_preferences: ^2.5.5

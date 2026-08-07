@@ -179,6 +179,7 @@ void main() {
       expect(entries.first.isDirectory, isTrue);
       expect(entries.last.path, '/mnt/user/photos/a.jpg');
       expect(entries.last.size, '1.0 KB');
+      expect(entries.last.byteSize, 1024);
     });
 
     test('listMedia uses recursive resources and filters media files',
@@ -252,6 +253,57 @@ void main() {
       expect(
         await client.fileManager.readFileBytes('/mnt/user/photos/a.jpg'),
         [1, 2, 3],
+      );
+    });
+
+    test('readFileBytes enforces a content-length limit', () async {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: MockClient((request) async {
+          expect(request.url.path, '/api/raw/logs/app.log');
+          return http.Response.bytes([1, 2, 3], 200);
+        }),
+      );
+
+      await expectLater(
+        client.fileManager.readFileBytes(
+          '/mnt/user/logs/app.log',
+          maxBytes: 2,
+        ),
+        throwsA(
+          isA<UnraidApiException>().having(
+            (error) => error.message,
+            'message',
+            contains('预览上限'),
+          ),
+        ),
+      );
+    });
+
+    test('readFileBytes stops an unknown-length stream at the byte limit',
+        () async {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        httpClient: _StreamingClient((request) async {
+          expect(request.url.path, '/api/raw/logs/app.log');
+          return http.StreamedResponse(
+            Stream.fromIterable([
+              [1, 2],
+              [3, 4],
+            ]),
+            200,
+          );
+        }),
+      );
+
+      await expectLater(
+        client.fileManager.readFileBytes(
+          '/mnt/user/logs/app.log',
+          maxBytes: 3,
+        ),
+        throwsA(isA<UnraidApiException>()),
       );
     });
 
@@ -420,6 +472,25 @@ void main() {
       expect(track.isMedia, isFalse);
     });
 
+    test('preview kind classification is centralized by extension', () {
+      UnraidFileEntry file(String name) => UnraidFileEntry(
+            name: name,
+            path: '/mnt/user/$name',
+            isDirectory: false,
+            size: '',
+            modified: '',
+          );
+
+      expect(file('photo.JPG').previewKind, FilePreviewKind.image);
+      expect(file('movie.mkv').previewKind, FilePreviewKind.video);
+      expect(file('song.flac').previewKind, FilePreviewKind.audio);
+      expect(file('server.log').previewKind, FilePreviewKind.text);
+      expect(file('manual.pdf').previewKind, FilePreviewKind.pdf);
+      expect(file('report.docx').previewKind, FilePreviewKind.unsupported);
+      expect(file('archive.zip').previewKind, FilePreviewKind.unsupported);
+      expect(file('.env').previewKind, FilePreviewKind.text);
+    });
+
     test('listAudio returns only audio files from recursive scan', () async {
       final client = UnraidApiClient(
         baseUrl: 'http://tower.local',
@@ -490,4 +561,16 @@ void main() {
       expect(uri.path, '/api/raw/music/song.mp3');
     });
   });
+}
+
+class _StreamingClient extends http.BaseClient {
+  _StreamingClient(this._handler);
+
+  final Future<http.StreamedResponse> Function(http.BaseRequest request)
+      _handler;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    return _handler(request);
+  }
 }

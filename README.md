@@ -23,7 +23,6 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 - 主页阵列电源：启动/停止阵列（GraphQL `array.setState`，停止需输入 STOP 确认）；奇偶校验开始/取消。
 - 整机重启/关机未在当前 Connect GraphQL schema 暴露，主页会提示改用 WebGUI。
 - 提供通知、磁盘、网络、UPS、插件、安全、云服务、日志等模块化详情面板；通知列表来自 GraphQL（只读）。
-- 提供相册、音乐等应用入口。
 
 ### Docker 与虚拟机管理
 
@@ -37,7 +36,10 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 
 - 共享列表来自 Unraid GraphQL API。
 - 共享详情页通过 File Manager 读取 `/mnt/user` 下的目录内容。
-- 支持子目录进入、图片预览，以及重命名 / 删除（File Browser 写接口）。
+- 支持子目录进入，以及图片、视频、音频、常见文本和 PDF 的应用内预览；Office 文档与压缩包暂不预览。
+- 图片先加载缩略图，可按需查看原图；视频/音频默认不自动播放，支持进度控制，视频支持全屏。
+- 文本预览限制为 2 MB，并在响应头未知时执行流式截断，避免大文件完整下载；预览页支持前后切换和左右滑动。
+- 支持重命名 / 删除（File Browser 写接口）。
 - 支持新建文件夹、本机多文件上传。
 - 支持多选批量删除、移动与复制到其他目录（同名冲突跳过；禁止移入自身/子目录）。
 
@@ -70,6 +72,9 @@ Unflutterraid 是一个使用 Flutter 构建的 Unraid 移动端/桌面端管理
 - Material Design 3
 - `flutter_localizations` / `intl`：应用内中英文与系统语言
 - `http`：访问 Unraid GraphQL API 和 File Browser API
+- `media_kit` / `media_kit_video`：跨平台视频预览
+- `just_audio`：音频播放
+- `pdfrx`：跨平台 PDF 预览
 - `shared_preferences`：语言与主题偏好
 - `photo_manager` / `connectivity_plus`：相册备份权限、本地照片枚举与网络类型
 - Android MethodChannel：登录偏好原生持久化
@@ -86,6 +91,7 @@ lib/
   pages/
     login_page.dart                 登录、连接配置、登录前语言切换
     main_shell_page.dart            主页、导航、共享目录浏览/重命名/删除
+    share_file_preview_page.dart    共享文件统一预览（图片/视频/音频/文本/PDF）
     settings_page.dart              语言、主题等应用设置
     server_config_page.dart         服务器地址 / API Key、重连与断开
     album_page.dart                 相册、视频、备份设置
@@ -107,7 +113,8 @@ android/
 
 test/
   widget_test.dart                  登录页与语言切换
-  unraid_api_client_test.dart       File Browser 读/写与错误提示
+  unraid_api_client_test.dart       File Browser 读/写、预览分类与大小限制
+  share_file_preview_page_test.dart 共享文件预览与切换
 ```
 
 核心数据流：
@@ -131,7 +138,8 @@ LoginPage
      GET /api/resources/recursive/<path>
      GET /api/preview/<size>/<path>?inline=true
      GET /api/raw/<path>
-  -> UnraidFileEntry / Uint8List
+  -> UnraidFileEntry / Uint8List / 流式媒体 URL
+  -> ShareFilePreviewPage（图片 / 视频 / 音频 / 文本 / PDF）
 ```
 
 管理操作数据流：

@@ -754,6 +754,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String get previewUnsupported => '暂不支持预览该文件类型';
 
   @override
+  String get previewPreviousFile => '上一个文件';
+
+  @override
+  String get previewNextFile => '下一个文件';
+
+  @override
+  String get previewViewOriginal => '查看原图';
+
+  @override
+  String get previewLoadingOriginal => '正在加载原图…';
+
+  @override
+  String previewLoadFailed(String error) {
+    return '预览失败：$error';
+  }
+
+  @override
+  String get previewAudio => '音频预览';
+
+  @override
+  String get previewVideo => '视频预览';
+
+  @override
+  String get previewText => '文本预览';
+
+  @override
+  String get previewPdf => 'PDF 预览';
+
+  @override
+  String get previewPlay => '播放';
+
+  @override
+  String get previewPause => '暂停';
+
+  @override
   String labelActionSubmitted(String label) {
     return '$label 操作已提交';
   }
@@ -1184,6 +1219,11 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String apiFileBrowserFailed(String action, int statusCode) {
     return 'File Browser $action失败：HTTP $statusCode';
+  }
+
+  @override
+  String apiFileTooLarge(String maxSize) {
+    return '文件超过预览上限 $maxSize';
   }
 
   @override
