@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../services/connection_url.dart';
+import '../services/file_browser_preferences.dart';
 import '../services/server_profiles.dart';
 import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
@@ -54,9 +55,15 @@ class _ServerProfilesPageState extends State<ServerProfilesPage> {
       return;
     }
     setState(() => _connecting = true);
+    final fileBrowserBaseUrl =
+        await FileBrowserPreferences.loadOverride(profile.baseUrl);
+    if (!mounted) {
+      return;
+    }
     final client = UnraidApiClient(
       baseUrl: profile.baseUrl,
       apiKey: profile.apiKey,
+      fileBrowserBaseUrl: fileBrowserBaseUrl,
     );
     try {
       await client.checkConnection();

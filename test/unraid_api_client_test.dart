@@ -132,6 +132,30 @@ void main() {
       expect(client.fileBrowserBaseUrl, 'http://tower.local:8080');
     });
 
+    test('preserves a reverse-proxy base path for File Browser requests',
+        () async {
+      final client = UnraidApiClient(
+        baseUrl: 'http://tower.local',
+        apiKey: 'api-key',
+        fileBrowserBaseUrl: 'https://files.example.com/storage',
+        httpClient: MockClient((request) async {
+          expect(request.url.toString(),
+              'https://files.example.com/storage/api/resources/photos');
+          return http.Response(
+            jsonEncode({
+              'name': 'photos',
+              'path': '/photos',
+              'isDir': true,
+              'items': [],
+            }),
+            200,
+          );
+        }),
+      );
+
+      await client.fileManager.listDirectory('/mnt/user/photos');
+    });
+
     test('listDirectory reads File Browser resources and maps app paths',
         () async {
       final client = UnraidApiClient(

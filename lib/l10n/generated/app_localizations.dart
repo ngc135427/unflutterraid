@@ -818,6 +818,72 @@ abstract class AppLocalizations {
   /// **'已连接'**
   String get settingsConnected;
 
+  /// No description provided for @fileBrowserSettingsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'File Browser 配置'**
+  String get fileBrowserSettingsTitle;
+
+  /// No description provided for @fileBrowserSettingsSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件浏览、预览与备份服务地址'**
+  String get fileBrowserSettingsSubtitle;
+
+  /// No description provided for @fileBrowserConfigTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'File Browser 连接'**
+  String get fileBrowserConfigTitle;
+
+  /// No description provided for @fileBrowserUrlLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务基础地址'**
+  String get fileBrowserUrlLabel;
+
+  /// No description provided for @fileBrowserUrlHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如：http://tower.local:8080'**
+  String get fileBrowserUrlHint;
+
+  /// No description provided for @fileBrowserUrlHelp.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持自定义端口和反向代理路径；不含 /api/resources。留空或恢复默认后使用 Unraid 主机的 8080 端口。'**
+  String get fileBrowserUrlHelp;
+
+  /// No description provided for @fileBrowserUrlInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效的 http:// 或 https:// 地址，不要包含账号、查询参数或片段'**
+  String get fileBrowserUrlInvalid;
+
+  /// No description provided for @fileBrowserUseDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认地址'**
+  String get fileBrowserUseDefault;
+
+  /// No description provided for @fileBrowserSaveApply.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试、保存并应用'**
+  String get fileBrowserSaveApply;
+
+  /// No description provided for @fileBrowserChecking.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在测试 File Browser 连接…'**
+  String get fileBrowserChecking;
+
+  /// No description provided for @fileBrowserSaveSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'File Browser 地址已保存并应用'**
+  String get fileBrowserSaveSuccess;
+
   /// No description provided for @serverConfigTitle.
   ///
   /// In zh, this message translates to:

@@ -51,7 +51,7 @@ Today that is essentially **language preference** (`AppLanguageScope`). Do not i
 
 - Owned by `UnraidFileManager` via `client.fileManager`.
 - Path mapping: app paths under `/mnt/user/...` ↔ File Browser resource paths.
-- Default base URL: same host as Unraid, port `UnraidApiClient.defaultFileBrowserPort` (`8080`).
+- Default base URL: same host as Unraid, port `UnraidApiClient.defaultFileBrowserPort` (`8080`). A non-secret per-server override may be loaded from `FileBrowserPreferences` and passed into the client constructor.
 
 ### Caching
 

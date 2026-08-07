@@ -18,6 +18,7 @@ lib/services/
   display_copy.dart        # Locale-aware app-owned service strings
   language_preferences.dart
   login_preferences.dart
+  file_browser_preferences.dart # Per-server File Browser endpoint overrides
 
 lib/l10n/                  # ARB + generated AppLocalizations (UI + DisplayCopy source)
 test/
@@ -61,7 +62,7 @@ Documented in `README.md`:
 1. **Unraid GraphQL** — server info, Docker, VM, share metadata, mutations.
 2. **File Browser API** — directory listing, recursive media, thumbnails, raw bytes.
 
-Default File Browser URL: same scheme/host as Unraid base URL, port `8080` (`UnraidApiClient.defaultFileBrowserPort`). Override only via constructor `fileBrowserBaseUrl`, not login-page fields (MVP).
+Default File Browser URL: same scheme/host as Unraid base URL, port `8080` (`UnraidApiClient.defaultFileBrowserPort`). Settings persist an optional per-server override through `FileBrowserPreferences`; every client-creation flow loads it and passes it to the existing `fileBrowserBaseUrl` constructor parameter.
 
 ---
 

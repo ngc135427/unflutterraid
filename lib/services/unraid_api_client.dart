@@ -23,7 +23,7 @@ class UnraidApiClient {
     http.Client? httpClient,
   })  : baseUrl = _normalizeBaseUrl(baseUrl),
         fileBrowserBaseUrl = _normalizeBaseUrl(
-            fileBrowserBaseUrl ?? _deriveFileBrowserBaseUrl(baseUrl)),
+            fileBrowserBaseUrl ?? deriveFileBrowserBaseUrl(baseUrl)),
         apiKey = apiKey.trim(),
         _httpClient = httpClient ?? http.Client();
 
@@ -213,7 +213,7 @@ class UnraidApiClient {
     return withoutTrailingSlash;
   }
 
-  static String _deriveFileBrowserBaseUrl(String unraidBaseUrl) {
+  static String deriveFileBrowserBaseUrl(String unraidBaseUrl) {
     final normalized = _normalizeBaseUrl(unraidBaseUrl);
     final uri = Uri.parse(normalized);
     return uri

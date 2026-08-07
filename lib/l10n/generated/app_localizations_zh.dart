@@ -405,6 +405,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsConnected => '已连接';
 
   @override
+  String get fileBrowserSettingsTitle => 'File Browser 配置';
+
+  @override
+  String get fileBrowserSettingsSubtitle => '文件浏览、预览与备份服务地址';
+
+  @override
+  String get fileBrowserConfigTitle => 'File Browser 连接';
+
+  @override
+  String get fileBrowserUrlLabel => '服务基础地址';
+
+  @override
+  String get fileBrowserUrlHint => '例如：http://tower.local:8080';
+
+  @override
+  String get fileBrowserUrlHelp =>
+      '支持自定义端口和反向代理路径；不含 /api/resources。留空或恢复默认后使用 Unraid 主机的 8080 端口。';
+
+  @override
+  String get fileBrowserUrlInvalid =>
+      '请输入有效的 http:// 或 https:// 地址，不要包含账号、查询参数或片段';
+
+  @override
+  String get fileBrowserUseDefault => '恢复默认地址';
+
+  @override
+  String get fileBrowserSaveApply => '测试、保存并应用';
+
+  @override
+  String get fileBrowserChecking => '正在测试 File Browser 连接…';
+
+  @override
+  String get fileBrowserSaveSuccess => 'File Browser 地址已保存并应用';
+
+  @override
   String get serverConfigTitle => '服务器连接';
 
   @override

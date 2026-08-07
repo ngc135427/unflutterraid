@@ -14,6 +14,7 @@ import '../services/unraid_api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/phone_frame.dart';
 import 'about_page.dart';
+import 'file_browser_config_page.dart';
 import 'server_config_page.dart';
 import 'server_profiles_page.dart';
 
@@ -176,6 +177,27 @@ class _SettingsPageState extends State<SettingsPage> {
                               ServerProfilesPage.routeName,
                             );
                           },
+                        ),
+                        _SettingRow(
+                          icon: Icons.cloud_outlined,
+                          iconColor: const Color(0xFF0E7490),
+                          iconBackground: const Color(0xFFE6F7FA),
+                          title: l10n.fileBrowserSettingsTitle,
+                          subtitle: client?.fileBrowserBaseUrl ??
+                              l10n.fileBrowserSettingsSubtitle,
+                          value: client == null
+                              ? l10n.settingsNotConnected
+                              : l10n.settingsOpen,
+                          onTap: client == null
+                              ? null
+                              : () {
+                                  Navigator.of(context).pushNamed(
+                                    FileBrowserConfigPage.routeName,
+                                    arguments: FileBrowserConfigPageArgs(
+                                      apiClient: client,
+                                    ),
+                                  );
+                                },
                         ),
                       ],
                     ),

@@ -2250,6 +2250,7 @@ class _ManagementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final running = _isRunningStatus(item.status);
+    final isShare = item.type == ManagementItemType.share;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
@@ -2320,7 +2321,7 @@ class _ManagementCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                if (item.tags.isNotEmpty) ...[
+                if (!isShare && item.tags.isNotEmpty) ...[
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 6,
@@ -2331,28 +2332,8 @@ class _ManagementCard extends StatelessWidget {
                     ],
                   ),
                 ],
-                const SizedBox(height: 12),
-                if (onAction == null)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _CompactActionButton(
-                          icon: Icons.folder_open,
-                          label: AppLocalizations.of(context).browse,
-                          onPressed: onTap,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _CompactActionButton(
-                          icon: Icons.tune,
-                          label: AppLocalizations.of(context).settings,
-                          onPressed: onTap,
-                        ),
-                      ),
-                    ],
-                  )
-                else
+                if (!isShare) const SizedBox(height: 12),
+                if (!isShare && onAction != null)
                   Row(
                     children: [
                       Expanded(
@@ -3326,7 +3307,7 @@ class _ManagementDetailPageState extends State<ManagementDetailPage> {
   }
 
   String _shareRoot(ManagementDetailArgs args) {
-    return '/mnt/user';
+    return '/mnt/user/${args.data.title}';
   }
 
   String _parentPath(String path) {

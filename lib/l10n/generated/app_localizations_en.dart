@@ -417,6 +417,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsConnected => 'Connected';
 
   @override
+  String get fileBrowserSettingsTitle => 'File Browser configuration';
+
+  @override
+  String get fileBrowserSettingsSubtitle =>
+      'Endpoint for file browsing, previews, and backups';
+
+  @override
+  String get fileBrowserConfigTitle => 'File Browser connection';
+
+  @override
+  String get fileBrowserUrlLabel => 'Service base URL';
+
+  @override
+  String get fileBrowserUrlHint => 'For example: http://tower.local:8080';
+
+  @override
+  String get fileBrowserUrlHelp =>
+      'Custom ports and reverse-proxy paths are supported. Do not include /api/resources. Leave empty or restore the default to use port 8080 on the Unraid host.';
+
+  @override
+  String get fileBrowserUrlInvalid =>
+      'Enter a valid http:// or https:// URL without credentials, a query, or a fragment';
+
+  @override
+  String get fileBrowserUseDefault => 'Restore default URL';
+
+  @override
+  String get fileBrowserSaveApply => 'Test, save, and apply';
+
+  @override
+  String get fileBrowserChecking => 'Testing the File Browser connection…';
+
+  @override
+  String get fileBrowserSaveSuccess => 'File Browser URL saved and applied';
+
+  @override
   String get serverConfigTitle => 'Server connection';
 
   @override

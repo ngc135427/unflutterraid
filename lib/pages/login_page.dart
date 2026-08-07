@@ -4,6 +4,7 @@ import '../app_language_scope.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../l10n/language_names.dart';
 import '../services/connection_url.dart';
+import '../services/file_browser_preferences.dart';
 import '../services/language_preferences.dart';
 import '../services/login_preferences.dart';
 import '../services/server_profiles.dart';
@@ -74,15 +75,22 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     final l10n = AppLocalizations.of(context);
-    final client = UnraidApiClient(
-      baseUrl: _buildBaseUrl(),
-      apiKey: _apiKeyController.text,
-    );
-
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
     });
+
+    final baseUrl = _buildBaseUrl();
+    final fileBrowserBaseUrl =
+        await FileBrowserPreferences.loadOverride(baseUrl);
+    if (!mounted) {
+      return;
+    }
+    final client = UnraidApiClient(
+      baseUrl: baseUrl,
+      apiKey: _apiKeyController.text,
+      fileBrowserBaseUrl: fileBrowserBaseUrl,
+    );
 
     try {
       await client.checkConnection();

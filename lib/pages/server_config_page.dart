@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../services/connection_url.dart';
+import '../services/file_browser_preferences.dart';
 import '../services/login_preferences.dart';
 import '../services/server_profiles.dart';
 import '../services/unraid_api_client.dart';
@@ -98,15 +99,21 @@ class _ServerConfigPageState extends State<ServerConfigPage> {
       domain: _domainController.text,
       useHttps: _useHttps,
     );
-    final client = UnraidApiClient(
-      baseUrl: baseUrl,
-      apiKey: _apiKeyController.text.trim(),
-    );
-
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
     });
+
+    final fileBrowserBaseUrl =
+        await FileBrowserPreferences.loadOverride(baseUrl);
+    if (!mounted) {
+      return;
+    }
+    final client = UnraidApiClient(
+      baseUrl: baseUrl,
+      apiKey: _apiKeyController.text.trim(),
+      fileBrowserBaseUrl: fileBrowserBaseUrl,
+    );
 
     try {
       await client.checkConnection();
