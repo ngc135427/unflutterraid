@@ -104,3 +104,36 @@ Implemented theme prefs, music library from File Browser, share rename/delete, R
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: Shared file preview and home cleanup
+
+**Date**: 2026-08-07
+**Task**: Shared file preview and home cleanup
+**Branch**: `codex/share-file-preview`
+
+### Summary
+
+Added cross-platform shared-file previews for images, video, audio, text, and PDF with size-limited text reads and preview navigation; removed the Album and Music shortcuts from the home screen; added localization, tests, and documentation.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0606357` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
