@@ -137,3 +137,36 @@ Added cross-platform shared-file previews for images, video, audio, text, and PD
 ### Next Steps
 
 - None - task complete
+
+
+## Session 5: File Browser settings and share card cleanup
+
+**Date**: 2026-08-08
+**Task**: File Browser settings and share card cleanup
+**Branch**: `codex/webdav-settings`
+
+### Summary
+
+Added per-server File Browser endpoint settings with validation and immediate apply, simplified share cards while preserving folder navigation, added tests and built a release APK.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `df677cc` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 4
-- **Last Active**: 2026-08-07
+- **Total Sessions**: 5
+- **Last Active**: 2026-08-08
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~139 | Active |
+| `journal-1.md` | ~172 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 5 | 2026-08-08 | File Browser settings and share card cleanup | `df677cc` | `codex/webdav-settings` |
 | 4 | 2026-08-07 | Shared file preview and home cleanup | `0606357` | `codex/share-file-preview` |
 | 3 | 2026-07-17 | Roadmap MVP theme music file writes | `5129cd1` | `main` |
 | 2 | 2026-07-17 | Bootstrap guidelines and archive completed tasks | `94b1219` | `main` |
